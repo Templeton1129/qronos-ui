@@ -1,0 +1,26 @@
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+/* 配置支持暗夜模式 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg-color: #f5f2ff;
+  --main-color: #9333ea;
+}
+
+body {
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+
+.p-popover::before,
+.p-popover::after {
+  display: none !important;
+}

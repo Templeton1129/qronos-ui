@@ -1,0 +1,74 @@
+# Node dependencies
+/node_modules/
+
+# Build output
+/dist/
+/build/
+/coverage/
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# System files
+.DS_Store
+Thumbs.db
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional: if using Volar
+.volar.config.js
+
+# Optional: if using Vitest
+/test-results/
+
+# Optional: if using Cypress
+/cypress/videos/
+/cypress/screenshots/
+
+# Optional: if using Playwright
+/playwright-report/
+/test-results/
+
+# Optional: if using Storybook
+/storybook-static/
+
+# Optional: if using vitepress or other static site tools
+/.vitepress/dist/
+
+# Optional: local dev server cache (like Vite)
+node_modules/.vite
+
+# Optional: if using ESLint cache
+.eslintcache
+
+# Optional: if using Prettier cache
+.prettier-cache
+
+# Optional: output for tsc CLI
+out/
+
+# Yarn v2+ (pnp)
+.pnp.*
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.yarn/patches
+

@@ -1,0 +1,23 @@
+{
+	"extends": "@vue/tsconfig/tsconfig.dom.json",
+	"include": [
+		"env.d.ts",
+		"src/common-component.d.ts",
+		"src/**/*",
+		"src/**/*.vue",
+		"src/**/**/*.vue"
+	],
+	"exclude": ["src/**/__tests__/*"],
+	"compilerOptions": {
+		"target": "es5",
+		"downlevelIteration": true,
+		"lib": ["dom", "dom.iterable", "esnext"],
+		"moduleResolution": "Node",
+		"composite": true,
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./src/*"]
+		},
+		"types": ["node"]
+	}
+}
