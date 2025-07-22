@@ -193,7 +193,7 @@
                 >
                 </Tag>
               </div>
-              <div class="flex flex-col items-center gap-y-1">
+              <div class="flex flex-col items-center gap-y-1 -mt-2">
                 <div
                   v-if="
                     slotProps.data?.equity &&
@@ -426,12 +426,6 @@
       @refreshAccountInfoList="getAccountInfoListFn"
     />
   </div>
-
-  <!-- <UploadEquityData
-    ref="refUploadEquityData"
-    :frameWorkId="frameWorkId"
-    :accountName="viewActiveAccount?.account_name || ``"
-  /> -->
 </template>
 
 <script setup lang="ts">
@@ -451,10 +445,6 @@ import LeverageConfirmDialog from "@/strategy-center-module/components/LeverageC
 const refLeverageConfirmDialog = ref<InstanceType<
   typeof LeverageConfirmDialog
 > | null>(null);
-// import UploadEquityData from "@/strategy-center-module/components/uploadEquityData.vue";
-// const refUploadEquityData = ref<InstanceType<typeof UploadEquityData> | null>(
-//   null
-// );
 import {
   getAccountInfo,
   deleteAccount,
@@ -624,15 +614,6 @@ const menuItems = computed(() => {
         deleteAccountAction();
       },
     },
-    // {
-    //   label: "导入资金曲线数据",
-    //   icon: "pi pi-folder-open",
-    //   command: () => {
-    //     openUploadEquityData();
-    //   },
-    //   disabled: true,
-    //   class: "hidden sm:flex",
-    // },
   ];
 });
 
@@ -808,12 +789,6 @@ const lockAccountFn = async (accountData: tDbAccountInfoRes) => {
     getAccountInfoListFn();
   }
 };
-
-// const openUploadEquityData = () => {
-//   if (refUploadEquityData.value) {
-//     refUploadEquityData.value?.openDialog();
-//   }
-// };
 
 defineExpose({
   openAddAccountForm,

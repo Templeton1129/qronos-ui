@@ -82,7 +82,7 @@
           ref="refAvatar"
         />
         <div v-if="viewExpanded">
-          <Message severity="secondary" class="h-6 font-mono">v0.2.0</Message>
+          <Message severity="secondary" class="h-6 font-mono">v0.3.0</Message>
         </div>
         <Menu
           ref="viewUserMenu"

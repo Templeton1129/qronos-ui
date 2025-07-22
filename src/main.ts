@@ -34,6 +34,7 @@ import {
   GridComponent,
   LegendComponent,
   MarkPointComponent,
+  DataZoomComponent,
   // 你还可以加其它组件
 } from "echarts/components";
 
@@ -57,37 +58,6 @@ export function setPrimaryTheme() {
         900: `{${color}.900}`,
         950: `{${color}.950}`,
       },
-      // noir需要的额外配置 目前先不支持noir！
-      // colorScheme: {
-      //   light: {
-      //     primary: {
-      //       color: "{zinc.950}",
-      //       inverseColor: "#ffffff",
-      //       hoverColor: "{zinc.900}",
-      //       activeColor: "{zinc.800}",
-      //     },
-      //     highlight: {
-      //       background: "{zinc.950}",
-      //       focusBackground: "{zinc.700}",
-      //       color: "#ffffff",
-      //       focusColor: "#ffffff",
-      //     },
-      //   },
-      //   dark: {
-      //     primary: {
-      //       color: "{zinc.50}",
-      //       inverseColor: "{zinc.950}",
-      //       hoverColor: "{zinc.100}",
-      //       activeColor: "{zinc.200}",
-      //     },
-      //     highlight: {
-      //       background: "rgba(250, 250, 250, .16)",
-      //       focusBackground: "rgba(250, 250, 250, .24)",
-      //       color: "rgba(255,255,255,.87)",
-      //       focusColor: "rgba(255,255,255,.87)",
-      //     },
-      //   },
-      // },
     },
   });
   usePreset(MyPreset);
@@ -136,6 +106,7 @@ echarts.use([
   LegendComponent,
   CanvasRenderer,
   MarkPointComponent,
+  DataZoomComponent,
 ]);
 app.component("v-chart", VueECharts);
 

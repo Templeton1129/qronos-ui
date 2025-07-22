@@ -16,20 +16,22 @@
 
     <!-- 操作区和账户卡片区 -->
     <AccountListModuleTemplate />
+
+    <VersionUpdataLogTemplate />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+
 import DataCenterModuleTemplate from "@/home-module/components/dataCenterModule.template.vue";
 const refDataCenterModuleTemplate = ref<InstanceType<
   typeof DataCenterModuleTemplate
 > | null>(null);
 import StrategyCenterModuleTemplate from "@/home-module/components/strategyCenterModule.template.vue";
 import AccountListModuleTemplate from "@/home-module/components/accountListModule.template.vue";
+import VersionUpdataLogTemplate from "@/common-module/components/versionUpdataLog.template.vue";
 
-import { useToast } from "primevue/usetoast";
-const toast = useToast();
 import {
   frameWorkDownloadStatusEnum,
   getAllFrameWorkStatusList,

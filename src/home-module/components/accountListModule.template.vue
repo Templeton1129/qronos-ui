@@ -112,8 +112,8 @@
               class="flex gap-3 px-4 pb-1"
               :class="[
                 viewfullscreenId === item.id
-                  ? `flex-wrap justify-center min-h-full`
-                  : `overflow-x-auto flex-nowrap scrollbar-thin max-h-120`,
+                  ? `grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3`
+                  : `overflow-x-auto flex-nowrap scrollbar-thin max-h-120 box-content`,
               ]"
             >
               <!-- 账户净值 -->
@@ -121,19 +121,36 @@
                 class="px-4 py-3 flex flex-col gap-4 bg-gray-50 dark:bg-neutral-900 rounded-lg"
                 :class="[
                   viewfullscreenId === item.id
-                    ? 'max-h-120 w-110'
+                    ? 'max-h-120'
                     : 'min-w-full sm:min-w-100',
                 ]"
               >
                 <div class="text-md text-center">账户净值</div>
                 <div class="flex-1 flex justify-center items-center">
                   <div class="flex flex-row items-end justify-center gap-2">
-                    <div class="text-7xl font-bold text-primary-500 font-mono">
+                    <div
+                      class="text-7xl font-bold text-primary-500 font-mono"
+                      v-if="
+                        item?.equity?.equity_amount &&
+                        item?.equity?.equity_amount?.length > 0
+                      "
+                    >
                       {{
-                        item?.equity?.equity_amount[
-                          item?.equity?.equity_amount?.length - 1
-                        ] || "--"
+                        Number(
+                          item?.equity?.equity_amount[
+                            item?.equity?.equity_amount?.length - 1
+                          ]
+                        ).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })
                       }}
+                    </div>
+                    <div
+                      v-else
+                      class="text-7xl font-bold text-primary-500 font-mono"
+                    >
+                      --
                     </div>
                     <div class="text-sm text-gray-500">USDT</div>
                   </div>
@@ -152,14 +169,14 @@
                     class="flex justify-between w-full bg-gray-100 dark:bg-neutral-800 p-2 rounded-md"
                   >
                     <div class="flex flex-1 flex-col items-center gap-2">
-                      <span>24H盈亏:</span>
+                      <span>24H盈亏</span>
                       <Tag class="font-medium w-30 font-mono rounded-sm">{{
                         item?.eq_pnl_24h || "--"
                       }}</Tag>
                     </div>
                     <Divider layout="vertical" />
                     <div class="flex flex-1 flex-col items-center gap-2">
-                      <span>24H收益率:</span>
+                      <span>24H收益率</span>
                       <Tag class="font-medium w-30 font-mono rounded-sm"
                         >{{ item?.eq_pct_24h || "--" }}%</Tag
                       >
@@ -169,14 +186,14 @@
                     class="flex justify-between w-full bg-gray-100 dark:bg-neutral-800 p-2 rounded-md"
                   >
                     <div class="flex flex-1 flex-col items-center gap-2">
-                      <span>24H最大净值:</span>
+                      <span>24H最大净值</span>
                       <Tag class="font-medium w-30 font-mono rounded-sm">{{
                         item?.eq_max_24h || "--"
                       }}</Tag>
                     </div>
                     <Divider layout="vertical" />
                     <div class="flex flex-1 flex-col items-center gap-2">
-                      <span>24H最小净值:</span>
+                      <span>24H最小净值</span>
                       <Tag class="font-medium w-30 font-mono rounded-sm">{{
                         item?.eq_min_24h || "--"
                       }}</Tag>
@@ -189,7 +206,7 @@
                 class="box-border flex flex-col justify-end gap-4 bg-gray-50 dark:bg-neutral-900 rounded-lg overflow-hidden"
                 :class="[
                   viewfullscreenId === item.id
-                    ? 'max-h-120 w-110'
+                    ? 'max-h-120 min-h-100'
                     : 'min-w-full sm:min-w-110',
                 ]"
               >
@@ -203,7 +220,6 @@
                   "
                 >
                   <StrategicNetValueChart
-                    ref="strategicNetValueChartRefs"
                     :dateTime="item.equity.time"
                     :equity="item.equity.net"
                     :dd2here="item.equity.dd2here"
@@ -225,7 +241,7 @@
                 class="flex bg-gray-50 dark:bg-neutral-900 rounded-lg overflow-hidden"
                 :class="[
                   viewfullscreenId === item.id
-                    ? 'max-h-120 w-110'
+                    ? 'max-h-120 min-h-100'
                     : 'min-w-full sm:min-w-110',
                 ]"
               >
@@ -241,7 +257,6 @@
                   "
                 >
                   <LongChart
-                    ref="longChartRefs"
                     :dateTime="item.equity.time"
                     :long="item.equity.long_ratio"
                     :short="item.equity.short_ratio"
@@ -262,11 +277,9 @@
               </div>
               <!-- 持仓模块 表格 -->
               <div
-                class="pt-4 flex flex-col content-between bg-gray-50 dark:bg-neutral-900 rounded-lg"
+                class="pt-3 flex flex-col content-between bg-gray-50 dark:bg-neutral-900 rounded-lg"
                 :class="[
-                  viewfullscreenId === item.id
-                    ? 'max-h-120 w-110'
-                    : 'min-w-130',
+                  viewfullscreenId === item.id ? 'max-h-120' : 'min-w-130',
                 ]"
               >
                 <SelectButton
@@ -350,37 +363,110 @@
                   </div>
                 </template>
               </div>
-              <!-- 盈利亏损币排名 -->
+              <!-- 盈利/亏损币排名 -->
               <div
-                class="px-4 py-3 flex flex-col items-center bg-gray-50 dark:bg-neutral-900 rounded-lg"
+                class="px-4 py-3 flex flex-col gap-3 bg-gray-50 dark:bg-neutral-900 rounded-lg"
                 :class="[
                   viewfullscreenId === item.id
-                    ? 'max-h-120 w-110'
+                    ? 'max-h-120'
                     : 'min-w-full sm:min-w-100',
                 ]"
               >
-                <span class="text-md">盈利/亏损币排名即将上线</span>
-                <div class="flex-1 flex items-center justify-center">
-                  <img
-                    src="@/assets/home-img/no-data.png"
-                    class="w-40 h-auto"
+                <div class="flex justify-center text-md">盈利/亏损币前五名</div>
+
+                <div class="flex justify-between items-center gap-2">
+                  <SelectButton
+                    v-model="item.coinSortType"
+                    :options="coinSortTypeOptions"
+                    size="small"
                   />
+                  <Select
+                    v-model="selectedTimeRange"
+                    :options="timeRangeOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="时间范围"
+                    size="small"
+                  />
+                </div>
+
+                <template v-if="getPnlHistory(item).length > 0">
+                  <div class="flex-1 flex flex-col px-2 w-full">
+                    <div
+                      class="divide-y divide-gray-100 dark:divide-neutral-700"
+                    >
+                      <div
+                        v-for="(coin, index) in getPnlHistory(item)"
+                        :key="coin.symbol"
+                        class="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                      >
+                        <div
+                          :class="[
+                            'w-2 h-2 rounded-full',
+                            colorList[index] || 'bg-gray-500',
+                          ]"
+                        ></div>
+                        <div class="flex-1 flex flex-col justify-center gap-1">
+                          <span
+                            class="font-semibold text-gray-800 dark:text-gray-200"
+                            >{{ coin.symbol }}</span
+                          >
+                          <div
+                            class="text-xs text-gray-500 dark:text-gray-300 text-left"
+                          >
+                            {{ coin.type === "swap" ? "合约持仓" : "现货持仓" }}
+                          </div>
+                        </div>
+                        <div class="font-mono text-xl text-right">
+                          <span
+                            :class="
+                              coin.total_pnl > 0
+                                ? 'text-green-600'
+                                : 'text-red-600'
+                            "
+                            >{{
+                              Number(coin.total_pnl).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })
+                            }}</span
+                          >
+                          <span
+                            class="text-xs text-gray-500 dark:text-gray-300"
+                          >
+                            USDT
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <div class="flex-1 flex items-center justify-center">
+                    <img
+                      src="@/assets/home-img/no-data.png"
+                      class="w-40 h-auto"
+                    />
+                  </div>
+                </template>
+                <div
+                  class="text-xs text-gray-500 dark:text-gray-300 text-center"
+                >
+                  开平仓币种数据可能还不准确，后续会优化
                 </div>
               </div>
               <!-- 策略配置信息 -->
               <div
-                class="pt-4 flex flex-col gap-2 bg-gray-50 dark:bg-neutral-900 rounded-lg"
+                class="pt-3 flex flex-col gap-2 bg-gray-50 dark:bg-neutral-900 rounded-lg"
                 :class="[
-                  viewfullscreenId === item.id
-                    ? 'max-h-120 w-110'
-                    : 'sm:min-w-140',
+                  viewfullscreenId === item.id ? 'max-h-120' : 'sm:min-w-140',
                 ]"
               >
                 <div class="flex px-4 justify-between">
                   <span class="text-md hidden sm:block"> 策略配置信息 </span>
                   <div
                     v-if="item?.strategy_name"
-                    class="flex items-center justify-center gap-2 text-xs text-gray-500"
+                    class="flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-300"
                   >
                     当前使用的策略是
                     <Tag class="text-xs" severity="secondary">{{
@@ -639,22 +725,18 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, onUnmounted } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 const router = useRouter();
 const viewfullscreenId = ref<number | null>(null);
 
 import StrategicNetValueChart from "@/home-module/components/strategicNetValueChart.template.vue";
-const strategicNetValueChartRefs = ref<
-  InstanceType<typeof StrategicNetValueChart>[]
->([]);
 import LongChart from "@/home-module/components/longChart.template.vue";
-const longChartRefs = ref<InstanceType<typeof LongChart>[]>([]);
 import { getHomeAccountInfo } from "@/common-module/services/service.provider";
 const viewIsLoading = ref<boolean>(false);
 const viewData = ref<tDbHomeAccountInfoRes[]>([]);
 
-const viewPostSelectOptions = ref(["持仓合约", "持仓现货"]);
+const viewPostSelectOptions = ref<string[]>(["持仓合约", "持仓现货"]);
 const viewFactorDialogVisible = ref(false);
 
 const viewFactorSelect = ref<string>("因子");
@@ -670,6 +752,13 @@ const viewCurrentFactorList = ref<{
   filterListPost: [],
 });
 
+const selectedTimeRange = ref<string>("1h");
+const timeRangeOptions = [
+  { label: "最近1小时", value: "1h" },
+  { label: "最近24小时", value: "24h" },
+];
+const coinSortTypeOptions = ref<string[]>(["盈利", "亏损"]);
+
 onMounted(() => {
   loadData();
 });
@@ -681,6 +770,7 @@ const loadData = async () => {
   viewData.value = res.data;
   viewData.value.forEach((item) => {
     item.selectValue = "持仓合约";
+    item.coinSortType = "盈利";
   });
   formatStrategyPool();
   viewIsLoading.value = false;
@@ -700,6 +790,29 @@ const formatStrategyPool = () => {
       });
     }
   });
+};
+
+const getPnlHistory = (item: any) => {
+  if (
+    item?.pnl_history &&
+    selectedTimeRange.value &&
+    item.pnl_history[selectedTimeRange.value] &&
+    item.pnl_history[selectedTimeRange.value].length > 0
+  ) {
+    // 根据coinSortType取total_pnl>0/<0的币排序,截取前五名展示
+    if (item.coinSortType === "盈利") {
+      return item.pnl_history[selectedTimeRange.value]
+        .filter((coin: any) => coin.total_pnl > 0)
+        .sort((a: any, b: any) => b.total_pnl - a.total_pnl)
+        .slice(0, 5);
+    } else {
+      return item.pnl_history[selectedTimeRange.value]
+        .filter((coin: any) => coin.total_pnl < 0)
+        .sort((a: any, b: any) => a.total_pnl - b.total_pnl)
+        .slice(0, 5);
+    }
+  }
+  return [];
 };
 
 const expandAll = () => {
@@ -750,27 +863,13 @@ const viewFactorSelectChange = () => {
   }
 };
 
-const handleResizeFn = () => {
-  if (strategicNetValueChartRefs.value) {
-    strategicNetValueChartRefs.value.forEach((item) => {
-      item?.handleResize();
-    });
-  }
-
-  if (longChartRefs.value) {
-    longChartRefs.value.forEach((item) => {
-      item?.handleResize();
-    });
-  }
-};
-
-onMounted(() => {
-  window.addEventListener("resize", handleResizeFn);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("resize", handleResizeFn);
-});
+const colorList = ref<string[]>([
+  "bg-green-500",
+  "bg-yellow-500",
+  "bg-blue-500",
+  "bg-purple-500",
+  "bg-teal-500",
+]);
 </script>
 
 <style scoped>

@@ -7,7 +7,7 @@
       appendTo="self"
       :closable="!isForceAddConfigFile"
       modal
-      class="w-[90vw] sm:w-150 max-w-full z-100"
+      class="max-w-[90vw] min-w-[50vw] z-100"
     >
       <template #default>
         <!-- 策略导入... -->

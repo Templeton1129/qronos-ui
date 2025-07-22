@@ -14,7 +14,7 @@
         <div class="flex items-center justify-center">
           实盘网页版<Divider layout="vertical" />公测版本
           <Message severity="secondary" size="small" class="h-6 font-mono mx-2"
-            >v0.2.0</Message
+            >v0.3.0</Message
           >© 2025
         </div>
       </footer>

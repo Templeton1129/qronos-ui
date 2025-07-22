@@ -6,14 +6,11 @@
     <!-- 骨架屏（加载状态） -->
     <template v-if="isLoading" #title>
       <div class="space-y-3">
-        <!-- Main title skeleton -->
         <Skeleton
           width="75%"
           height="1.5rem"
           class="mx-auto rounded"
         ></Skeleton>
-
-        <!-- Tags section -->
         <div class="flex flex-wrap justify-center gap-2">
           <Skeleton width="5rem" height="2rem"></Skeleton>
           <Skeleton width="4rem" height="2rem"></Skeleton>
@@ -332,66 +329,71 @@
     header="日志"
     modal
     position="full"
-    class="w-[90vw] max-w-full"
     @hide="clearLogRefreshTimer"
   >
-    <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
-      <div class="space-x-2">
-        <label class="text-sm flex-shrink-0">条数:</label>
-        <InputNumber
-          v-model="viewLogLines"
-          type="number"
-          :min="1"
-          @keydown.enter="openLogDialogAction"
-          placeholder="日志条数"
-          size="small"
-          class="min-w-0"
-        />
-        <Button
-          type="button"
-          label="刷新"
-          @click="openLogDialogAction"
-          variant="outlined"
-          class="flex-shrink-0"
+    <div class="h-full flex flex-col">
+      <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
+        <div class="space-x-2">
+          <label class="text-sm flex-shrink-0">条数:</label>
+          <InputNumber
+            v-model="viewLogLines"
+            type="number"
+            :min="1"
+            @keydown.enter="openLogDialogAction"
+            placeholder="日志条数"
+            size="small"
+            class="min-w-0"
+          />
+          <Button
+            type="button"
+            label="刷新"
+            @click="openLogDialogAction"
+            variant="outlined"
+            class="flex-shrink-0"
+            size="small"
+          />
+        </div>
+        <Select
+          v-model="strategyLogRefreshTime"
+          :options="logRefreshTimeList"
+          optionLabel="name"
+          optionValue="code"
+          placeholder="刷新频率"
+          @value-change="refreshTimeChangeAction"
           size="small"
         />
       </div>
-      <Select
-        v-model="strategyLogRefreshTime"
-        :options="logRefreshTimeList"
-        optionLabel="name"
-        optionValue="code"
-        placeholder="刷新频率"
-        @value-change="refreshTimeChangeAction"
-        size="small"
-      />
-    </div>
-    <Tabs
-      v-if="logTypeList.length > 0 && viewCurrentPm_id"
-      :value="viewCurrentPm_id"
-      scrollable
-      class="w-full border-0 bg-transparent"
-    >
-      <TabList class="flex space-x-2">
-        <Tab
-          v-for="tab in logTypeList"
-          :key="tab.name"
-          :value="tab.pm_id"
-          @click="tabClick(tab.pm_id)"
-          class="rounded-t-lg px-4 py-2 bg-transparent border-none focus:outline-none"
-        >
-          {{ logTypeEnum[tab.name as keyof typeof logTypeEnum] }}
-        </Tab>
-      </TabList>
-      <TabPanels
-        class="border-0 focus:outline-none p-1 flex-1 overflow-y-auto max-h-[55vh]"
+      <Tabs
+        v-if="logTypeList.length > 0 && viewCurrentPm_id"
+        :value="viewCurrentPm_id"
+        scrollable
+        class="flex-1 h-[90%] w-full border-0 bg-transparent"
       >
-        <TabPanel v-for="tab in logTypeList" :key="tab.name" :value="tab.pm_id">
-          <p v-html="viewDataLog" class="pt-1"></p>
-        </TabPanel>
-      </TabPanels>
-    </Tabs>
-    <p v-html="viewDataLog" v-else class="max-h-[55vh] overflow-y-auto"></p>
+        <TabList class="flex space-x-2">
+          <Tab
+            v-for="tab in logTypeList"
+            :key="tab.name"
+            :value="tab.pm_id"
+            @click="tabClick(tab.pm_id)"
+            class="rounded-t-lg px-4 py-2 bg-transparent border-none focus:outline-none"
+          >
+            {{ logTypeEnum[tab.name as keyof typeof logTypeEnum] }}
+          </Tab>
+        </TabList>
+        <TabPanels
+          class="flex-1 border-0 focus:outline-none p-1 overflow-y-auto"
+        >
+          <TabPanel
+            v-for="tab in logTypeList"
+            :key="tab.name"
+            :value="tab.pm_id"
+          >
+            <p v-html="viewDataLog" class="pt-1"></p>
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
+      <p v-html="viewDataLog" v-else class="flex-1 overflow-y-auto"></p>
+    </div>
   </Drawer>
 </template>
 
@@ -413,8 +415,6 @@ import { formatOutputLog } from "@/common-module/utils";
 import {
   dataCenterStatusEnum,
   startOrStopFrameWork,
-  uploadFolderEnum,
-  frameWorkTypeEnum,
   logTypeEnum,
   getAccountInfo,
   editGlobalConfig,
@@ -557,12 +557,6 @@ const getLogFn = async () => {
 
   if (res.result === true) {
     viewDataLog.value = formatOutputLog(res.data || "");
-
-    // toast.add({
-    //   severity: "success",
-    //   summary: "获取日志成功",
-    //   life: 3000,
-    // });
   } else {
     toast.add({
       severity: "error",

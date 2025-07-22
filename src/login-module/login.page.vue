@@ -240,27 +240,41 @@ const isGAVerificationCodeValid = computed(() => {
 const bindGaAction1 = async () => {
   // [mk] 1.发送验证码和viewGASecretKey,获取GAtoken 接口2 ga-bind
   if (viewGASecretKey.value && isGAVerificationCodeValid.value) {
-    viewIsLoading.value = true;
-    const res = await bindGA(
-      viewGAVerificationCode.value,
-      viewGASecretKey.value
-    );
-    if (res.result === true) {
-      let resData = res.data;
-      localStorage.removeItem("ga-secret-key");
-      storageGAtokenAndGoHome(resData);
+    try {
+      viewIsLoading.value = true;
+      const res = await bindGA(
+        viewGAVerificationCode.value,
+        viewGASecretKey.value
+      );
+      if (res.result === true) {
+        let resData = res.data;
+        localStorage.removeItem("ga-secret-key");
+        storageGAtokenAndGoHome(resData);
+      } else {
+        viewIsLoading.value = false;
+        viewGAVerificationCode.value = "";
+      }
+    } catch (error) {
+      viewIsLoading.value = false;
     }
   }
 };
 // 二次登录 只传 code
 const bindGaAction2 = async () => {
   if (isGAVerificationCodeValid.value) {
-    viewIsLoading.value = true;
-    const res = await bindGA(viewGAVerificationCode.value);
-    if (res.result === true) {
-      let resData = res.data;
-      localStorage.removeItem("ga-secret-key");
-      storageGAtokenAndGoHome(resData);
+    try {
+      viewIsLoading.value = true;
+      const res = await bindGA(viewGAVerificationCode.value);
+      if (res.result === true) {
+        let resData = res.data;
+        localStorage.removeItem("ga-secret-key");
+        storageGAtokenAndGoHome(resData);
+      } else {
+        viewIsLoading.value = false;
+        viewGAVerificationCode.value = "";
+      }
+    } catch (error) {
+      viewIsLoading.value = false;
     }
   }
 };

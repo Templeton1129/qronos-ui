@@ -31,6 +31,7 @@ export function useStorageValueOrFn() {
     "strategylogRefreshTime",
     "0"
   );
+
   return {
     gaToken,
     sessionGAtoken,

@@ -9,7 +9,7 @@
       ]"
     >
       <!-- 放大按钮 -->
-      <div class="absolute top-2 right-2 z-10">
+      <div class="absolute top-1 right-2 z-10">
         <Button
           v-if="isFullscreen === false"
           icon="pi pi-window-maximize"
@@ -33,6 +33,7 @@
       </div>
 
       <v-chart
+        ref="refChart"
         :key="chartKey"
         :option="option"
         :theme="themeMode === `dark` ? `dark` : `light`"
@@ -49,7 +50,7 @@ import { useStorageValueOrFn } from "@/common-module/hooks/getOrSetStorage";
 const { themeMode } = useStorageValueOrFn();
 
 const props = defineProps<{
-  equity: number[];
+  equity: number[]; //net
   dateTime: string[];
   dd2here: number[];
   sub_stg_eqs: {
@@ -61,8 +62,9 @@ const props = defineProps<{
 const isFullscreen = ref<boolean>(false);
 // 图表重新渲染的key
 const chartKey = ref<number>(0);
-
 const subStgDataTime = ref<string[]>([]);
+
+const refChart = ref(null);
 
 watch(
   props.sub_stg_eqs,
@@ -102,16 +104,15 @@ const getSubStgOption = () => {
 const option = computed(() => {
   return {
     backgroundColor: themeMode.value === "dark" ? "#171717" : "",
-    // "#6baed6", "#bdbdbd",
     color: ["#f5a623", "#bbbbbb"],
     title: {
       text: "策略净值曲线图",
-      left: "center",
       textStyle: {
         fontSize: 16,
         fontWeight: "normal",
       },
-      top: 12,
+      left: "center",
+      top: isFullscreen.value ? 0 : 12,
     },
     tooltip: {
       trigger: "axis",
@@ -121,15 +122,15 @@ const option = computed(() => {
       },
     },
     legend: {
-      // "S1-多头后面过滤+空头后面过滤", "S2-多头+空头后面过滤"
       data: ["Equity", "dd2here", ...Object.keys(props.sub_stg_eqs)],
       textStyle: {
         fontSize: 10,
       },
-      top: 35,
+      top: 38,
+      show: isFullscreen.value,
     },
     grid: {
-      top: 125,
+      top: isFullscreen.value ? 105 : 70,
       left: 41,
       right: 45,
       bottom: 20,
@@ -171,6 +172,20 @@ const option = computed(() => {
           formatter: "{value}%",
         },
         show: true,
+      },
+    ],
+    dataZoom: [
+      {
+        type: "inside",
+        xAxisIndex: 0,
+        start: 0,
+        end: 100,
+      },
+      {
+        type: "inside",
+        xAxisIndex: 1,
+        start: 0,
+        end: 100,
       },
     ],
     series: [
@@ -222,22 +237,33 @@ const option = computed(() => {
   };
 });
 
+let isUnmounted = false;
+
 // 监听窗口大小变化
 let lastHeight = window.innerHeight;
+let lastWidth = window.innerWidth;
 const handleResize = () => {
+  if (isUnmounted || !refChart.value) return;
   const currentHeight = window.innerHeight;
+  const currentWidth = window.innerWidth;
   // 只监听高度变化，且变化超过10px才触发重新渲染
-  if (Math.abs(currentHeight - lastHeight) > 10) {
+  if (
+    Math.abs(currentHeight - lastHeight) > 10 ||
+    Math.abs(currentWidth - lastWidth) > 10
+  ) {
     chartKey.value++;
     lastHeight = currentHeight;
+    lastWidth = currentWidth;
   }
 };
 
 onMounted(() => {
+  isUnmounted = false;
   window.addEventListener("resize", handleResize);
 });
 
 onUnmounted(() => {
+  isUnmounted = true;
   window.removeEventListener("resize", handleResize);
 });
 

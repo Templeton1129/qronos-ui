@@ -8,7 +8,6 @@
           <div class="min-w-0 flex-1">
             <div class="w-full">
               <div class="flex space-x-2">
-                <!-- PrimeVue Skeleton Tabs -->
                 <Skeleton
                   height="3rem"
                   class="rounded-md w-full sm:w-[80%]"
@@ -32,7 +31,42 @@
                   @click="tabClick(tab.id)"
                   class="px-3 py-2 border-none"
                 >
-                  {{ tab.framework_name }}
+                  <div class="flex items-center gap-2">
+                    <span>
+                      {{ tab.framework_name }}
+                    </span>
+                    <div class="flex items-center">
+                      <Button
+                        ref="refUpdateFrameWorkButton"
+                        v-if="
+                          tab.id !== 0 && getNewFramWorkInfo(tab.framework_name)
+                        "
+                        icon="pi pi-arrow-up"
+                        size="small"
+                        class="p-0 w-7 h-7"
+                        rounded
+                        text
+                        severity="success"
+                        v-tooltip="'升级框架'"
+                        @click.stop="
+                          upateFrameWork(tab.framework_id, tab.framework_name)
+                        "
+                      />
+                      <Button
+                        v-if="tab.id !== 0"
+                        icon="pi pi-trash"
+                        size="small"
+                        class="p-0 w-7 h-7"
+                        rounded
+                        text
+                        severity="danger"
+                        v-tooltip="'删除框架'"
+                        @click.stop="
+                          deleteFrameWork(tab.framework_id, tab.framework_name)
+                        "
+                      />
+                    </div>
+                  </div>
                 </Tab>
               </TabList>
             </Tabs>
@@ -101,72 +135,109 @@
       class="w-[90vw] sm:w-[600px] max-w-full"
     >
       <template #default>
-        <div class="p-4">
-          <Select
-            v-model="selectFarmWorkId"
-            name="id"
-            :options="viewFrameWorkVersionList"
-            optionValue="id"
-            optionLabel="name"
-            filter
-            placeholder="请选择框架版本"
-            class="w-full min-h-10"
-            :optionDisabled="
-              (option) => option.status === frameWorkDownloadStatusEnum.finished
-            "
-          >
-            <template #value="slotProps">
-              <div
-                v-if="slotProps.value"
-                class="flex items-center justify-between w-full"
+        <div class="px-4 py-2 flex flex-col gap-6">
+          <RadioButtonGroup v-model="viewAddType" class="flex gap-6">
+            <div class="flex gap-2 items-center">
+              <RadioButton inputId="official" name="addType" value="official" />
+              <label for="official" class="mr-4">下载官网框架</label>
+            </div>
+            <div class="flex gap-2 items-center">
+              <RadioButton
+                inputId="custom"
+                name="addType"
+                value="custom"
+                :disabled="true"
+              />
+              <label for="custom">自定义框架(目前不支持)</label>
+            </div>
+          </RadioButtonGroup>
+
+          <div class="space-y-4">
+            <template v-if="viewAddType === 'official'">
+              <Select
+                v-model="selectFarmWorkId"
+                name="id"
+                :options="viewFrameWorkVersionList"
+                optionValue="id"
+                optionLabel="name"
+                filter
+                placeholder="请选择框架版本"
+                emptyFilterMessage="无该框架版本"
+                emptyMessage="暂无新框架"
+                class="w-full min-h-10"
+                :optionDisabled="
+                  (option) =>
+                    option.status === frameWorkDownloadStatusEnum.finished
+                "
               >
-                <template
-                  v-for="item in viewFrameWorkVersionList"
-                  :key="item.id"
-                >
-                  <template v-if="item.id === slotProps.value">
-                    <div>{{ item.name }}</div>
+                <template #value="slotProps">
+                  <div
+                    v-if="slotProps.value"
+                    class="flex items-center justify-between w-full"
+                  >
+                    <template
+                      v-for="item in viewFrameWorkVersionList"
+                      :key="item.id"
+                    >
+                      <template v-if="item.id === slotProps.value">
+                        <div>{{ item.name }}</div>
+                        <i
+                          v-if="
+                            item.status === frameWorkDownloadStatusEnum.finished
+                          "
+                          class="pi pi-check-circle text-green-400"
+                        ></i>
+                        <i
+                          v-else-if="
+                            item.status ===
+                            frameWorkDownloadStatusEnum.downloading
+                          "
+                          class="pi pi-spinner-dotted"
+                        ></i>
+                        <i v-else class="pi pi-arrow-circle-down"></i>
+                      </template>
+                    </template>
+                  </div>
+                  <span v-else class="flex items-center justify-between w-full">
+                    {{ slotProps.placeholder }}
+                  </span>
+                </template>
+                <template #option="slotProps">
+                  <div class="flex items-center justify-between w-full">
+                    <div>{{ slotProps.option.name }}</div>
                     <i
                       v-if="
-                        item.status === frameWorkDownloadStatusEnum.finished
+                        slotProps.option.status ===
+                        frameWorkDownloadStatusEnum.finished
                       "
                       class="pi pi-check-circle text-green-400"
                     ></i>
                     <i
                       v-else-if="
-                        item.status === frameWorkDownloadStatusEnum.downloading
+                        slotProps.option.status ===
+                        frameWorkDownloadStatusEnum.downloading
                       "
                       class="pi pi-spinner-dotted"
                     ></i>
                     <i v-else class="pi pi-arrow-circle-down"></i>
-                  </template>
+                  </div>
                 </template>
-              </div>
-              <span v-else class="flex items-center justify-between w-full">
-                {{ slotProps.placeholder }}
-              </span>
+              </Select>
             </template>
-            <template #option="slotProps">
-              <div class="flex items-center justify-between w-full">
-                <div>{{ slotProps.option.name }}</div>
-                <i
-                  v-if="
-                    slotProps.option.status ===
-                    frameWorkDownloadStatusEnum.finished
-                  "
-                  class="pi pi-check-circle text-green-400"
-                ></i>
-                <i
-                  v-else-if="
-                    slotProps.option.status ===
-                    frameWorkDownloadStatusEnum.downloading
-                  "
-                  class="pi pi-spinner-dotted"
-                ></i>
-                <i v-else class="pi pi-arrow-circle-down"></i>
+            <template v-else>
+              <div>
+                <label class="block text-sm font-medium mb-1"
+                  ><span class="text-red-500 mr-1">*</span
+                  >本地框架路径(绝对路径)</label
+                >
+                <InputText
+                  v-model="viewCustomFrameWorkPath"
+                  class="w-full"
+                  placeholder="如 /home/youruser/myproject/xxx"
+                />
               </div>
             </template>
-          </Select>
+          </div>
         </div>
       </template>
       <template #footer>
@@ -186,6 +257,17 @@
         />
       </template>
     </Dialog>
+
+    <!-- 升级框架 -->
+    <UpdateFrameWorkDialog
+      ref="refUpdateFrameWorkDialog"
+      @refreshStrategyCenter="refreshStrategyCenter"
+    />
+    <!-- 删除框架 -->
+    <DeleteFrameWorkDialog
+      ref="refDeleteFrameWorkDialog"
+      @refreshStrategyCenter="refreshStrategyCenter"
+    />
   </div>
 </template>
 
@@ -194,8 +276,19 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "primevue/usetoast";
 const toast = useToast();
+import { useConfirm } from "primevue/useconfirm";
+const confirm = useConfirm();
 
 import Detail from "@/strategy-center-module/components/detail.template.vue";
+import UpdateFrameWorkDialog from "@/strategy-center-module/components/updateFrameWork.template.vue";
+const refUpdateFrameWorkDialog = ref<InstanceType<
+  typeof UpdateFrameWorkDialog
+> | null>(null);
+
+import DeleteFrameWorkDialog from "@/strategy-center-module/components/deleteFrameWork.template.vue";
+const refDeleteFrameWorkDialog = ref<InstanceType<
+  typeof DeleteFrameWorkDialog
+> | null>(null);
 
 import {
   getframWorkVersionList,
@@ -233,7 +326,15 @@ const downloadFrameWorkStatusTimer = ref<ReturnType<typeof setTimeout> | null>(
 const selectFarmWorkId = ref<string | null>(null);
 const isOpenAddFrameWorkDialog = ref<boolean>(false);
 
-onMounted(async () => {
+const viewAddType = ref<string>("official"); //official官方提供 custom自定义
+const viewCustomFrameWorkPath = ref<string>("");
+const refUpdateFrameWorkButton = ref<any>(null);
+
+onMounted(() => {
+  loadData();
+});
+
+const loadData = async () => {
   await getframWorkVersionListFn();
   await startDownloadFrameWorkStatusTimer();
 
@@ -261,7 +362,7 @@ onMounted(async () => {
       params: { id: currentFarmWorkId.value },
     });
   }
-});
+};
 
 const currentFarmWorkData = computed(() => {
   // 根据当前选择的框架ID获取对应的框架数据
@@ -414,6 +515,44 @@ const tabClick = (tabValue: number) => {
   currentFarmWorkId.value = tabValue;
   // 路由跳转到对应的框架详情页
   router.push({ name: route.name, params: { id: tabValue } });
+};
+
+// 删除框架
+const deleteFrameWork = (frameworkId: string, frameworkName: string) => {
+  if (refDeleteFrameWorkDialog.value) {
+    refDeleteFrameWorkDialog.value.openDialog(frameworkId, frameworkName);
+  }
+};
+
+// 根据老框架name获取新框架版本信息
+const getNewFramWorkInfo = (oldFrameworkName: string) => {
+  const newFramework: vFrameWorkVersionItem | undefined =
+    viewFrameWorkVersionList.value.find(
+      (item) =>
+        item.name.split("v")[0] === oldFrameworkName.split("v")[0] &&
+        item.name !== oldFrameworkName
+    );
+  return newFramework;
+};
+
+// 升级框架
+const upateFrameWork = (oldFrameworkId: string, oldFrameworkName: string) => {
+  const newFramework: vFrameWorkVersionItem | undefined =
+    getNewFramWorkInfo(oldFrameworkName);
+  if (newFramework) {
+    if (refUpdateFrameWorkDialog.value) {
+      refUpdateFrameWorkDialog.value.openDialog({
+        oldFrameworkId,
+        oldFrameworkName,
+        newFrameworkId: newFramework.id || "",
+        newFrameworkName: newFramework.name || "",
+      });
+    }
+  }
+};
+
+const refreshStrategyCenter = () => {
+  loadData();
 };
 
 onUnmounted(() => {

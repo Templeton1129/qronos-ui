@@ -56,7 +56,7 @@
 
       <template #content>
         <!-- content -->
-        <div class="felx-1 p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div class="felx-1 py-4 sm:p-6 space-y-4 sm:space-y-6">
           <div class="flex justify-center">
             <Message
               severity="success"
@@ -117,7 +117,14 @@
               :disabled="viewStatusIsProcessing"
             />
           </div>
-          <div class="flex flex-col gap-y-4">
+          <div class="pt-4">
+            <DataTimeLineTemplate
+              ref="refDataTimeLineTemplate"
+              :autoRefresh="true"
+              :refreshInterval="5 * 60 * 1000"
+            />
+          </div>
+          <div class="flex flex-col gap-y-2">
             <Divider align="center" type="solid">
               <b class="text-gray-500 dark:text-gray-300 font-medium"
                 >数据中心配置信息</b
@@ -325,10 +332,9 @@
     header="日志"
     modal
     position="full"
-    class="w-[90vw] max-w-full"
     @hide="clearLogRefreshTimer"
   >
-    <div class="flex flex-col max-h-full">
+    <div class="flex flex-col h-full">
       <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
         <div class="space-x-2">
           <label class="text-sm flex-shrink-0">条数:</label>
@@ -373,8 +379,6 @@ import { useConfirm } from "primevue/useconfirm";
 const confirm = useConfirm();
 import {
   getDataCenterConfig,
-  editDataCenterConfig,
-  updataDataCenterConfig,
   getFrameWorkStatus,
   startOrStopFrameWork,
   frameWorkDownloadStatusEnum,
@@ -383,6 +387,10 @@ import {
   framwWorkRunStatusEnum,
 } from "@/common-module/services/service.provider";
 import EditDataFormTemplate from "@/data-center-module/components/editDataForm.template.vue";
+import DataTimeLineTemplate from "@/data-center-module/components/dataTimeLine.template.vue";
+const refDataTimeLineTemplate = ref<InstanceType<
+  typeof DataTimeLineTemplate
+> | null>(null);
 const refEditDataFormTemplate = ref<InstanceType<
   typeof EditDataFormTemplate
 > | null>(null);
@@ -503,6 +511,11 @@ const clearDownloadFrameWorkStatusTimer = () => {
 const loadDataFn = async () => {
   startFrameWorkRunStatusTimer();
   getDataCenterConfigFn();
+  if (refDataTimeLineTemplate.value) {
+    refDataTimeLineTemplate.value?.getDateCenterUpdateStatusListFn(
+      currentNewFrameWorkId.value
+    );
+  }
 };
 
 const startFrameWorkRunStatusTimer = () => {

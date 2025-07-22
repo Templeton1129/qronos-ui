@@ -9,7 +9,6 @@ const tbindGaRes = {
   token_type: "Bearer",
   is_bind: true, //是否绑定过微信
 };
-
 type tDbBindGaRes = typeof tbindGaRes;
 
 const tWxLoginRes = {
@@ -128,7 +127,6 @@ const tWxLoginRes = {
     virgin: true,
   },
 };
-
 type tDbWxLoginRes = typeof tWxLoginRes;
 
 const tUserInfoRes = {
@@ -235,7 +233,6 @@ const tUserInfoRes = {
   uuid: "",
   virgin: true,
 };
-
 type tDbUserInfoRes = typeof tUserInfoRes;
 
 const tFrameWorkVersionVersionItem = {
@@ -277,7 +274,6 @@ const tFrameWorkItem = {
   versions: [tDbFrameWorkVersionVersionItem],
   white: 0,
 };
-
 type tDbFrameWorkItem = typeof tFrameWorkItem;
 
 type vFrameWorkVersionItem = {
@@ -297,11 +293,9 @@ const dataCenterConfigParams = {
   funding_rate: true,
   is_first: false,
 };
-
 type tDataCenterConfigParams = typeof dataCenterConfigParams & {
   is_debug?: boolean; //策略页面
 };
-
 type tDbDataCenterConfigRes = tDataCenterConfigParams & { is_first: boolean };
 
 const tFrameWorkStatusRes = {
@@ -313,7 +307,6 @@ const tFrameWorkStatusRes = {
   time: "2025-01-17 11:22",
   path: "/Users/muzihang/PycharmProjects/qronos/data/firm/7448dc0db7_position-mgmt-trading_v1",
 };
-
 type tDbFrameWorkStatusRes = typeof tFrameWorkStatusRes;
 
 // start 启动
@@ -323,7 +316,6 @@ type tDbFrameWorkStatusRes = typeof tFrameWorkStatusRes;
 const dataCenterStatusParams = {
   type: "log",
 };
-
 type vDataCenterStatusParams = typeof dataCenterStatusParams & {
   lines?: number;
 } & { framework_id: string | number };
@@ -343,7 +335,6 @@ const tFramwWorkRunStatusRes = {
   cpu_usage: "0%",
   pm_uptime: 1751964356166,
 };
-
 type tDbFrameWorkRunStatusRes = typeof tFramwWorkRunStatusRes;
 
 const tNewAccountConfigRes = {
@@ -445,7 +436,6 @@ const tGlobalConfigDataRes = {
   error_webhook_url: "",
   realtime_data_path: "",
 };
-
 type tDbGlobalConfigDataRes = typeof tGlobalConfigDataRes;
 
 const sendApikeyOrSecretParams = {
@@ -456,7 +446,6 @@ const sendApikeyOrSecretParams = {
   content: "abcd",
   total: 4,
 };
-
 type tSendApikeyOrSecretParams = typeof sendApikeyOrSecretParams;
 
 const tLockAccountRes = {
@@ -465,13 +454,13 @@ const tLockAccountRes = {
   operation: "解锁",
   python_file: "账户2.py",
 };
-
 type tDbLockAccountRes = typeof tLockAccountRes;
 
 const tHomeAccountInfoRes = {
   // 前端拓展字段
   id: 1,
   selectValue: "合约",
+  coinSortType: "盈利",
   //跳转到框架页面的id
   edit_id: 1,
   framework_id: "685d01ea59ea5960a881a420",
@@ -522,7 +511,7 @@ const tHomeAccountInfoRes = {
     short_ratio: [0.16, 0.16],
     empty_ratio: [0.84, 0.84],
   },
-  // 现货持仓
+  // 现货持仓（前端处理过后的格式）
   pos_spot: [
     {
       symbol: "BTCUSDT", //币种
@@ -534,7 +523,7 @@ const tHomeAccountInfoRes = {
       cur_price: 0.1688,
     },
   ],
-  // 合约持仓
+  // 合约持仓（前端处理过后的格式）
   pos_swap: [
     {
       symbol: "BTCUSDT",
@@ -546,20 +535,64 @@ const tHomeAccountInfoRes = {
       cur_price: 0.1688,
     },
   ],
+  // 盈利/亏损币前五名（前端处理过后的格式）
+  pnl_history: {
+    "1h": [
+      {
+        symbol: "MYXUSDT",
+        price_change: 0.7,
+        position_pnl: 0.12,
+        trade_pnl: 0.1,
+        total_pnl: 0.22, //总盈利/亏损
+        type: "swap", //类型
+      },
+    ],
+    "24h": [
+      {
+        symbol: "MYXUSDT",
+        price_change: 0.7,
+        position_pnl: 0.12,
+        trade_pnl: 0.1,
+        total_pnl: 0.22,
+        type: "swap",
+      },
+    ],
+  },
   sub_stg_eqs: {
     "S1-浪淘沙2多空": {
       candle_begin_time: [], //时间
       net: [], //净值
     },
     "S1-浪淘沙2多空": {
-      candle_begin_time: [], //时间
-      net: [], //净值
+      candle_begin_time: [],
+      net: [],
     },
     "S1-浪淘沙2多空": {
-      candle_begin_time: [], //时间
-      net: [], //净值
+      candle_begin_time: [],
+      net: [],
     },
   },
 };
-
 type tDbHomeAccountInfoRes = typeof tHomeAccountInfoRes;
+
+const tDataCenterUpdateStatusRes = {
+  id: "20250716104500",
+  start_time: "2025-07-16 10:40:07",
+  end_time: "2025-07-16 10:54:10",
+  runtime: "2025-07-16 10:45:00+08:00",
+  operations: [
+    {
+      timestamp: "2025-07-16 10:40:07.054 +08:00",
+      operation_type: "update_cycle",
+      status: "in_progress",
+      description:
+        "================== Update 5m Runtime=2025-07-16 10:45:00+08:00 ===================",
+      details: {
+        runtime: "2025-07-16 10:45:00+08:00",
+      },
+      duration: null,
+    },
+  ],
+};
+
+type tDbDataCenterUpdateStatusRes = typeof tDataCenterUpdateStatusRes;

@@ -969,7 +969,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useToast } from "primevue/usetoast";
 const toast = useToast();
 import { maskString } from "@/common-module/utils";
@@ -1151,18 +1151,6 @@ const resolver = ({ values }: any) => {
   if (initialValues.value.account_config.hour_offset === "") {
     errors.hour_offset = [{ message: "请选择分钟偏移" }];
   }
-  // 企业微信机器人url 必填+格式校验
-  // if (!initialValues.value.account_config.wechat_webhook_url) {
-  //   errors.wechat_webhook_url = [{ message: "请填写企业微信机器人url" }];
-  // } else {
-  //   // 简单url正则校验
-  //   const urlPattern = /^(https?:\/\/)[^\s/$.?#].[^\s]*$/i;
-  //   if (
-  //     !urlPattern.test(initialValues.value.account_config.wechat_webhook_url)
-  //   ) {
-  //     errors.wechat_webhook_url = [{ message: "请输入正确的URL格式" }];
-  //   }
-  // }
   // k线数 必填
   if (
     initialValues.value.get_kline_num < 0 ||

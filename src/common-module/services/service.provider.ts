@@ -2,12 +2,7 @@ import HttpProvider, {
   contentTypeEnum,
 } from "@/common-module/services/http.provider";
 
-export enum frameWorkTypeEnum {
-  dataCenter = 0,
-  warehouseRealTrading = 1,
-  coinRealTrading = 2,
-}
-
+// 数据中心状态
 export enum dataCenterStatusEnum {
   start = "start",
   stop = "stop",
@@ -16,12 +11,14 @@ export enum dataCenterStatusEnum {
   log = "log",
 }
 
+// 日志类型
 export enum logTypeEnum {
   startup = "实盘",
   delist = "下架监控",
   monitor = "账户监控",
 }
 
+// 框架下载状态
 export enum frameWorkDownloadStatusEnum {
   notDownloaded = "not_downloaded",
   downloading = "downloading",
@@ -29,6 +26,7 @@ export enum frameWorkDownloadStatusEnum {
   failed = "failed",
 }
 
+// 框架运行状态
 export enum framwWorkRunStatusEnum {
   // 启动
   online = "online",
@@ -42,6 +40,7 @@ export enum framwWorkRunStatusEnum {
   restarting = "restarting",
 }
 
+// 因子类型
 export enum uploadFolderEnum {
   // 时序因子
   factors = "factors",
@@ -49,8 +48,11 @@ export enum uploadFolderEnum {
   sections = "sections",
   // 仓管策略
   positions = "positions",
+  // 择时因子
+  signals = "signals",
 }
 
+// 框架类型
 export enum frameWorkTypeEnum {
   // 选币
   selectCoin = "select_coin",
@@ -60,12 +62,40 @@ export enum frameWorkTypeEnum {
   data_center = "data_center",
 }
 
+// 账户类型
 export enum accountTypeEnum {
   portfolio_margin = "统一账户",
   standard = "普通账户",
 }
 
-// 接口返回444 则代表未登录微信 接口返回xbx-Authorization 就能拿去获取userInfo
+export enum dataCenterOperationTypeEnum {
+  update_cycle = "更新周期",
+  exchange_info = "获取交易所信息",
+  market_cap_update = "市值数据更新",
+  kline_update = "K线数据更新",
+  kline_api = "K线API调用",
+  data_api_update = "Date API K线更新",
+  preprocessing = "数据预处理",
+  pivot_processing = "Pivot表处理",
+  kline_merge = "K线合并",
+  skip_operation = "跳过操作",
+  other = "其他",
+}
+
+export enum dateCenterOperationStatusEnum {
+  in_progress = "进行中",
+  completed = "已完成",
+  failed = "失败",
+  skipped = "跳过",
+  unknown = "未知",
+}
+
+/**
+ * 绑定谷歌验证码
+ * @param code 验证码
+ * @param google_secret_key 谷歌验证码密钥 只有初次需要传入
+ * @returns
+ */
 export const bindGA = (
   code: string,
   google_secret_key?: string
@@ -99,6 +129,10 @@ export const bindGA = (
   });
 };
 
+/**
+ * 判断是否绑定过Ga和鉴权状态
+ * @returns
+ */
 export const isFirstLogin = (): Promise<
   iProviderOutputWithT<tDbIsFistLoginRes>
 > => {
@@ -127,6 +161,11 @@ export const isFirstLogin = (): Promise<
   });
 };
 
+/**
+ * 发送声明
+ * @param code 声明码
+ * @returns
+ */
 export const sendCodeDeclaration = (
   code: string
 ): Promise<iProviderOutputWithT<boolean>> => {
@@ -155,6 +194,10 @@ export const sendCodeDeclaration = (
   });
 };
 
+/**
+ * 退出登录
+ * @returns
+ */
 export const logout = (): Promise<iProviderOutputWithT<null>> => {
   return new Promise((resolve, reject) => {
     let output: iProviderOutputWithT<null> = {
@@ -181,6 +224,12 @@ export const logout = (): Promise<iProviderOutputWithT<null>> => {
   });
 };
 
+/**
+ * 微信登录
+ * @param client_id 随机id
+ * @param nonce 随机数
+ * @returns
+ */
 export const wxLoginApi = (
   client_id: string,
   nonce: string
@@ -209,32 +258,10 @@ export const wxLoginApi = (
   });
 };
 
-export const CheckGAaToken = (): Promise<iProviderOutputWithT<null>> => {
-  return new Promise((resolve, reject) => {
-    let output: iProviderOutputWithT<null> = {
-      result: false,
-      data: null,
-      msg: "",
-    };
-    HttpProvider.get("/protected", false).then(
-      (res) => {
-        res = res.data;
-        if (res.code === 200) {
-          output.result = true;
-          output.data = res.data;
-        } else {
-          output.msg = res.msg;
-        }
-        resolve(output);
-      },
-      (err) => {
-        output.msg = err.msg;
-        resolve(output);
-      }
-    );
-  });
-};
-
+/**
+ * 获取用户信息
+ * @returns
+ */
 export const getUserInfoData = (): Promise<
   iProviderOutputWithT<tDbUserInfoRes>
 > => {
@@ -263,6 +290,10 @@ export const getUserInfoData = (): Promise<
   });
 };
 
+/**
+ * 获取框架版本列表
+ * @returns
+ */
 export const getframWorkVersionList = (): Promise<
   iProviderOutputArrayWithT<vFrameWorkVersionItem>
 > => {
@@ -291,6 +322,11 @@ export const getframWorkVersionList = (): Promise<
   });
 };
 
+/**
+ * 格式化框架版本列表
+ * @param list 框架版本列表
+ * @returns
+ */
 export const formatFramWorkVersionList = (
   list: tDbFrameWorkItem[]
 ): vFrameWorkVersionItem[] => {
@@ -298,6 +334,15 @@ export const formatFramWorkVersionList = (
   if (list && list.length > 0) {
     list.map((item: tDbFrameWorkItem) => {
       if (item.versions.length > 0) {
+        // 先根据时间倒叙排序
+        item.versions.sort(
+          (
+            a: tDbFrameWorkVersionVersionItem,
+            b: tDbFrameWorkVersionVersionItem
+          ) => {
+            return new Date(b.time).getTime() - new Date(a.time).getTime();
+          }
+        );
         item.versions.map((versionItem: tDbFrameWorkVersionVersionItem) => {
           output.push({
             frameWorkName: item.title,
@@ -315,6 +360,11 @@ export const formatFramWorkVersionList = (
   return output;
 };
 
+/**
+ * 获取数据中心配置
+ * @param framework_id 框架id
+ * @returns
+ */
 export const getDataCenterConfig = (
   framework_id: string
 ): Promise<iProviderOutputWithT<tDbDataCenterConfigRes>> => {
@@ -345,6 +395,11 @@ export const getDataCenterConfig = (
   });
 };
 
+/**
+ * 编辑数据中心配置
+ * @param configObj 配置对象
+ * @returns
+ */
 export const editDataCenterConfig = (
   configObj: tDataCenterConfigParams
 ): Promise<iProviderOutputWithT<null>> => {
@@ -373,6 +428,11 @@ export const editDataCenterConfig = (
   });
 };
 
+/**
+ * 更新数据中心配置
+ * @param configObj 配置对象
+ * @returns
+ */
 export const updataDataCenterConfig = (
   configObj: tDataCenterConfigParams
 ): Promise<iProviderOutputWithT<null>> => {
@@ -401,6 +461,11 @@ export const updataDataCenterConfig = (
   });
 };
 
+/**
+ * 获取框架下载状态列表
+ * @param isSelectDataCenterType 是否只要数据中心
+ * @returns
+ */
 export const getFrameWorkStatus = (
   isSelectDataCenterType: boolean = false
 ): Promise<iProviderOutputArrayWithT<tDbFrameWorkStatusRes>> => {
@@ -445,9 +510,13 @@ export const getFrameWorkStatus = (
   });
 };
 
-export const getAllFrameWorkStatusList = (
-  isSelectDataCenterType: boolean = false
-): Promise<iProviderOutputArrayWithT<tDbFrameWorkStatusRes>> => {
+/**
+ * 获取所有框架状态列表
+ * @returns
+ */
+export const getAllFrameWorkStatusList = (): Promise<
+  iProviderOutputArrayWithT<tDbFrameWorkStatusRes>
+> => {
   return new Promise((resolve, reject) => {
     let output: iProviderOutputArrayWithT<tDbFrameWorkStatusRes> = {
       result: false,
@@ -477,6 +546,11 @@ export const getAllFrameWorkStatusList = (
   });
 };
 
+/**
+ * 启动或停止框架
+ * @param configObj 配置对象
+ * @returns
+ */
 export const startOrStopFrameWork = (
   configObj: vDataCenterStatusParams
 ): Promise<iProviderOutputWithT<string>> => {
@@ -505,6 +579,11 @@ export const startOrStopFrameWork = (
   });
 };
 
+/**
+ * 下载框架版本
+ * @param framework_id 框架id
+ * @returns
+ */
 export const addFrameWorkVersion = (
   framework_id: string
 ): Promise<iProviderOutputWithT<string | null>> => {
@@ -535,6 +614,13 @@ export const addFrameWorkVersion = (
   });
 };
 
+/**
+ * 上传因子文件夹
+ * @param framework_id 框架id
+ * @param upload_folder 因子类型
+ * @param formData 文件数据
+ * @returns
+ */
 export const uploadFiles = (
   framework_id: string,
   upload_folder: string,
@@ -572,6 +658,12 @@ export const uploadFiles = (
   });
 };
 
+/**
+ * 获取因子文件列表
+ * @param framework_id 框架id
+ * @param upload_folder 因子类型
+ * @returns
+ */
 export const getUploadFiles = (
   framework_id: string,
   upload_folder: string
@@ -604,6 +696,10 @@ export const getUploadFiles = (
   });
 };
 
+/**
+ * 获取框架运行状态
+ * @returns
+ */
 export const getFrameWorkRunStatus = (): Promise<
   iProviderOutputArrayWithT<tDbFrameWorkRunStatusRes>
 > => {
@@ -638,6 +734,11 @@ export const getFrameWorkRunStatus = (): Promise<
   });
 };
 
+/**
+ * 获取账户列表
+ * @param frameWorkId 框架id
+ * @returns
+ */
 export const getAccountInfo = (
   frameWorkId: string
 ): Promise<iProviderOutputArrayWithT<tDbAccountInfoRes>> => {
@@ -668,6 +769,11 @@ export const getAccountInfo = (
   });
 };
 
+/**
+ * 添加或编辑账户
+ * @param accountInfo 账户信息
+ * @returns
+ */
 export const addOrEditAccountInfo = (
   accountInfo: tDbAccountInfoRes
 ): Promise<iProviderOutputWithT<null>> => {
@@ -696,6 +802,12 @@ export const addOrEditAccountInfo = (
   });
 };
 
+/**
+ * 删除账户
+ * @param framework_id 框架id
+ * @param account_name 账户名称
+ * @returns
+ */
 export const deleteAccount = (
   framework_id: string,
   account_name: string
@@ -728,6 +840,13 @@ export const deleteAccount = (
   });
 };
 
+/**
+ * 账户添加策略
+ * @param framework_id 框架id
+ * @param account_name 账户名称
+ * @param formData 策略数据（config.py文件）
+ * @returns
+ */
 export const accountBindStrategy = (
   framework_id: string,
   account_name: string,
@@ -765,6 +884,11 @@ export const accountBindStrategy = (
   });
 };
 
+/**
+ * 编辑全局配置
+ * @param params 配置对象
+ * @returns
+ */
 export const editGlobalConfig = (
   params: object
 ): Promise<iProviderOutputWithT<null>> => {
@@ -793,6 +917,11 @@ export const editGlobalConfig = (
   });
 };
 
+/**
+ * 添加或编辑apikey和secret
+ * @param params 配置对象
+ * @returns
+ */
 export const splitSendApikeyOrSecret = (
   params: tSendApikeyOrSecretParams
 ): Promise<iProviderOutputWithT<null>> => {
@@ -821,6 +950,13 @@ export const splitSendApikeyOrSecret = (
   });
 };
 
+/**
+ * 锁定(启用/禁用)账户
+ * @param framework_id 框架id
+ * @param account_name 账户名称
+ * @param is_lock 是否锁定（true:锁定，false:启用）
+ * @returns
+ */
 export const lockAccount = (
   framework_id: string,
   account_name: string,
@@ -854,7 +990,10 @@ export const lockAccount = (
   });
 };
 
-// home页账户图表数据
+/**
+ * home页账户图表数据
+ * @returns
+ */
 export const getHomeAccountInfo = (): Promise<
   iProviderOutputArrayWithT<tDbHomeAccountInfoRes>
 > => {
@@ -873,27 +1012,32 @@ export const getHomeAccountInfo = (): Promise<
           if (res.data.length > 0) {
             for (let i = 0; i < res.data.length; i++) {
               res.data[i].id = i + 1;
-
               // 排序找最新数据
+              // 持仓现货
               if (res.data[i]?.pos_spot) {
                 if (JSON.stringify(res.data[i].pos_spot) !== "{}") {
                   const keys = Object.keys(res.data[i].pos_spot);
-                  keys.sort((a: string, b: string) => Number(a) - Number(b));
-                  res.data[i].pos_spot =
-                    res.data[i].pos_spot[keys[keys.length - 1]];
+                  keys.sort((a: string, b: string) => Number(b) - Number(a));
+                  res.data[i].pos_spot = res.data[i].pos_spot[keys[0]];
                 } else {
                   res.data[i].pos_spot = [];
                 }
               }
+              // 持仓合约
               if (res.data[i]?.pos_swap) {
                 if (JSON.stringify(res.data[i].pos_swap) !== "{}") {
                   const keys = Object.keys(res.data[i].pos_swap);
-                  keys.sort((a: string, b: string) => Number(a) - Number(b));
-                  res.data[i].pos_swap =
-                    res.data[i].pos_swap[keys[keys.length - 1]];
+                  keys.sort((a: string, b: string) => Number(b) - Number(a));
+                  res.data[i].pos_swap = res.data[i].pos_swap[keys[0]];
                 } else {
                   res.data[i].pos_swap = [];
                 }
+              }
+              // 盈利/亏损币前五名
+              if (res.data[i]?.pnl_history) {
+                const keys = Object.keys(res.data[i].pnl_history);
+                keys.sort((a: string, b: string) => Number(b) - Number(a));
+                res.data[i].pnl_history = res.data[i].pnl_history[keys[0]];
               }
             }
           }
@@ -911,7 +1055,11 @@ export const getHomeAccountInfo = (): Promise<
   });
 };
 
-// 策略中心页账户图表数据
+/**
+ * 策略中心页账户图表数据
+ * @param frameworkId 框架id
+ * @returns
+ */
 export const getAccountInfoChart = (
   frameworkId: string
 ): Promise<iProviderOutputArrayWithT<tDbHomeAccountInfoRes>> => {
@@ -930,6 +1078,113 @@ export const getAccountInfoChart = (
         if (res.code === 200) {
           output.result = true;
           output.data = res.data;
+        } else {
+          output.msg = res.msg;
+        }
+        resolve(output);
+      },
+      (err) => {
+        output.msg = err.msg;
+        resolve(output);
+      }
+    );
+  });
+};
+
+/**
+ * 获取数据中心更新状态列表（分钟偏移量）
+ * @param frameworkId 框架id
+ * @param hours 小时
+ * @returns
+ */
+export const getDateCenterUpdateStatusList = (
+  frameworkId: string,
+  hours: number
+): Promise<iProviderOutputArrayWithT<tDbDataCenterUpdateStatusRes>> => {
+  return new Promise((resolve, reject) => {
+    let output: iProviderOutputArrayWithT<tDbDataCenterUpdateStatusRes> = {
+      result: false,
+      data: [],
+      msg: "",
+    };
+    HttpProvider.get(
+      `/data_center/operations?framework_id=${frameworkId}&hours=${hours}`,
+      false
+    ).then(
+      (res) => {
+        res = res.data;
+        if (res.code === 200) {
+          output.result = true;
+          output.data = res.data?.task_blocks.reverse() || [];
+        } else {
+          output.msg = res.msg;
+        }
+        resolve(output);
+      },
+      (err) => {
+        output.msg = err.msg;
+        resolve(output);
+      }
+    );
+  });
+};
+
+/**
+ * 框架数据迁移
+ * @param oldFrameworkId 旧框架id
+ * @param newFrameworkId 新框架id
+ * @returns
+ */
+export const frameWorkDataMigration = (
+  oldFrameworkId: string,
+  newFrameworkId: string
+): Promise<iProviderOutputArrayWithT<tDbDataCenterUpdateStatusRes>> => {
+  return new Promise((resolve, reject) => {
+    let output: iProviderOutputArrayWithT<tDbDataCenterUpdateStatusRes> = {
+      result: false,
+      data: [],
+      msg: "",
+    };
+    HttpProvider.get(
+      `/basic_code/data/migration?raw_framework_id=${oldFrameworkId}&target_framework_id=${newFrameworkId}`,
+      false
+    ).then(
+      (res) => {
+        res = res.data;
+        if (res.code === 200) {
+          output.result = true;
+        } else {
+          output.msg = res.msg;
+        }
+        resolve(output);
+      },
+      (err) => {
+        output.msg = err.msg;
+        resolve(output);
+      }
+    );
+  });
+};
+
+/**
+ * 删除框架
+ * @param frameworkId 框架id
+ * @returns
+ */
+export const deleteFrameWork = (
+  frameworkId: string
+): Promise<iProviderOutputArrayWithT<tDbDataCenterUpdateStatusRes>> => {
+  return new Promise((resolve, reject) => {
+    let output: iProviderOutputArrayWithT<tDbDataCenterUpdateStatusRes> = {
+      result: false,
+      data: [],
+      msg: "",
+    };
+    HttpProvider.delete(`/basic_code?framework_id=${frameworkId}`, false).then(
+      (res) => {
+        res = res.data;
+        if (res.code === 200) {
+          output.result = true;
         } else {
           output.msg = res.msg;
         }

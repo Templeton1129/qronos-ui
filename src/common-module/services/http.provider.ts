@@ -18,7 +18,7 @@ export enum contentTypeEnum {
 }
 
 // 动态获取 API 前缀
-function getApiPrefix(): string {
+const getApiPrefix = (): string => {
   // 检查是否为开发环境
   const isDev = import.meta.env.VITE_APP_ENV === "development";
 
@@ -37,16 +37,16 @@ function getApiPrefix(): string {
   }
 
   return "";
-}
+};
 
 // 构建 API 基础路径
-function buildApiBaseUrl(endpoint: string): string {
+const buildApiBaseUrl = (endpoint: string): string => {
   const prefix = getApiPrefix();
   if (prefix) {
     return `/${prefix}/${endpoint}`;
   }
   return `/${endpoint}`;
-}
+};
 
 const flaskBaseUrl = buildApiBaseUrl("flask");
 const apiBaseUrl = buildApiBaseUrl("api");

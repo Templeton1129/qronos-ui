@@ -8,7 +8,7 @@
     ]"
   >
     <!-- 放大按钮 -->
-    <div class="absolute top-2 right-2 z-10">
+    <div class="absolute top-1 right-2 z-10">
       <Button
         v-if="isFullscreen === false"
         icon="pi pi-window-maximize"
@@ -32,6 +32,7 @@
     </div>
 
     <v-chart
+      ref="refChart1"
       :key="`longRatio-${chartKey}`"
       :option="longRatioOption"
       :theme="themeMode === `dark` ? `dark` : `light`"
@@ -39,6 +40,7 @@
       autoresize
     />
     <v-chart
+      ref="refChart2"
       :key="`coinNum-${chartKey}`"
       :option="coinNumOption"
       :theme="themeMode === `dark` ? `dark` : `light`"
@@ -61,6 +63,9 @@ const props = defineProps<{
   long_coin_num: number[]; // 多头选币
   short_coin_num: number[]; // 空头选币
 }>();
+
+const refChart1 = ref(null);
+const refChart2 = ref(null);
 
 // 全屏状态
 const isFullscreen = ref<boolean>(false);
@@ -88,13 +93,13 @@ const longRatioOption = computed(() => ({
   },
   legend: {
     data: ["Long", "Short", "empty"],
-    top: 30,
+    top: 32,
     textStyle: {
       fontSize: 10,
     },
   },
   grid: {
-    top: 50,
+    top: 54,
     left: 40,
     right: 5,
     bottom: 20,
@@ -117,6 +122,15 @@ const longRatioOption = computed(() => ({
       fontSize: 10,
     },
   },
+  // 图表可缩放 拖拽 滚动
+  dataZoom: [
+    {
+      type: "inside",
+      xAxisIndex: 0,
+      start: 0,
+      end: 100,
+    },
+  ],
   series: [
     {
       name: "Long",
@@ -181,13 +195,13 @@ const coinNumOption = computed(() => ({
   },
   legend: {
     data: ["多头选币", "空头选币"],
-    top: 30,
+    top: 32,
     textStyle: {
       fontSize: 10,
     },
   },
   grid: {
-    top: 50,
+    top: 54,
     left: 40,
     right: 5,
     bottom: 20,
@@ -207,6 +221,14 @@ const coinNumOption = computed(() => ({
       fontSize: 10,
     },
   },
+  dataZoom: [
+    {
+      type: "inside",
+      xAxisIndex: 0,
+      start: 0,
+      end: 100,
+    },
+  ],
   series: [
     {
       name: "多头选币",
@@ -225,9 +247,11 @@ const coinNumOption = computed(() => ({
   ],
 }));
 
+let isUnmounted = false;
 // 监听窗口大小变化
 let lastHeight = window.innerHeight;
 const handleResize = () => {
+  if (isUnmounted || !refChart1.value || !refChart2) return;
   const currentHeight = window.innerHeight;
   // 只监听高度变化，且变化超过10px才触发重新渲染
   if (Math.abs(currentHeight - lastHeight) > 10) {
@@ -237,10 +261,12 @@ const handleResize = () => {
 };
 
 onMounted(() => {
+  isUnmounted = false;
   window.addEventListener("resize", handleResize);
 });
 
 onUnmounted(() => {
+  isUnmounted = true;
   window.removeEventListener("resize", handleResize);
 });
 

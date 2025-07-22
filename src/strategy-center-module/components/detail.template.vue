@@ -59,6 +59,12 @@
           uploadName="仓位管理策略"
           :uploadType="uploadFolderEnum.positions"
         />
+        <!--signals -->
+        <UploadFilesTemplate
+          :frameWorkId="frameWorkDataItem.framework_id"
+          uploadName="择时因子库"
+          :uploadType="uploadFolderEnum.signals"
+        />
       </div>
     </div>
   </div>
