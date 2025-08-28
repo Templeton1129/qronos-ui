@@ -42,7 +42,7 @@
 
           <!-- 账户类型 -->
           <div class="hidden sm:block">
-            <label for="account_type" class="text-sm font-medium mb-1"
+            <label for="account_type" class="text-sm font-medium"
               ><span class="text-red-500 mr-1">*</span>账户类型</label
             >
             <Select
@@ -52,7 +52,7 @@
               placeholder="请选择账户类型"
               checkmark
               :highlightOnSelect="false"
-              class="w-full"
+              class="w-full mt-1"
             />
             <Message
               v-if="$form.account_type?.invalid"
@@ -92,13 +92,13 @@
 
           <!-- API KEY (修改模式) -->
           <div v-if="type === `修改`" class="hidden sm:block">
-            <label for="apiKey" class="text-sm font-medium mb-1">API KEY</label>
+            <label for="apiKey" class="text-sm font-medium">API KEY</label>
             <InputText
               :size="formItemSize || 'normal'"
               :value="maskString(initialValues.account_config.apiKey)"
               name="apiKey"
               placeholder="请输入API KEY"
-              class="w-full cursor-pointer"
+              class="w-full cursor-pointer mt-1"
               type="text"
               readonly
               @click="
@@ -150,16 +150,14 @@
             >
           </div>
           <!-- 密钥 (修改模式) -->
-          <div v-if="type === `修改`">
-            <label for="secret" class="hidden sm:block text-sm font-medium mb-1"
-              >密钥</label
-            >
+          <div v-if="type === `修改`" class="hidden sm:block">
+            <label for="secret" class="text-sm font-medium">密钥</label>
             <InputText
               :size="formItemSize || 'normal'"
               :value="maskString(initialValues.account_config.secret)"
               name="secret"
               placeholder="请输入密钥"
-              class="hidden sm:block w-full cursor-pointer"
+              class="hidden sm:block w-full cursor-pointer mt-1"
               type="text"
               readonly
               @click="
@@ -173,7 +171,8 @@
               :closable="true"
               :pt="{
                 display: {
-                  class: 'w-full flex justify-end hover:bg-transparent p-1',
+                  class:
+                    'hidden sm:block w-full flex justify-end hover:bg-transparent p-1',
                 },
                 content: {
                   class: 'p-1',
@@ -271,7 +270,7 @@
 
           <!-- k线数 -->
           <div class="hidden sm:block">
-            <label for="get_kline_num" class="text-sm font-medium mb-1"
+            <label for="get_kline_num" class="text-sm font-medium"
               ><span class="text-red-500 mr-1">*</span>k线数</label
             >
             <InputNumber
@@ -281,7 +280,7 @@
               mode="decimal"
               showButtons
               :min="1"
-              class="w-full"
+              class="w-full mt-1"
             />
             <Inplace
               :closable="true"
@@ -791,6 +790,7 @@
                   placeholder="现货下单最小金额"
                   mode="decimal"
                   showButtons
+                  size="small"
                 />
                 <Inplace
                   :closable="true"
@@ -831,6 +831,7 @@
                   placeholder="合约下单最小金额"
                   mode="decimal"
                   showButtons
+                  size="small"
                 />
                 <Inplace
                   :closable="true"
@@ -871,6 +872,7 @@
                   placeholder="最大拆单金额"
                   mode="decimal"
                   showButtons
+                  size="small"
                 />
                 <Inplace
                   :closable="true"
@@ -910,6 +912,7 @@
                   placeholder="下单间隔"
                   mode="decimal"
                   showButtons
+                  size="small"
                 />
                 <Inplace
                   :closable="true"
@@ -934,6 +937,86 @@
                     >
                       拆单下单时，每笔下单的间隔时间；
                     </div>
+                  </template>
+                </Inplace>
+              </div>
+              <div class="hidden sm:block">
+                <label class="text-sm font-medium">rebalance模式</label>
+                <div class="flex gap-2 mt-1">
+                  <Select
+                    :size="formItemSize || 'normal'"
+                    v-model="initialValues.rebalance_mode.mode"
+                    :options="rebalanceModeOptions"
+                    placeholder="请选择rebalance模式"
+                    checkmark
+                    :highlightOnSelect="false"
+                    optionLabel="label"
+                    optionValue="value"
+                    :class="[
+                      initialValues.rebalance_mode.mode ===
+                        'RebByEquityRatio' ||
+                      initialValues.rebalance_mode.mode === 'RebByPositionRatio'
+                        ? 'max-w-[60%]'
+                        : 'flex-1',
+                    ]"
+                    showClear
+                  />
+                  <FloatLabel
+                    v-if="
+                      initialValues.rebalance_mode.mode ===
+                        'RebByEquityRatio' ||
+                      initialValues.rebalance_mode.mode === 'RebByPositionRatio'
+                    "
+                    class="flex-1"
+                  >
+                    <InputNumber
+                      name="reblanceModeParams"
+                      :size="formItemSize || 'normal'"
+                      v-model="
+                        initialValues.rebalance_mode.params.min_order_usdt_ratio
+                      "
+                      mode="decimal"
+                      showButtons
+                      :max="1"
+                      :min="0"
+                      :minFractionDigits="0"
+                      :maxFractionDigits="3"
+                      :step="0.01"
+                      class="w-full"
+                    />
+                    <label for="min_order_usdt_ratio">最小金额比例</label>
+                  </FloatLabel>
+                </div>
+                <Message
+                  v-if="$form.reblanceModeParams?.invalid"
+                  severity="error"
+                  size="small"
+                  variant="simple"
+                  class="mt-1"
+                  >{{ $form.reblanceModeParams.error?.message }}</Message
+                >
+                <Inplace
+                  :closable="true"
+                  :pt="{
+                    display: {
+                      class: 'w-full flex justify-end hover:bg-transparent p-1',
+                    },
+                    content: {
+                      class: 'p-1',
+                    },
+                  }"
+                >
+                  <template #display>
+                    <span
+                      class="text-xs text-primary-500 hover:text-primary-400 cursor-pointer"
+                    >
+                      什么是rebalance模式？
+                    </span>
+                  </template>
+                  <template #content>
+                    <div
+                      class="max-h-[70px] overflow-auto text-xs text-gray-600 dark:text-gray-300 p-2 bg-neutral-50 dark:bg-neutral-800 rounded leading-relaxed"
+                    ></div>
                   </template>
                 </Inplace>
               </div>
@@ -976,6 +1059,7 @@ import { maskString } from "@/common-module/utils";
 import {
   getAccountInfo,
   addOrEditAccountInfo,
+  initAccountInfo,
 } from "@/common-module/services/service.provider";
 import ApiKeyOrSecretDialogTemplate from "@/strategy-center-module/components/apiKeyOrSecretDialogTemplate.vue";
 import LeverageConfirmDialog from "@/strategy-center-module/components/LeverageConfirmDialog.vue";
@@ -994,32 +1078,7 @@ const props = defineProps<{
   formItemSize?: "small" | "normal" | "large";
 }>();
 
-const initialValues = ref<tDbAccountInfoRes>({
-  framework_id: "",
-  account_name: "",
-  account_config: {
-    account_type: "普通账户",
-    apiKey: "",
-    secret: "",
-    hour_offset: "",
-    wechat_webhook_url: "",
-    if_use_bnb_burn: true,
-    buy_bnb_value: 11,
-    if_transfer_bnb: true,
-    seed_coins: [], //套利底仓设置
-    coin_margin: {}, //指定账户中的所有ETH的保证金金额
-    order_spot_money_limit: 10, //现货下单最小金额限制
-    order_swap_money_limit: 5, //合约下单最小金额限制，
-    max_one_order_amount: 100, //最大拆单金额
-    twap_interval: 2, //下单间隔
-  },
-  min_kline_num: 168,
-  get_kline_num: 1500,
-  leverage: 1,
-  black_list: [],
-  white_list: [],
-  is_lock: false,
-});
+const initialValues = ref<tDbAccountInfoRes>({ ...initAccountInfo });
 const hourOffsetList = [
   "0m",
   "5m",
@@ -1046,6 +1105,21 @@ const viewIsLoading = ref<boolean>(false);
 const coinMarginEditKeys = ref<string[]>([]);
 const coinMarginEditValues = ref<number[]>([]);
 
+const rebalanceModeOptions = ref([
+  {
+    label: "每个周期rebalance",
+    value: "RebAlways",
+  },
+  {
+    label: "调仓金额大于资产最小金额比例时进行reblance",
+    value: "RebByEquityRatio",
+  },
+  {
+    label: "调仓金额大于币种持仓最小金额比例时进行rebalance",
+    value: "RebByPositionRatio",
+  },
+]);
+
 const $emit = defineEmits(["refreshAccountInfoList", "refreshForceStatus"]);
 
 onMounted(() => {
@@ -1053,60 +1127,25 @@ onMounted(() => {
 });
 
 const openDialog = (formValues: tDbAccountInfoRes | null) => {
-  initialValues.value = {
-    framework_id: "",
-    account_name: "",
-    account_config: {
-      account_type: "普通账户",
-      apiKey: "",
-      secret: "",
-      hour_offset: "",
-      wechat_webhook_url: "",
-      if_use_bnb_burn: true,
-      buy_bnb_value: 11,
-      if_transfer_bnb: true,
-      seed_coins: [], //套利底仓设置
-      coin_margin: {}, //指定账户中的所有ETH的保证金金额
-      order_spot_money_limit: 10, //现货下单最小金额限制
-      order_swap_money_limit: 5, //合约下单最小金额限制，
-      max_one_order_amount: 100, //最大拆单金额
-      twap_interval: 2, //下单间隔
-    },
-    min_kline_num: 168,
-    get_kline_num: 1500,
-    leverage: 1,
-    black_list: [],
-    white_list: [],
-    is_lock: false,
-  };
+  initialValues.value = { ...initAccountInfo };
 
   if (props.type === `修改`) {
     const clonedVal = JSON.parse(JSON.stringify(formValues));
-    clonedVal.account_config = {
-      ...{
-        account_type: "普通账户",
-        apiKey: "",
-        secret: "",
-        hour_offset: "",
-        wechat_webhook_url: "",
-        if_use_bnb_burn: true,
-        buy_bnb_value: 11,
-        if_transfer_bnb: true,
-        seed_coins: [], //套利底仓设置
-        coin_margin: {}, //指定账户中的所有ETH的保证金金额
-        order_spot_money_limit: 10, //现货下单最小金额限制
-        order_swap_money_limit: 5, //合约下单最小金额限制，
-        max_one_order_amount: 100, //最大拆单金额
-        twap_interval: 2, //下单间隔
-      },
-      ...JSON.parse(JSON.stringify(clonedVal.account_config)),
-    };
     initialValues.value = {
       ...JSON.parse(JSON.stringify(initialValues.value)),
       ...clonedVal,
     };
     if (initialValues.value.account_config.buy_bnb_value === 0) {
       initialValues.value.account_config.buy_bnb_value = 11;
+    }
+
+    if (!initialValues.value.rebalance_mode?.mode) {
+      initialValues.value.rebalance_mode = {
+        mode: "",
+        params: {
+          min_order_usdt_ratio: 0.1,
+        },
+      };
     }
   } else {
     coinMarginEditKeys.value = [];
@@ -1172,6 +1211,15 @@ const resolver = ({ values }: any) => {
     initialValues.value.account_config.buy_bnb_value === null
   ) {
     errors.buy_bnb_value = [{ message: "请设置买多少U的bnb" }];
+  }
+
+  // rebalance
+  if (
+    (initialValues.value.rebalance_mode.mode === "RebByEquityRatio" ||
+      initialValues.value.rebalance_mode.mode === "RebByPositionRatio") &&
+    !initialValues.value.rebalance_mode.params.min_order_usdt_ratio
+  ) {
+    errors.reblanceModeParams = [{ message: "该模式下最小金额比例必填" }];
   }
 
   return {
@@ -1266,6 +1314,10 @@ const formSubmitAction = async ({ valid }: any) => {
 
     if (initialValues.value.account_config.account_type === "普通账户") {
       initialValues.value.account_config.seed_coins = [];
+    }
+
+    if (initialValues.value.rebalance_mode.mode === "") {
+      initialValues.value.rebalance_mode = null as any;
     }
     addOrEditAccountAction(initialValues.value);
   }

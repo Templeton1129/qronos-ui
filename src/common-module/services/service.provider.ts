@@ -62,6 +62,12 @@ export enum frameWorkTypeEnum {
   data_center = "data_center",
 }
 
+export enum frameworkTypeIdEnum {
+  selectCoinId = "6780e5efffed44b938b25671",
+  positionId = "678915a96ae722eaa2fe2ca2",
+  data_center = "6789163a488832004afe2cda",
+}
+
 // 账户类型
 export enum accountTypeEnum {
   portfolio_margin = "统一账户",
@@ -82,6 +88,7 @@ export enum dataCenterOperationTypeEnum {
   other = "其他",
 }
 
+// 用于时间线
 export enum dateCenterOperationStatusEnum {
   in_progress = "进行中",
   completed = "已完成",
@@ -90,6 +97,47 @@ export enum dateCenterOperationStatusEnum {
   unknown = "未知",
 }
 
+// rebalance模式
+export enum rebalanceModeEnum {
+  RebAlways = "每个周期rebalance",
+  RebByEquityRatio = "调仓金额大于资产最小金额比例时进行reblance",
+  RebByPositionRatio = "调仓金额大于币种持仓最小金额比例时进行rebalance",
+}
+
+export const initAccountInfo: tDbAccountInfoRes = {
+  framework_id: "",
+  account_name: "",
+  account_config: {
+    account_type: "普通账户",
+    apiKey: "",
+    secret: "",
+    hour_offset: "",
+    wechat_webhook_url: "",
+    if_use_bnb_burn: true,
+    buy_bnb_value: 11,
+    if_transfer_bnb: true,
+    seed_coins: [], //套利底仓设置
+    coin_margin: {}, //指定账户中的所有ETH的保证金金额
+    order_spot_money_limit: 10, //现货下单最小金额限制
+    order_swap_money_limit: 5, //合约下单最小金额限制，
+    max_one_order_amount: 100, //最大拆单金额
+    twap_interval: 2, //下单间隔
+  },
+  min_kline_num: 168,
+  get_kline_num: 1500,
+  leverage: 1,
+  black_list: [],
+  white_list: [],
+  is_lock: false,
+  rebalance_mode: {
+    mode: "RebAlways",
+    params: {
+      min_order_usdt_ratio: 0.1,
+    },
+  },
+};
+
+// ---------------登录鉴权相关接口-------------
 /**
  * 绑定谷歌验证码
  * @param code 验证码
@@ -290,13 +338,82 @@ export const getUserInfoData = (): Promise<
   });
 };
 
+// ------------------home页面--------------
+
+/**
+ * home页账户图表数据
+ * @returns
+ */
+export const getHomeAccountInfo = (): Promise<
+  iProviderOutputArrayWithT<tDbHomeAccountInfoRes>
+> => {
+  return new Promise((resolve, reject) => {
+    let output: iProviderOutputArrayWithT<tDbHomeAccountInfoRes> = {
+      result: false,
+      data: [],
+      msg: "",
+    };
+    HttpProvider.get(`/basic_code/all_account/statistics`, false).then(
+      (res) => {
+        res = res.data;
+        if (res.code === 200) {
+          output.result = true;
+
+          if (res.data.length > 0) {
+            for (let i = 0; i < res.data.length; i++) {
+              res.data[i].id = i + 1;
+              // 排序找最新数据
+              // 持仓现货
+              if (res.data[i]?.pos_spot) {
+                if (JSON.stringify(res.data[i].pos_spot) !== "{}") {
+                  const keys = Object.keys(res.data[i].pos_spot);
+                  keys.sort((a: string, b: string) => Number(b) - Number(a));
+                  res.data[i].pos_spot = res.data[i].pos_spot[keys[0]];
+                } else {
+                  res.data[i].pos_spot = [];
+                }
+              }
+              // 持仓合约
+              if (res.data[i]?.pos_swap) {
+                if (JSON.stringify(res.data[i].pos_swap) !== "{}") {
+                  const keys = Object.keys(res.data[i].pos_swap);
+                  keys.sort((a: string, b: string) => Number(b) - Number(a));
+                  res.data[i].pos_swap = res.data[i].pos_swap[keys[0]];
+                } else {
+                  res.data[i].pos_swap = [];
+                }
+              }
+              // 盈利/亏损币前五名
+              if (res.data[i]?.pnl_history) {
+                const keys = Object.keys(res.data[i].pnl_history);
+                keys.sort((a: string, b: string) => Number(b) - Number(a));
+                res.data[i].pnl_history = res.data[i].pnl_history[keys[0]];
+              }
+            }
+          }
+          output.data = res.data;
+        } else {
+          output.msg = res.msg;
+        }
+        resolve(output);
+      },
+      (err) => {
+        output.msg = err.msg;
+        resolve(output);
+      }
+    );
+  });
+};
+
+// ---------------数据中心-------------------
+
 /**
  * 获取框架版本列表
  * @returns
  */
-export const getframWorkVersionList = (): Promise<
-  iProviderOutputArrayWithT<vFrameWorkVersionItem>
-> => {
+export const getframWorkVersionList = (
+  isDataCenter: boolean = false
+): Promise<iProviderOutputArrayWithT<vFrameWorkVersionItem>> => {
   return new Promise((resolve, reject) => {
     let output: iProviderOutputArrayWithT<vFrameWorkVersionItem> = {
       result: false,
@@ -308,7 +425,7 @@ export const getframWorkVersionList = (): Promise<
         res = res.data;
         if (res.code === 200) {
           output.result = true;
-          output.data = formatFramWorkVersionList(res.data);
+          output.data = formatFramWorkVersionList(res.data, isDataCenter);
         } else {
           output.msg = res.msg;
         }
@@ -328,10 +445,21 @@ export const getframWorkVersionList = (): Promise<
  * @returns
  */
 export const formatFramWorkVersionList = (
-  list: tDbFrameWorkItem[]
+  list: tDbFrameWorkItem[],
+  isDataCenter: boolean
 ): vFrameWorkVersionItem[] => {
   let output: vFrameWorkVersionItem[] = [];
   if (list && list.length > 0) {
+    if (isDataCenter) {
+      list = list.filter(
+        (item: tDbFrameWorkItem) => item.id === frameworkTypeIdEnum.data_center
+      );
+    } else {
+      list = list.filter(
+        (item: tDbFrameWorkItem) => item.id !== frameworkTypeIdEnum.data_center
+      );
+    }
+
     list.map((item: tDbFrameWorkItem) => {
       if (item.versions.length > 0) {
         // 先根据时间倒叙排序
@@ -345,17 +473,20 @@ export const formatFramWorkVersionList = (
         );
         item.versions.map((versionItem: tDbFrameWorkVersionVersionItem) => {
           output.push({
+            // 分类id
+            classId: item.id,
             frameWorkName: item.title,
             name: versionItem.file.name,
             id: versionItem.file.id,
             status: frameWorkDownloadStatusEnum.notDownloaded,
             hidden: versionItem.hidden,
+            time: versionItem.time,
           });
         });
       }
     });
   }
-
+  // 过滤掉已经下架的
   output = output.filter((item) => item.hidden === false);
   return output;
 };
@@ -510,6 +641,7 @@ export const getFrameWorkStatus = (
   });
 };
 
+// ----------------框架管理------------------------
 /**
  * 获取所有框架状态列表
  * @returns
@@ -991,71 +1123,6 @@ export const lockAccount = (
 };
 
 /**
- * home页账户图表数据
- * @returns
- */
-export const getHomeAccountInfo = (): Promise<
-  iProviderOutputArrayWithT<tDbHomeAccountInfoRes>
-> => {
-  return new Promise((resolve, reject) => {
-    let output: iProviderOutputArrayWithT<tDbHomeAccountInfoRes> = {
-      result: false,
-      data: [],
-      msg: "",
-    };
-    HttpProvider.get(`/basic_code/all_account/statistics`, false).then(
-      (res) => {
-        res = res.data;
-        if (res.code === 200) {
-          output.result = true;
-
-          if (res.data.length > 0) {
-            for (let i = 0; i < res.data.length; i++) {
-              res.data[i].id = i + 1;
-              // 排序找最新数据
-              // 持仓现货
-              if (res.data[i]?.pos_spot) {
-                if (JSON.stringify(res.data[i].pos_spot) !== "{}") {
-                  const keys = Object.keys(res.data[i].pos_spot);
-                  keys.sort((a: string, b: string) => Number(b) - Number(a));
-                  res.data[i].pos_spot = res.data[i].pos_spot[keys[0]];
-                } else {
-                  res.data[i].pos_spot = [];
-                }
-              }
-              // 持仓合约
-              if (res.data[i]?.pos_swap) {
-                if (JSON.stringify(res.data[i].pos_swap) !== "{}") {
-                  const keys = Object.keys(res.data[i].pos_swap);
-                  keys.sort((a: string, b: string) => Number(b) - Number(a));
-                  res.data[i].pos_swap = res.data[i].pos_swap[keys[0]];
-                } else {
-                  res.data[i].pos_swap = [];
-                }
-              }
-              // 盈利/亏损币前五名
-              if (res.data[i]?.pnl_history) {
-                const keys = Object.keys(res.data[i].pnl_history);
-                keys.sort((a: string, b: string) => Number(b) - Number(a));
-                res.data[i].pnl_history = res.data[i].pnl_history[keys[0]];
-              }
-            }
-          }
-          output.data = res.data;
-        } else {
-          output.msg = res.msg;
-        }
-        resolve(output);
-      },
-      (err) => {
-        output.msg = err.msg;
-        resolve(output);
-      }
-    );
-  });
-};
-
-/**
  * 策略中心页账户图表数据
  * @param frameworkId 框架id
  * @returns
@@ -1173,11 +1240,11 @@ export const frameWorkDataMigration = (
  */
 export const deleteFrameWork = (
   frameworkId: string
-): Promise<iProviderOutputArrayWithT<tDbDataCenterUpdateStatusRes>> => {
+): Promise<iProviderOutputWithT<null>> => {
   return new Promise((resolve, reject) => {
-    let output: iProviderOutputArrayWithT<tDbDataCenterUpdateStatusRes> = {
+    let output: iProviderOutputWithT<null> = {
       result: false,
-      data: [],
+      data: null,
       msg: "",
     };
     HttpProvider.delete(`/basic_code?framework_id=${frameworkId}`, false).then(
@@ -1185,6 +1252,218 @@ export const deleteFrameWork = (
         res = res.data;
         if (res.code === 200) {
           output.result = true;
+        } else {
+          output.msg = res.msg;
+        }
+        resolve(output);
+      },
+      (err) => {
+        output.msg = err.msg;
+        resolve(output);
+      }
+    );
+  });
+};
+
+/**
+ * 获取设备列表
+ * @returns
+ */
+export const getDeviceList = (): Promise<
+  iProviderOutputArrayWithT<tDbDeviceInfo>
+> => {
+  return new Promise((resolve, reject) => {
+    let output: iProviderOutputArrayWithT<tDbDeviceInfo> = {
+      result: false,
+      data: [],
+      msg: "",
+    };
+    HttpProvider.get(`/user/devices`, false).then(
+      (res) => {
+        res = res.data;
+        if (res.code === 200) {
+          output.result = true;
+          output.data = res.data?.devices || [];
+        } else {
+          output.msg = res.msg;
+        }
+        resolve(output);
+      },
+      (err) => {
+        output.msg = err.msg;
+        resolve(output);
+      }
+    );
+  });
+};
+
+/**
+ * 踢掉设备
+ * @param device_id
+ * @param google_code
+ * @returns
+ */
+export const deleteDevice = (
+  device_id: string,
+  google_code: string
+): Promise<iProviderOutputWithT<null>> => {
+  return new Promise((resolve, reject) => {
+    let output: iProviderOutputWithT<null> = {
+      result: false,
+      data: null,
+      msg: "",
+    };
+    HttpProvider.delete(
+      `/user/device?device_id=${device_id}&google_code=${google_code}`,
+      false
+    ).then(
+      (res) => {
+        res = res.data;
+        if (res.code === 200) {
+          output.result = true;
+        } else {
+          output.msg = res.msg;
+        }
+        resolve(output);
+      },
+      (err) => {
+        output.msg = err.msg;
+        resolve(output);
+      }
+    );
+  });
+};
+
+/**
+ * 数据中心更新
+ */
+export const updateDataCenter = (): Promise<iProviderOutputWithT<null>> => {
+  return new Promise((resolve, reject) => {
+    let output: iProviderOutputWithT<null> = {
+      result: false,
+      data: null,
+      msg: "",
+    };
+    HttpProvider.get(
+      `/basic_code/data_center/upgrade`,
+      false,
+      {},
+      {
+        timeoutSeconds: 3 * 60,
+      }
+    ).then(
+      (res) => {
+        res = res.data;
+        if (res.code === 200) {
+          output.result = true;
+        } else {
+          output.msg = res.msg;
+        }
+        resolve(output);
+      },
+      (err) => {
+        output.msg = err.msg;
+        resolve(output);
+      }
+    );
+  });
+};
+
+/**
+ * 获取导出的框架压缩包名
+ * @param frameWorkId
+ * @returns
+ */
+export const getExportFrameWorkZipName = (
+  frameWorkId: string
+): Promise<iProviderOutputWithT<string>> => {
+  return new Promise((resolve, reject) => {
+    let output: iProviderOutputWithT<string> = {
+      result: false,
+      data: null,
+      msg: "",
+    };
+    HttpProvider.get(
+      `/basic_code/data/export?framework_id=${frameWorkId}`,
+      false
+    ).then(
+      (res) => {
+        res = res.data;
+        if (res.code === 200) {
+          output.result = true;
+          output.data = res.data.filename || "";
+        } else {
+          output.msg = res.msg;
+        }
+        resolve(output);
+      },
+      (err) => {
+        output.msg = err.msg;
+        resolve(output);
+      }
+    );
+  });
+};
+
+/**
+ * 下载压缩包
+ * @param filename 压缩包名
+ * @returns
+ */
+export const getExportFrameWorkZip = (
+  filename: string
+): Promise<iProviderOutputWithT<any>> => {
+  return new Promise((resolve, reject) => {
+    let output: iProviderOutputWithT<any> = {
+      result: false,
+      data: null,
+      msg: "",
+    };
+    HttpProvider.get(
+      `/basic_code/data/download?filename=${filename}`,
+      false,
+      {},
+      {
+        responseType: "blob",
+      }
+    ).then(
+      (res) => {
+        output.result = true;
+        output.data = res.data;
+
+        resolve(output);
+      },
+      (err) => {
+        output.msg = err.msg;
+        resolve(output);
+      }
+    );
+  });
+};
+
+export const importFrameWorkZip = (
+  framework_id: string,
+  formData: FormData
+): Promise<iProviderOutputWithT<null>> => {
+  return new Promise((resolve, reject) => {
+    let output: iProviderOutputWithT<null> = {
+      result: false,
+      data: null,
+      msg: "",
+    };
+    HttpProvider.post(
+      `/basic_code/data/import?framework_id=${framework_id}`,
+      false,
+      formData,
+      {
+        contentType: contentTypeEnum.formData,
+      }
+    ).then(
+      (res) => {
+        res = res.data;
+        if (res.code === 200) {
+          output.result = true;
+          output.data = res.data;
         } else {
           output.msg = res.msg;
         }

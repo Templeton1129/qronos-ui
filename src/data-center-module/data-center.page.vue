@@ -26,15 +26,18 @@
             <h1 class="text-lg font-bold mb-1">当前使用的框架</h1>
             <div class="text-gray-200 text-md">
               {{ viewFrameWorkName }}
-              <!-- <Button
-                class="ml-4 h-8"
-                size="small"
-                label="更改框架"
-                @click="changeFrameWorkAction"
-              /> -->
             </div>
           </div>
-          <div>
+          <div class="space-x-2">
+            <Button
+              class="hidden sm:inline-flex"
+              icon="pi pi-upload"
+              label="升级"
+              severity="primary"
+              @click="checkForUpdates"
+              :loading="viewCheckingForUpdates"
+              :disabled="viewStatusIsProcessing"
+            />
             <Button
               class="hidden sm:inline-flex"
               icon="pi pi-cog"
@@ -326,6 +329,62 @@
     @operate-data-center="operateDataCenter"
   />
 
+  <!-- 升级确认对话框 -->
+  <Dialog
+    v-model:visible="viewIsShowUpdateDialog"
+    header="发现新版本"
+    class="max-w-[90vw] w-[450px]"
+    :draggable="false"
+    modal
+  >
+    <template #default>
+      <div class="space-y-3">
+        <div
+          class="bg-primary-50/50 dark:bg-primary-900/30 rounded-lg p-4 border border-primary-100 dark:border-primary-800"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <i class="pi pi-tag text-primary-600 text-xl"></i>
+            <div
+              class="text-lg font-semibold text-primary-600 dark:text-primary-300"
+            >
+              {{ viewNewVesion?.name }}
+            </div>
+          </div>
+          <div
+            class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+          >
+            <i class="pi pi-calendar"></i>
+            <span>发布日期: {{ viewNewVesion?.time }}</span>
+          </div>
+        </div>
+        <div
+          class="text-xs text-gray-500 dark:text-gray-300 flex items-center justify-center gap-1"
+        >
+          更新到最新版本可以获得更好的功能和性能改进
+        </div>
+      </div>
+    </template>
+    <template #footer>
+      <div class="flex justify-end gap-3 pt-1">
+        <Button
+          label="稍后升级"
+          @click="viewIsShowUpdateDialog = false"
+          variant="outlined"
+          class="hover:bg-gray-100 dark:hover:bg-gray-800"
+          icon="pi pi-clock"
+        />
+        <Button
+          label="立即升级"
+          severity="primary"
+          @click="confirmUpdate"
+          :loading="viewStatusIsProcessing"
+          icon="pi pi-arrow-up"
+          class="px-4"
+        />
+      </div>
+    </template>
+  </Dialog>
+
   <!-- 查看日志 -->
   <Drawer
     v-model:visible="viewIsOpenLogDialog"
@@ -369,14 +428,32 @@
       <p v-html="viewDataLog" class="flex-1 overflow-y-auto"></p>
     </div>
   </Drawer>
+
+  <!-- 加载遮罩 -->
+  <div
+    v-if="viewUpdateIsLoading"
+    class="fixed inset-0 bg-black/20 z-50 flex items-center justify-center"
+  >
+    <div
+      class="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-2xl flex flex-col items-center"
+    >
+      <ProgressSpinner class="mb-4" />
+      <p class="text-lg font-medium mb-2">数据中心升级中，请耐心等待...</p>
+      <p
+        class="text-gray-500 dark:text-neutral-400 text-sm flex items-center gap-2"
+      >
+        <i class="pi pi-exclamation-triangle text-yellow-600"></i
+        >数据中心升级期间请勿刷新页面或关闭浏览器
+      </p>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
+import { onBeforeRouteLeave } from "vue-router";
 import { useToast } from "primevue/usetoast";
 const toast = useToast();
-import { useConfirm } from "primevue/useconfirm";
-const confirm = useConfirm();
 import {
   getDataCenterConfig,
   getFrameWorkStatus,
@@ -385,6 +462,8 @@ import {
   dataCenterStatusEnum,
   getFrameWorkRunStatus,
   framwWorkRunStatusEnum,
+  getframWorkVersionList,
+  updateDataCenter,
 } from "@/common-module/services/service.provider";
 import EditDataFormTemplate from "@/data-center-module/components/editDataForm.template.vue";
 import DataTimeLineTemplate from "@/data-center-module/components/dataTimeLine.template.vue";
@@ -428,8 +507,6 @@ const initialValues = ref<tDataCenterConfigParams>({
   funding_rate: true,
   is_first: false,
 });
-
-const viewIsOpenEditDataDialog = ref<boolean>(false);
 const viewIsForceEdit = ref<boolean>(false);
 
 const logRefreshTimeList = [
@@ -459,6 +536,12 @@ const resDataCenterInfo = ref<tDbDataCenterConfigRes>();
 const viewStatusIsProcessing = ref<boolean>(false);
 const currentDataCenterStatus = ref<string>(dataCenterStatusEnum.stop);
 const frameWorkStatusTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+
+// 更新相关
+const viewCheckingForUpdates = ref<boolean>(false);
+const viewIsShowUpdateDialog = ref<boolean>(false);
+const viewNewVesion = ref<vFrameWorkVersionItem>();
+const viewUpdateIsLoading = ref<boolean>(false);
 
 onMounted(async () => {
   startDownloadFrameWorkStatusTimer();
@@ -647,11 +730,6 @@ const getLogFn = async () => {
 
     if (res.result === true) {
       viewDataLog.value = formatOutputLog(res.data || "");
-      // toast.add({
-      //   severity: "success",
-      //   summary: "获取日志成功",
-      //   life: 3000,
-      // });
     } else {
       toast.add({
         severity: "error",
@@ -693,15 +771,60 @@ const openEditDataFormDialog = () => {
   }
 };
 
-const changeFrameWorkAction = () => {
-  toast.add({
-    severity: "warn",
-    summary: "当前版本不支持更改框架",
-    life: 3000,
-  });
+// 检查更新
+const checkForUpdates = async () => {
+  // [mk] 1.检测当前数据中心是否是最新版本
+  viewCheckingForUpdates.value = true;
+  const res1 = await getframWorkVersionList(true);
+  viewCheckingForUpdates.value = false;
+  let dataCenterVesionList: vFrameWorkVersionItem[] = [];
+  if (res1.result === true) {
+    dataCenterVesionList = res1.data;
+  } else {
+    dataCenterVesionList = [];
+  }
+
+  if (dataCenterVesionList[0].name === viewFrameWorkName.value) {
+    toast.add({
+      severity: "info",
+      summary: "当前已是最新版本",
+      life: 3000,
+    });
+  } else {
+    // [mk] 2.可升级
+    viewNewVesion.value = dataCenterVesionList[0];
+    viewIsShowUpdateDialog.value = true;
+  }
+};
+
+// 确认更新
+const confirmUpdate = async () => {
+  viewIsShowUpdateDialog.value = false;
+  try {
+    viewUpdateIsLoading.value = true;
+    const res = await updateDataCenter();
+    if (res.result) {
+      toast.add({
+        severity: "success",
+        summary: "升级成功",
+        detail: "数据中心已升级到最新版本",
+        life: 3000,
+      });
+      // 重新加载数据
+      loadDataFn();
+    }
+  } finally {
+    viewUpdateIsLoading.value = false;
+  }
 };
 
 onUnmounted(() => {
+  clearDownloadFrameWorkStatusTimer();
+  clearFrameWorkRunStatusTimer();
+  clearLogRefreshTimer();
+});
+
+onBeforeRouteLeave(() => {
   clearDownloadFrameWorkStatusTimer();
   clearFrameWorkRunStatusTimer();
   clearLogRefreshTimer();

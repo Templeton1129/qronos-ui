@@ -193,6 +193,7 @@
 
 <script setup lang="ts">
 import { ref, onUnmounted } from "vue";
+import { onBeforeRouteLeave } from "vue-router";
 import ProgressBar from "primevue/progressbar";
 import ProgressSpinner from "primevue/progressspinner";
 import Button from "primevue/button";
@@ -551,6 +552,12 @@ onUnmounted(() => {
   clearTimer();
   clearDownloadFrameWorkStatusTimer();
   clearStopFrameWorkStatusTimer(); // 清理暂停实盘轮询定时器
+});
+
+onBeforeRouteLeave(() => {
+  clearTimer();
+  clearDownloadFrameWorkStatusTimer();
+  clearStopFrameWorkStatusTimer();
 });
 
 defineExpose({

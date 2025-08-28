@@ -214,12 +214,15 @@
                 </div>
                 <div
                   v-else
-                  class="h-100 w-full flex items-center justify-center"
+                  class="h-100 w-full flex flex-col gap-2 items-center justify-center"
                 >
                   <img
                     src="@/assets/home-img/no-data.png"
                     class="w-40 h-auto"
                   />
+                  <span class="text-sm text-gray-500 dark:text-gray-300"
+                    >暂无策略净值曲线图</span
+                  >
                 </div>
 
                 <!-- 策略信息 -->

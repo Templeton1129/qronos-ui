@@ -62,7 +62,7 @@
           >
             <template #header>
               <div class="flex items-center gap-1 sm:gap-2">
-                <span class="text-lg font-bold">账户1</span>
+                <span class="text-lg font-bold">{{ item.account_name }}</span>
                 <span class="text-xs text-gray-500 dark:text-gray-200">{{
                   item.framework_name
                 }}</span>
@@ -127,9 +127,26 @@
               >
                 <div class="text-md text-center">账户净值</div>
                 <div class="flex-1 flex justify-center items-center">
-                  <div class="flex flex-row items-end justify-center gap-2">
+                  <div
+                    class="flex flex-row items-end flex-wrap justify-center gap-2"
+                  >
                     <div
-                      class="text-7xl font-bold text-primary-500 font-mono"
+                      class="font-bold text-primary-500 font-mono"
+                      :class="[
+                        item?.equity?.equity_amount &&
+                        item?.equity?.equity_amount?.length > 0 &&
+                        item?.equity?.equity_amount[
+                          item?.equity?.equity_amount?.length - 1
+                        ] < 1000
+                          ? 'text-6xl sm:text-7xl'
+                          : item?.equity?.equity_amount &&
+                            item?.equity?.equity_amount?.length > 0 &&
+                            item?.equity?.equity_amount[
+                              item?.equity?.equity_amount?.length - 1
+                            ] < 100000
+                          ? 'text-5xl sm:text-6xl'
+                          : 'text-4xl sm:text-5xl',
+                      ]"
                       v-if="
                         item?.equity?.equity_amount &&
                         item?.equity?.equity_amount?.length > 0
@@ -140,10 +157,9 @@
                           item?.equity?.equity_amount[
                             item?.equity?.equity_amount?.length - 1
                           ]
-                        ).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })
+                        )
+                          .toFixed(2)
+                          .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }}
                     </div>
                     <div
@@ -278,9 +294,7 @@
               <!-- 持仓模块 表格 -->
               <div
                 class="pt-3 flex flex-col content-between bg-gray-50 dark:bg-neutral-900 rounded-lg"
-                :class="[
-                  viewfullscreenId === item.id ? 'max-h-120' : 'min-w-130',
-                ]"
+                :class="[viewfullscreenId === item.id ? 'max-h-120' : '']"
               >
                 <SelectButton
                   v-model="item.selectValue"
@@ -306,15 +320,23 @@
                         class: 'text-xs !bg-transparent h-full',
                       },
                     }"
+                    v-model:filters="tableFilters"
+                    filterDisplay="menu"
+                    :globalFilterFields="['side']"
                   >
-                    <Column field="symbol" header="币种">
+                    <Column field="symbol" header="币种" class="min-w-20">
                       <template #body="{ data }">
                         <div class="w-20">
                           {{ data.symbol || "--" }}
                         </div>
                       </template>
                     </Column>
-                    <Column field="change" header="涨幅">
+                    <Column
+                      field="change"
+                      header="涨幅"
+                      sortable
+                      class="min-w-20"
+                    >
                       <template #body="{ data }">
                         <Tag
                           :severity="
@@ -327,23 +349,76 @@
                         >
                       </template>
                     </Column>
-                    <Column field="side" header="方向">
+                    <Column
+                      field="side"
+                      header="方向"
+                      class="min-w-22"
+                      :showFilterMatchModes="false"
+                      :showApplyButton="false"
+                      :filterMenuClass="'w-10'"
+                      :pt="{
+                        filter: {
+                          class: 'w-6 h-6  justify-center items-center ml-0',
+                        },
+                      }"
+                    >
                       <template #body="{ data }">
                         <Tag
-                          :severity="data.side > 0 ? `success` : `danger`"
+                          :severity="data.side === 1 ? `success` : `danger`"
                           class="text-xs w-6 h-6 font-medium"
                           size="small"
                           variant="simple"
                           rounded
                         >
-                          {{ data.side > 0 ? "多" : "空" }}
+                          {{ data.side === 1 ? "多" : "空" }}
                         </Tag>
                       </template>
+                      <template #filter="{ filterModel, filterCallback }">
+                        <Select
+                          v-model="filterModel.value"
+                          :options="sideFilterOptions"
+                          optionLabel="label"
+                          optionValue="value"
+                          placeholder="选择方向"
+                          showClear
+                          @change="filterCallback()"
+                        >
+                          <template #option="slotProps">
+                            <Tag
+                              :value="slotProps.option.label"
+                              :severity="
+                                slotProps.option.value === 1
+                                  ? `success`
+                                  : `danger`
+                              "
+                              rounded
+                            />
+                          </template>
+                        </Select>
+                      </template>
                     </Column>
-                    <Column field="pos_u" header="仓位价值"></Column>
-                    <Column field="pnl_u" header="未实现盈亏"></Column>
-                    <Column field="avg_price" header="均价"></Column>
-                    <Column field="cur_price" header="当前价格"></Column>
+                    <Column
+                      field="pos_u"
+                      header="仓位价值"
+                      sortable
+                      class="min-w-28"
+                    ></Column>
+                    <Column
+                      field="pnl_u"
+                      header="未实现盈亏"
+                      sortable
+                      class="min-w-30"
+                    ></Column>
+                    <Column
+                      field="avg_price"
+                      header="均价"
+                      class="min-w-15"
+                    ></Column>
+                    <Column
+                      field="cur_price"
+                      header="当前价格"
+                      class="min-w-20"
+                    ></Column>
                     <template #empty>
                       <div class="flex items-center justify-center h-full">
                         <img
@@ -458,9 +533,7 @@
               <!-- 策略配置信息 -->
               <div
                 class="pt-3 flex flex-col gap-2 bg-gray-50 dark:bg-neutral-900 rounded-lg"
-                :class="[
-                  viewfullscreenId === item.id ? 'max-h-120' : 'sm:min-w-140',
-                ]"
+                :class="[viewfullscreenId === item.id ? 'max-h-120' : '']"
               >
                 <div class="flex px-4 justify-between">
                   <span class="text-md hidden sm:block"> 策略配置信息 </span>
@@ -515,16 +588,38 @@
                         </div>
                       </template>
                     </Column>
-                    <Column field="offset_list" header="offset_list">
+                    <Column
+                      field="offset_list"
+                      header="offset_list"
+                      class="min-w-25"
+                    >
                       <template #body="{ data }">
-                        <div class="flex justify-center gap-1">
-                          <Tag
-                            class="font-medium text-xs"
-                            severity="secondary"
-                            v-for="item of data.offset_list"
+                        <div
+                          class="flex items-center gap-1 flex-wrap"
+                          v-if="data.offset_list && data.offset_list.length"
+                        >
+                          <template
+                            v-for="(item, idx) in data.offset_list.slice(0, 3)"
                             :key="item"
-                            >{{ item }}</Tag
                           >
+                            <Tag
+                              class="font-medium text-xs"
+                              severity="secondary"
+                              >{{ item }}</Tag
+                            >
+                          </template>
+                          <template v-if="data.offset_list.length > 3">
+                            <span
+                              class="cursor-pointer text-xs text-primary-500 dark:text-primary-300"
+                              v-tooltip.bottom="{
+                                value: `所有的offset：${data.offset_list.join(
+                                  ', '
+                                )}`,
+                                autoHide: false,
+                              }"
+                              >+{{ data.offset_list.length - 3 }}</span
+                            >
+                          </template>
                         </div>
                       </template>
                     </Column>
@@ -728,6 +823,7 @@
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 const router = useRouter();
+import { FilterMatchMode } from "@primevue/core/api";
 const viewfullscreenId = ref<number | null>(null);
 
 import StrategicNetValueChart from "@/home-module/components/strategicNetValueChart.template.vue";
@@ -739,6 +835,14 @@ const viewData = ref<tDbHomeAccountInfoRes[]>([]);
 const viewPostSelectOptions = ref<string[]>(["持仓合约", "持仓现货"]);
 const viewFactorDialogVisible = ref(false);
 
+// 定义方向筛选器
+const sideFilterOptions = ref([
+  { label: "多", value: 1 },
+  { label: "空", value: -1 },
+]);
+const tableFilters = ref({
+  side: { value: null, matchMode: FilterMatchMode.EQUALS },
+});
 const viewFactorSelect = ref<string>("因子");
 const viewFactorOptions = ref<string[]>(["因子", "过滤因子", "后置因子"]);
 const viewFactorList = ref<string[]>([]);
@@ -758,6 +862,13 @@ const timeRangeOptions = [
   { label: "最近24小时", value: "24h" },
 ];
 const coinSortTypeOptions = ref<string[]>(["盈利", "亏损"]);
+const colorList = ref<string[]>([
+  "bg-green-500",
+  "bg-yellow-500",
+  "bg-blue-500",
+  "bg-purple-500",
+  "bg-teal-500",
+]);
 
 onMounted(() => {
   loadData();
@@ -862,14 +973,6 @@ const viewFactorSelectChange = () => {
     viewFactorList.value = [...viewCurrentFactorList.value.filterListPost];
   }
 };
-
-const colorList = ref<string[]>([
-  "bg-green-500",
-  "bg-yellow-500",
-  "bg-blue-500",
-  "bg-purple-500",
-  "bg-teal-500",
-]);
 </script>
 
 <style scoped>

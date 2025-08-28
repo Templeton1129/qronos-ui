@@ -1,4 +1,5 @@
 <template>
+  <NetworkLatency />
   <Toast
     :pt="{
       root: {
@@ -7,8 +8,11 @@
       message: {
         class: 'text-sm md:text-base',
       },
+      messageContent: {
+        class: 'flex items-center',
+      },
       closeButton: {
-        class: '!hidden md:!block',
+        class: '!hidden sm:!flex',
       },
     }"
   />
@@ -18,9 +22,9 @@
 <script setup lang="ts">
 import { RouterView } from "vue-router";
 import { onMounted, onUnmounted } from "vue";
+import NetworkLatency from "@/common-module/components/networkLatency.template.vue";
 import { useToast } from "primevue/usetoast";
 import { useRouter } from "vue-router";
-
 const router = useRouter();
 
 const toast = useToast();

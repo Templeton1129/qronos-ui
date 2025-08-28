@@ -19,36 +19,57 @@
       </div>
     </template>
     <template v-else #title>
-      <div class="font-semibold text-center">
-        {{ frameWorkName }}
-      </div>
-      <div
-        class="text-sm text-gray-500 dark:text-gray-300 mt-2 flex flex-wrap items-center justify-center gap-x-1 sm:gap-x-2 gap-y-1"
-      >
-        当前是
-        <Message
-          :severity="globalConfigData.is_debug === true ? `warn` : `success`"
-          size="small"
-          >{{
-            globalConfigData.is_debug === true ? `debug模式` : `真实实盘模式`
-          }}</Message
-        ><Divider layout="vertical" />
-        <Message
-          :severity="
-            runStatus === dataCenterStatusEnum.start ? `success` : `warn`
-          "
-          size="small"
-          >{{
-            runStatus === dataCenterStatusEnum.start ? `已启动` : `已暂停`
-          }}</Message
-        ><span>实盘</span><Divider layout="vertical" />
-        <Message
-          :severity="globalConfigData.error_webhook_url ? `success` : `warn`"
-          size="small"
-          >{{
-            globalConfigData.error_webhook_url ? `已配置` : `未配置`
-          }}</Message
-        >全局报错机器人
+      <div class="relative">
+        <div class="absolute right-0 top-0 space-x-2 hidden sm:block">
+          <Button
+            label="导入"
+            icon="pi pi-file-import"
+            size="small"
+            variant="outlined"
+            severity="secondary"
+            v-tooltip.left="'导入框架'"
+            @click="openImportZipDialog"
+          />
+          <Button
+            label="导出"
+            icon="pi pi-file-export"
+            size="small"
+            variant="outlined"
+            v-tooltip="'导出框架'"
+            @click="openExportZipDialog"
+          />
+        </div>
+        <div class="font-semibold h-[35px] flex justify-center items-end">
+          <span>{{ frameWorkName }}</span>
+        </div>
+        <div
+          class="text-sm text-gray-500 dark:text-gray-300 mt-2 flex flex-wrap items-center justify-center gap-x-1 sm:gap-x-2 gap-y-1"
+        >
+          当前是
+          <Message
+            :severity="globalConfigData.is_debug === true ? `warn` : `success`"
+            size="small"
+            >{{
+              globalConfigData.is_debug === true ? `debug模式` : `真实实盘模式`
+            }}</Message
+          ><Divider layout="vertical" />
+          <Message
+            :severity="
+              runStatus === dataCenterStatusEnum.start ? `success` : `warn`
+            "
+            size="small"
+            >{{
+              runStatus === dataCenterStatusEnum.start ? `已启动` : `已暂停`
+            }}</Message
+          ><span>实盘</span><Divider layout="vertical" />
+          <Message
+            :severity="globalConfigData.error_webhook_url ? `success` : `warn`"
+            size="small"
+            >{{
+              globalConfigData.error_webhook_url ? `已配置` : `未配置`
+            }}</Message
+          >全局报错机器人
+        </div>
       </div>
     </template>
     <!-- 骨架屏（加载状态） -->
@@ -136,7 +157,7 @@
               value:
                 runStatus === dataCenterStatusEnum.start
                   ? '启动状态不可操作设置'
-                  : '配置全局报错机器人',
+                  : '配置全局报错机器人，一次性计算多少列因子...',
               pt: {
                 arrow: {
                   style: {
@@ -287,16 +308,23 @@
     </template>
   </Card>
 
+  <!-- 设置 -->
   <Dialog
     v-model:visible="viewIsOpenConfigDataDialog"
     header="设置"
     modal
     class="w-[90vw] sm:w-[600px] max-w-full"
+    :closable="false"
   >
-    <Form v-slot="$form" :resolver @submit="submitConfigDataAction">
-      <div class="space-y-2 sm:space-y-4">
+    <Form
+      v-slot="$form"
+      :resolver
+      @submit="submitConfigDataAction"
+      class="space-y-4"
+    >
+      <div class="space-y-2">
         <label for="error_webhook_url" class="block text-sm font-medium"
-          >全局报错机器人:</label
+          >全局报错机器人</label
         >
         <InputText
           v-model.trim="viewConfigData.error_webhook_url"
@@ -314,16 +342,52 @@
           >{{ $form.error_webhook_url.error?.message }}</Message
         >
       </div>
-      <div class="flex justify-end pt-4">
+      <div class="space-y-2">
+        <label
+          for="factor_col_limit"
+          class="text-sm font-medium flex items-center gap-1"
+          >一次性计算多少列因子
+          <i
+            class="pi pi-question-circle cursor-pointer"
+            v-tooltip="{
+              value: `内存优化选项，一次性计算多少列因子。64是 16GB内存 电脑的典型值<br/>1. 数字越大，计算速度越快，但同时内存占用也会增加。<br/>2. 该数字是在 '因子数量 * 参数数量' 的基础上进行优化的。<br/>3. 例如，当你遍历 200 个因子，每个因子有 10 个参数，总共生成 2000 列因子。<br/>4. 如果 'factor_col_limit' 设置为 64，则计算会拆分为 ceil(2000 / 64) = 32 个批次，每次最多处理 64 列因子。<br/>5. 对于16GB内存的电脑，在跑含现货的策略时，64是一个合适的设置。<br/>6. 如果是在16GB内存下跑纯合约策略，则可以考虑将其提升到 128，毕竟数值越高计算速度越快。<br/>7. 以上数据仅供参考，具体值会根据机器配置、策略复杂性、回测周期等有所不同。建议大家根据实际情况，逐步测试自己机器的性能极限，找到适合的最优值。`,
+              escape: false,
+              class: 'min-w-80',
+              autoHide: false,
+            }"
+          ></i
+        ></label>
+        <InputNumber
+          v-model="viewConfigData.factor_col_limit"
+          :min="1"
+          mode="decimal"
+          showButtons
+          name="factor_col_limit"
+          placeholder="请填写一次性计算多少列因子"
+          class="w-full"
+        />
+        <Message
+          v-if="$form.factor_col_limit?.invalid"
+          severity="error"
+          size="small"
+          variant="simple"
+          class="mt-1"
+          >{{ $form.factor_col_limit.error?.message }}</Message
+        >
+      </div>
+      <div class="flex justify-end pt-4 gap-2">
         <Button
           type="submit"
-          severity="primary"
-          label="确定"
-          class="px-6 py-2.5"
+          severity="secondary"
+          label="取消"
+          @click="closeConfigDataDialog"
         />
+        <Button type="submit" severity="primary" label="确定" />
       </div>
     </Form>
   </Dialog>
+
+  <!-- 日志弹窗 -->
   <Drawer
     v-model:visible="viewIsOpenLogDialog"
     header="日志"
@@ -395,11 +459,26 @@
       <p v-html="viewDataLog" v-else class="flex-1 overflow-y-auto"></p>
     </div>
   </Drawer>
+
+  <!-- 导入框架 -->
+  <ImportZipTemplate
+    title="导入框架压缩包"
+    :maxFileSize="50 * 1024 * 1024"
+    :frameWorkId="frameWorkId"
+    ref="refImportZipDialogTmpl"
+  />
+
+  <!-- 导出框架 -->
+  <ExportZipDialogTemplate
+    :frameWorkId="frameWorkId"
+    :frameWorkName="frameWorkName"
+    ref="refExportZipDialogTemplate"
+  />
 </template>
 
 <script setup lang="ts">
 import { onUnmounted, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 const route = useRoute();
 const router = useRouter();
 
@@ -408,6 +487,14 @@ const toast = useToast();
 import { useConfirm } from "primevue/useconfirm";
 const confirm = useConfirm();
 
+import ImportZipTemplate from "@/common-module/components/importZipDialog.template.vue";
+const refImportZipDialogTmpl = ref<InstanceType<
+  typeof ImportZipTemplate
+> | null>(null);
+import ExportZipDialogTemplate from "@/common-module/components/exportZipDialog.template.vue";
+const refExportZipDialogTemplate = ref<InstanceType<
+  typeof ExportZipDialogTemplate
+> | null>(null);
 import { useStorageValueOrFn } from "@/common-module/hooks/getOrSetStorage";
 const { strategyLogRefreshTime } = useStorageValueOrFn();
 
@@ -419,6 +506,12 @@ import {
   getAccountInfo,
   editGlobalConfig,
 } from "@/common-module/services/service.provider";
+
+interface iConfigData {
+  is_debug: boolean;
+  error_webhook_url: string;
+  factor_col_limit: number;
+}
 
 const props = defineProps<{
   isLoading: boolean;
@@ -432,6 +525,7 @@ const props = defineProps<{
   globalConfigData: {
     is_debug: boolean;
     error_webhook_url: string;
+    factor_col_limit: number;
   };
 }>();
 const viewIsOpenLogDialog = ref<boolean>(false);
@@ -454,13 +548,12 @@ const logRefreshTimeList = [
 ];
 const viewCurrentPm_id = ref<null | number | string>(null);
 
-const viewConfigData = ref<{
-  is_debug: boolean;
-  error_webhook_url: string;
-}>({
+const viewConfigData = ref<iConfigData>({
   is_debug: false,
   error_webhook_url: "",
+  factor_col_limit: 64,
 });
+const viewOldConfigData = ref<iConfigData>();
 const viewIsOpenConfigDataDialog = ref<boolean>(false);
 
 const $emit = defineEmits([
@@ -481,6 +574,14 @@ watch(
 );
 
 watch(
+  () => props.frameWorkId,
+  (val) => {
+    $emit("refreshGlobalConfigData");
+  },
+  { immediate: true }
+);
+
+watch(
   () => props.globalConfigData,
   (val) => {
     if (val) {
@@ -490,14 +591,6 @@ watch(
         ...clonedVal,
       };
     }
-  },
-  { immediate: true, deep: true }
-);
-
-watch(
-  () => props.frameWorkId,
-  (val) => {
-    $emit("refreshGlobalConfigData");
   },
   { immediate: true, deep: true }
 );
@@ -595,9 +688,14 @@ const tabClick = (pm_id: number) => {
 };
 
 const openConfigDataDialog = () => {
+  // 备份旧配置
+  viewOldConfigData.value = JSON.parse(JSON.stringify(viewConfigData.value));
   viewIsOpenConfigDataDialog.value = true;
-  viewConfigData.value.error_webhook_url =
-    props.globalConfigData.error_webhook_url;
+};
+
+const closeConfigDataDialog = () => {
+  viewConfigData.value = JSON.parse(JSON.stringify(viewOldConfigData.value));
+  viewIsOpenConfigDataDialog.value = false;
 };
 
 const changeDebugStatus = (value: Boolean) => {
@@ -637,6 +735,10 @@ const resolver = ({ values }: any) => {
   ) {
     errors.error_webhook_url = [{ message: "请输入正确的URL格式" }];
   }
+
+  if (!viewConfigData.value.factor_col_limit) {
+    errors.factor_col_limit = [{ message: "一次性计算多少列因子不能为空" }];
+  }
   return {
     values,
     errors,
@@ -652,8 +754,7 @@ const submitConfigDataAction = ({ valid }: any) => {
 const changeConfigDataFn = async () => {
   const res = await editGlobalConfig({
     framework_id: props.frameWorkId,
-    is_debug: viewConfigData.value.is_debug,
-    error_webhook_url: viewConfigData.value.error_webhook_url,
+    ...viewConfigData.value,
   });
 
   if (res.result === true) {
@@ -674,7 +775,24 @@ const gotoDetail = () => {
 const openAddAccountForm = () => {
   $emit("openAddAccount", props.frameWorkId);
 };
+
+const openImportZipDialog = () => {
+  if (refImportZipDialogTmpl.value) {
+    refImportZipDialogTmpl.value.openDialog();
+  }
+};
+
+const openExportZipDialog = () => {
+  if (refExportZipDialogTemplate.value) {
+    refExportZipDialogTemplate.value.openDialog();
+  }
+};
+
 onUnmounted(() => {
+  clearLogRefreshTimer();
+});
+
+onBeforeRouteLeave(() => {
   clearLogRefreshTimer();
 });
 </script>

@@ -1,7 +1,7 @@
 import { computed } from "vue";
 import { useStorage } from "@vueuse/core";
 
-export function useStorageValueOrFn() {
+export const useStorageValueOrFn = () => {
   const gaToken = useStorage<string | null>("gaToken", null);
   const sessionGAtoken = useStorage<string | null>(
     "gaToken",
@@ -45,4 +45,4 @@ export function useStorageValueOrFn() {
     dataLogRefreshTime,
     strategyLogRefreshTime,
   };
-}
+};

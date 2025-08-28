@@ -1,5 +1,4 @@
 <template>
-  <!-- 目前不需要 -->
   <Dialog
     v-model:visible="viewIsOpen"
     :modal="true"
@@ -118,8 +117,7 @@
 
 <script setup lang="ts">
 import { ref, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
-const router = useRouter();
+import { onBeforeRouteLeave } from "vue-router";
 
 import {
   getFrameWorkRunStatus,
@@ -240,6 +238,10 @@ const refreshDataCenter = () => {
 };
 
 onUnmounted(() => {
+  clearStopFrameWorkStatusTimer();
+});
+
+onBeforeRouteLeave(() => {
   clearStopFrameWorkStatusTimer();
 });
 

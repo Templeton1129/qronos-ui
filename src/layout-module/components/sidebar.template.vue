@@ -82,7 +82,7 @@
           ref="refAvatar"
         />
         <div v-if="viewExpanded">
-          <Message severity="secondary" class="h-6 font-mono">v0.3.0</Message>
+          <Message severity="secondary" class="h-6 font-mono">v0.4.0</Message>
         </div>
         <Menu
           ref="viewUserMenu"
@@ -119,6 +119,11 @@ const viewMenu = ref([
     label: "策略中心",
     icon: "pi pi-chart-scatter",
     route: "/strategyCenter",
+  },
+  {
+    label: "设备管理",
+    icon: "pi pi-desktop",
+    route: "/deviceManagement",
   },
 ]);
 

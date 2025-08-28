@@ -277,11 +277,13 @@ const tFrameWorkItem = {
 type tDbFrameWorkItem = typeof tFrameWorkItem;
 
 type vFrameWorkVersionItem = {
+  classId: string; //仓管/选币/实盘
   frameWorkName: string;
   name: string;
   id: string;
   status: string;
   hidden: boolean;
+  time: string;
 };
 
 const dataCenterConfigParams = {
@@ -295,6 +297,7 @@ const dataCenterConfigParams = {
 };
 type tDataCenterConfigParams = typeof dataCenterConfigParams & {
   is_debug?: boolean; //策略页面
+  factor_col_limit?: number; //策略页面
 };
 type tDbDataCenterConfigRes = tDataCenterConfigParams & { is_first: boolean };
 
@@ -366,6 +369,12 @@ const tAccountInfoRes = {
   black_list: ["A-USDT"],
   white_list: ["B-USDT"],
   is_lock: false,
+  rebalance_mode: {
+    mode: "",
+    params: {
+      min_order_usdt_ratio: 0.01, //小数
+    },
+  },
 };
 
 const tStrategyConfigRes = {
@@ -434,6 +443,7 @@ const tGlobalConfigDataRes = {
   framework_id: "",
   is_debug: false,
   error_webhook_url: "",
+  globalConfigData: 64,
   realtime_data_path: "",
 };
 type tDbGlobalConfigDataRes = typeof tGlobalConfigDataRes;
@@ -596,3 +606,15 @@ const tDataCenterUpdateStatusRes = {
 };
 
 type tDbDataCenterUpdateStatusRes = typeof tDataCenterUpdateStatusRes;
+
+const tDeviceInfo = {
+  id: "d36d8f68010d38ebc7808c0f4b87ac29ff49abeb388470c15d33d95c781ffb4c",
+  device_type: "pc",
+  browser_info: "unknown browser",
+  ip_address: "192.168.100.146",
+  last_active_time: "2025-08-14 11:58:36",
+  created_time: "2025-08-14 11:27:29",
+  is_current: true,
+};
+
+type tDbDeviceInfo = typeof tDeviceInfo;

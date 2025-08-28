@@ -22,7 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
+import { onBeforeRouteLeave } from "vue-router";
 
 import DataCenterModuleTemplate from "@/home-module/components/dataCenterModule.template.vue";
 const refDataCenterModuleTemplate = ref<InstanceType<
@@ -104,4 +105,12 @@ const clearDownloadFrameWorkStatusTimer = () => {
     downloadFrameWorkStatusTimer.value = null;
   }
 };
+
+onUnmounted(() => {
+  clearDownloadFrameWorkStatusTimer();
+});
+
+onBeforeRouteLeave(() => {
+  clearDownloadFrameWorkStatusTimer();
+});
 </script>

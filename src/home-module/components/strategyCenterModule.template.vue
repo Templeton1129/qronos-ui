@@ -107,8 +107,8 @@
                   <Tag class="text-xs font-medium">
                     {{
                       item?.pm_uptime
-                        ? new Date(item?.pm_uptime).toLocaleString()
-                        : "_"
+                        ? dayjs(item?.pm_uptime).format("YYYY-MM-DD HH:mm:ss")
+                        : "--"
                     }}
                   </Tag>
                 </div>
@@ -258,8 +258,8 @@
                   <Tag class="text-xs font-medium">
                     {{
                       item?.pm_uptime
-                        ? new Date(item?.pm_uptime).toLocaleString()
-                        : "_"
+                        ? dayjs(item?.pm_uptime).format("YYYY-MM-DD HH:mm:ss")
+                        : "--"
                     }}
                   </Tag>
                 </div>
@@ -330,7 +330,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch, onUnmounted } from "vue";
+import { onBeforeRouteLeave } from "vue-router";
+import dayjs from "dayjs";
 import {
   dataCenterStatusEnum,
   getFrameWorkRunStatus,
@@ -501,4 +503,12 @@ const goToFrameWorkPage = (id: number = 0) => {
     path: `/strategyCenter/${id}`,
   });
 };
+
+onUnmounted(() => {
+  clearFrameWorkRunStatusTimer();
+});
+
+onBeforeRouteLeave(() => {
+  clearFrameWorkRunStatusTimer();
+});
 </script>

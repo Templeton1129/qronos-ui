@@ -131,7 +131,7 @@ const option = computed(() => {
     },
     grid: {
       top: isFullscreen.value ? 105 : 70,
-      left: 41,
+      left: 58,
       right: 45,
       bottom: 20,
     },
@@ -158,7 +158,6 @@ const option = computed(() => {
       {
         type: "value",
         name: "Equity(%)",
-
         position: "left",
         axisLabel: {
           formatter: "{value}%",

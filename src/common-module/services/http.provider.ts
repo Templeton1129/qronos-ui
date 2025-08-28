@@ -6,8 +6,8 @@ import type {
   ResponseType as tAxiosResponseType,
 } from "axios";
 import { emitGlobalError } from "@/common-module/utils";
-
 import { useStorageValueOrFn } from "@/common-module/hooks/getOrSetStorage";
+import { useNetworkStore } from "@/store/network";
 
 const { sessionGAtoken, localStorageWxtoken, userInfo } = useStorageValueOrFn();
 
@@ -65,6 +65,10 @@ export interface iHttpOptions {
 
 axios.interceptors.request.use(
   (req) => {
+    // 开始计时
+    const networkStore = useNetworkStore();
+    networkStore.setRequestStartTime();
+
     // 处理一个特殊接口
     if (req.url?.includes("/user/info")) {
       const wxToken = localStorageWxtoken.value;
@@ -91,6 +95,10 @@ axios.interceptors.response.use(
    * 成功响应处理
    */
   (response) => {
+    // 计算网络延迟
+    const networkStore = useNetworkStore();
+    networkStore.calculateLatency();
+
     // 检查响应头是否有 x-refresh-token
     const refreshToken =
       response.headers["x-refresh-token"] ||

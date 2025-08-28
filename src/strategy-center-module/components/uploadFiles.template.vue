@@ -112,9 +112,9 @@ const getUploadFilesFn = async () => {
   }
 };
 
-function triggerFolderInput() {
+const triggerFolderInput = () => {
   folderInput.value?.click();
-}
+};
 
 const folderChange = async (e: Event) => {
   const input = e.target as HTMLInputElement;

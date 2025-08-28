@@ -7,12 +7,14 @@ const DataCenterPage = () =>
 const StrategyCenterPage = () =>
   import("@/strategy-center-module/strategy-center.page.vue");
 const BindWxPage = () => import("@/common-module/page/bind-wx.page.vue");
+const DeviceManagementPage = () =>
+  import("@/common-module/page/device-management.page.vue");
 
 import { useStorageValueOrFn } from "@/common-module/hooks/getOrSetStorage";
 const { sessionGAtoken, userInfo } = useStorageValueOrFn();
 
 // 动态获取 base URL
-function getBaseUrl(): string {
+const getBaseUrl = (): string => {
   // 首先尝试从 HTML base 标签获取（nginx 会动态设置）
   const baseElement = document.querySelector("base");
   if (baseElement && baseElement.href) {
@@ -22,7 +24,7 @@ function getBaseUrl(): string {
 
   // fallback 到 Vite 的 BASE_URL
   return import.meta.env.BASE_URL || "/";
-}
+};
 
 import { syncDarkClass } from "@/main";
 
@@ -78,6 +80,15 @@ const appRouter = createRouter({
           component: StrategyCenterPage,
           meta: {
             title: "策略中心",
+            auth: true,
+            header: true,
+          },
+        },
+        {
+          path: "/deviceManagement",
+          component: DeviceManagementPage,
+          meta: {
+            title: "设备管理",
             auth: true,
             header: true,
           },

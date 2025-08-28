@@ -41,7 +41,7 @@ import {
 let currentPrimary = "violet"; // 默认色
 
 let MyPreset;
-export function setPrimaryTheme() {
+export const setPrimaryTheme = () => {
   const color = localStorage.getItem("theme") || currentPrimary;
   MyPreset = definePreset(Aura, {
     semantic: {
@@ -61,7 +61,7 @@ export function setPrimaryTheme() {
     },
   });
   usePreset(MyPreset);
-}
+};
 setPrimaryTheme();
 
 export const syncDarkClass = () => {

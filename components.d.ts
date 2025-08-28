@@ -22,6 +22,7 @@ declare module 'vue' {
     Divider: typeof import('primevue/divider')['default']
     Drawer: typeof import('primevue/drawer')['default']
     FileUpload: typeof import('primevue/fileupload')['default']
+    FloatLabel: typeof import('primevue/floatlabel')['default']
     Form: typeof import('@primevue/forms/form')['default']
     Inplace: typeof import('primevue/inplace')['default']
     InputGroup: typeof import('primevue/inputgroup')['default']

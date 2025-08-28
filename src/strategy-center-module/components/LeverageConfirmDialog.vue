@@ -28,6 +28,8 @@
 
 <script setup lang="ts">
 import { onUnmounted, ref } from "vue";
+import { onBeforeRouteLeave } from "vue-router";
+
 defineProps<{
   leverage: number | string;
 }>();
@@ -64,6 +66,10 @@ const clearLeverageTimeout = () => {
 const $emit = defineEmits(["cancel", "confirm"]);
 
 onUnmounted(() => {
+  clearLeverageTimeout();
+});
+
+onBeforeRouteLeave(() => {
   clearLeverageTimeout();
 });
 

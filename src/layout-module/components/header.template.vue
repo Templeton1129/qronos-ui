@@ -65,7 +65,7 @@
     </div>
 
     <!-- mobile nav and usernav -->
-    <DisclosurePanel class="">
+    <DisclosurePanel>
       <div class="divide-y divide-gray-500 space-y-1 px-2 pt-2 pb-3">
         <div class="pb-2">
           <DisclosureButton
@@ -136,19 +136,19 @@ const navList = [
   { name: "首页", icon: "pi-home", href: "/home" },
   { name: "数据中心", icon: "pi-database", href: "/dataCenter" },
   { name: "策略中心", icon: "pi-chart-scatter", href: "/strategyCenter" },
+  { name: "设备管理", icon: "pi-desktop", href: "/deviceManagement" },
 ];
 
 const userNavList = [
-  // { id: 1, name: "已开通分享会", icon: "pi-crown" },
-  { id: 2, name: "锁定", icon: "pi-lock" },
-  { id: 3, name: "退出登录", icon: "pi-sign-out" },
+  { id: 1, name: "锁定", icon: "pi-lock" },
+  { id: 2, name: "退出登录", icon: "pi-sign-out" },
 ];
 
 const gotoProfileAction = () => {};
 
 const clickNavItemAction = async (id: number) => {
   ViewCurrentUserNavigationId.value = id;
-  if (id === 3) {
+  if (id === 2) {
     // const res = await logout();
     // if (res.result === true) {
     //   sessionStorage.clear();
@@ -171,7 +171,7 @@ const clickNavItemAction = async (id: number) => {
         "退出登录需要重新输入GA验证码，扫码绑定微信，重新下载数据中心的数据和框架(目前该功能还在开发中！)",
       life: 6000,
     });
-  } else if (id === 2) {
+  } else if (id === 1) {
     const res = await logout();
     if (res.result === true) {
       sessionStorage.clear();

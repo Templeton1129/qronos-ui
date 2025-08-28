@@ -24,3 +24,10 @@ body,
 .p-popover::after {
   display: none !important;
 }
+
+.p-tooltip-text {
+  background-color: #f3f4f6;
+  font-weight: 500;
+  font-size: 12px;
+  color: #4a5565;
+}

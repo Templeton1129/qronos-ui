@@ -72,6 +72,7 @@
 
 <script setup lang="ts">
 import { ref, defineProps, onMounted, onUnmounted, nextTick } from "vue";
+import { onBeforeRouteLeave } from "vue-router";
 import MarqueeTemplate from "@/common-module/components/marquee.template.vue";
 import RunStatusAndOperationTemplate from "@/strategy-center-module/components/runStatusAndOperation.template.vue";
 import AccountManageTemplate from "@/strategy-center-module/components/accountManage.template.vue";
@@ -98,6 +99,7 @@ const frameWorkStatusTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const viewGlobalConfigData = ref({
   is_debug: false,
   error_webhook_url: "",
+  factor_col_limit: 64,
 });
 
 onMounted(async () => {
@@ -179,10 +181,16 @@ const getGlobalConfigDataFn = async (framework_id: string) => {
     viewGlobalConfigData.value.is_debug = res.data?.is_debug || false;
     viewGlobalConfigData.value.error_webhook_url =
       res.data?.error_webhook_url || "";
+    viewGlobalConfigData.value.factor_col_limit =
+      res.data?.factor_col_limit || 64;
   }
 };
 
 onUnmounted(() => {
+  clearFrameWorkRunStatusTimer();
+});
+
+onBeforeRouteLeave(() => {
   clearFrameWorkRunStatusTimer();
 });
 

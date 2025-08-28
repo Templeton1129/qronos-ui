@@ -1,7 +1,9 @@
 <template>
   <div class="w-full space-y-6">
     <!-- 时间线头部 -->
-    <div class="flex justify-between items-center">
+    <div
+      class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0"
+    >
       <span class="text-gray-600 dark:text-gray-300 font-semibold">
         数据更新状态时间线
       </span>
@@ -94,44 +96,6 @@
                     <span>有{{ slotProps.item.operation_count }}个操作</span>
                   </div>
                 </div>
-                <!-- <div
-                  class="text-xs text-gray-500 dark:text-neutral-400"
-                  v-for="(operation, index) in getDisplayOperations(
-                    slotProps.item.operations,
-                    slotProps.item.id
-                  )"
-                  :key="index"
-                >
-                  <div class="flex flex-col gap-1">
-                    <div class="flex items-start gap-1">
-                      <span class="text-sm font-semibold font-mono"
-                        >{{ index + 1 }}.</span
-                      >
-                      <Tag
-                        class="tetx-xs font-medium flex-shrink-0"
-                        size="small"
-                        :severity="getOperationStatusColor(operation.status)"
-                        :value="dateCenterOperationStatusEnum[operation.status as keyof typeof dateCenterOperationStatusEnum]"
-                        :pt="{ label: { class: 'text-xs' } }"
-                      />
-                      <Tag
-                        class="tetx-xs font-medium flex-shrink-0"
-                        size="small"
-                        severity="secondary"
-                        :value="dataCenterOperationTypeEnum[operation.operation_type as keyof typeof dataCenterOperationTypeEnum]"
-                        :pt="{ label: { class: 'text-xs' } }"
-                      />
-                      <span class="text-xs leading-[24px] flex-shrink-0">
-                        {{ new Date(operation.timestamp).toLocaleString() }}
-                      </span>
-                    </div>
-                    <div
-                      class="text-xs leading-relaxed text-gray-700 dark:text-gray-300 break-all pl-6"
-                    >
-                      {{ operation.description }}
-                    </div>
-                  </div>
-                </div> -->
                 <Timeline
                   :value="
                     getDisplayOperations(
@@ -158,7 +122,11 @@
                         <span
                           class="text-xs text-gray-500 dark:text-neutral-400 font-semibold font-mono"
                           >{{
-                            new Date(opProps.item.timestamp).toLocaleString()
+                            dayjs(
+                              opProps.item.timestamp
+                                .replace(" ", "T")
+                                .replace(" ", "")
+                            ).format("YYYY-MM-DD HH:mm:ss") || "--"
                           }}</span
                         >
                         <div class="flex items-center gap-1">
@@ -235,6 +203,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onUnmounted, watch } from "vue";
+import { onBeforeRouteLeave } from "vue-router";
+import dayjs from "dayjs";
 import {
   dateCenterOperationStatusEnum,
   dataCenterOperationTypeEnum,
@@ -260,15 +230,17 @@ const timeRangeOptions = [
 ];
 // 展开状态，key为timeline的索引
 const expandedMap = ref<Record<string, boolean>>({});
+// 自动刷新定时器
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
-function toggleExpand(id: string) {
+const toggleExpand = (id: string) => {
   expandedMap.value[id] = !expandedMap.value[id];
-}
+};
 
-function getDisplayOperations(operations: any[], id: string) {
+const getDisplayOperations = (operations: any[], id: string) => {
   if (expandedMap.value[id]) return operations;
   return operations.slice(0, 3);
-}
+};
 
 const getDateCenterUpdateStatusListFn = async (frameworkId?: string) => {
   if (frameworkId) {
@@ -353,10 +325,8 @@ const pageChange = (event: any) => {
   pageSize.value = event.rows;
 };
 
-// 自动刷新定时器
-let refreshTimer: ReturnType<typeof setInterval> | null = null;
-
 const startAutoRefresh = () => {
+  clearAutoRefreshTimer();
   if (props.autoRefresh && props.refreshInterval && props.refreshInterval > 0) {
     refreshTimer = setInterval(
       getDateCenterUpdateStatusListFn,
@@ -386,6 +356,10 @@ watch(
 
 // 组件卸载时清理定时器
 onUnmounted(() => {
+  clearAutoRefreshTimer();
+});
+
+onBeforeRouteLeave(() => {
   clearAutoRefreshTimer();
 });
 

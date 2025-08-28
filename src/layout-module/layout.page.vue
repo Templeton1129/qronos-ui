@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-full h-screen max-h-screen flex items-start bg-neutral-100 dark:bg-neutral-950 box-border overflow-hidden"
+    class="w-full h-full max-h-full flex items-start bg-neutral-100 dark:bg-neutral-950 box-border"
   >
     <SidebarTemplate />
     <div class="flex-1 h-full overflow-y-auto flex flex-col">
@@ -14,7 +14,7 @@
         <div class="flex items-center justify-center">
           实盘网页版<Divider layout="vertical" />公测版本
           <Message severity="secondary" size="small" class="h-6 font-mono mx-2"
-            >v0.3.0</Message
+            >v0.4.0</Message
           >© 2025
         </div>
       </footer>

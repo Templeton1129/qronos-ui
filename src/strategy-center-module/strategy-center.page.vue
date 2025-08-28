@@ -39,7 +39,11 @@
                       <Button
                         ref="refUpdateFrameWorkButton"
                         v-if="
-                          tab.id !== 0 && getNewFramWorkInfo(tab.framework_name)
+                          tab.id !== 0 &&
+                          getNewFramWorkInfo(
+                            tab.framework_name,
+                            tab.framework_id
+                          )
                         "
                         icon="pi pi-arrow-up"
                         size="small"
@@ -261,23 +265,21 @@
     <!-- 升级框架 -->
     <UpdateFrameWorkDialog
       ref="refUpdateFrameWorkDialog"
-      @refreshStrategyCenter="refreshStrategyCenter"
+      @refreshStrategyCenter="loadData"
     />
     <!-- 删除框架 -->
     <DeleteFrameWorkDialog
       ref="refDeleteFrameWorkDialog"
-      @refreshStrategyCenter="refreshStrategyCenter"
+      @refreshStrategyCenter="loadData"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import { useToast } from "primevue/usetoast";
 const toast = useToast();
-import { useConfirm } from "primevue/useconfirm";
-const confirm = useConfirm();
 
 import Detail from "@/strategy-center-module/components/detail.template.vue";
 import UpdateFrameWorkDialog from "@/strategy-center-module/components/updateFrameWork.template.vue";
@@ -524,21 +526,54 @@ const deleteFrameWork = (frameworkId: string, frameworkName: string) => {
   }
 };
 
-// 根据老框架name获取新框架版本信息
-const getNewFramWorkInfo = (oldFrameworkName: string) => {
-  const newFramework: vFrameWorkVersionItem | undefined =
-    viewFrameWorkVersionList.value.find(
-      (item) =>
-        item.name.split("v")[0] === oldFrameworkName.split("v")[0] &&
-        item.name !== oldFrameworkName
-    );
-  return newFramework;
+/**
+ * 检查并获取框架的最新可用版本信息
+ * 当前框架名称
+ * 当前框架ID
+ * 如果有新版本则返回新版本信息，否则返回null
+ */
+const getNewFramWorkInfo = (
+  oldFrameworkName: string,
+  framework_id: string
+): vFrameWorkVersionItem | null => {
+  // 如果没有版本列表数据，直接返回null
+  if (!viewFrameWorkVersionList.value?.length) {
+    return null;
+  }
+
+  // 获取当前框架的分类ID
+  const currentFramework = viewFrameWorkVersionList.value.find(
+    (item: vFrameWorkVersionItem) => item.id === framework_id
+  );
+
+  if (!currentFramework?.classId) {
+    return null;
+  }
+
+  // 获取同类型框架的版本列表并按时间排序
+  const versionList = viewFrameWorkVersionList.value
+    .filter((item) => item.classId === currentFramework.classId)
+    .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+
+  // 检查是否存在新版本
+  const latestVersion = versionList[0];
+  if (
+    !latestVersion ||
+    latestVersion.id === framework_id ||
+    latestVersion.name === oldFrameworkName
+  ) {
+    return null;
+  }
+
+  return latestVersion;
 };
 
 // 升级框架
 const upateFrameWork = (oldFrameworkId: string, oldFrameworkName: string) => {
-  const newFramework: vFrameWorkVersionItem | undefined =
-    getNewFramWorkInfo(oldFrameworkName);
+  const newFramework: vFrameWorkVersionItem | null = getNewFramWorkInfo(
+    oldFrameworkName,
+    oldFrameworkId
+  );
   if (newFramework) {
     if (refUpdateFrameWorkDialog.value) {
       refUpdateFrameWorkDialog.value.openDialog({
@@ -551,11 +586,11 @@ const upateFrameWork = (oldFrameworkId: string, oldFrameworkName: string) => {
   }
 };
 
-const refreshStrategyCenter = () => {
-  loadData();
-};
-
 onUnmounted(() => {
+  clearDownloadFrameWorkStatusTimer();
+});
+
+onBeforeRouteLeave(() => {
   clearDownloadFrameWorkStatusTimer();
 });
 </script>

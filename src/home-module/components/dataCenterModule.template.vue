@@ -97,10 +97,12 @@
               <Tag class="text-xs font-medium">
                 {{
                   viewDataCenterInfo?.pm_uptime
-                    ? new Date(viewDataCenterInfo?.pm_uptime).toLocaleString()
-                    : "_"
-                }}
-              </Tag>
+                    ? dayjs(viewDataCenterInfo?.pm_uptime).format(
+                        "YYYY-MM-DD HH:mm:ss"
+                      )
+                    : "--"
+                }}</Tag
+              >
             </div>
           </div>
         </div>
@@ -183,8 +185,10 @@
                 <Tag class="text-xs font-medium">
                   {{
                     viewDataCenterInfo?.pm_uptime
-                      ? new Date(viewDataCenterInfo?.pm_uptime).toLocaleString()
-                      : "_"
+                      ? dayjs(viewDataCenterInfo?.pm_uptime).format(
+                          "YYYY-MM-DD HH:mm:ss"
+                        )
+                      : "--"
                   }}
                 </Tag>
               </div>
@@ -197,7 +201,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { onUnmounted, ref } from "vue";
+import { onBeforeRouteLeave } from "vue-router";
+import dayjs from "dayjs";
 import { useToast } from "primevue/usetoast";
 const toast = useToast();
 import {
@@ -206,7 +212,6 @@ import {
   framwWorkRunStatusEnum,
   startOrStopFrameWork,
 } from "@/common-module/services/service.provider";
-import { Message } from "primevue";
 const props = defineProps<{
   currentNewFrameWorkId: string;
   frameWorkName: string;
@@ -297,6 +302,14 @@ const operateDataCenter = async (status: dataCenterStatusEnum) => {
     });
   }
 };
+
+onUnmounted(() => {
+  clearFrameWorkRunStatusTimer();
+});
+
+onBeforeRouteLeave(() => {
+  clearFrameWorkRunStatusTimer();
+});
 
 defineExpose({
   startFrameWorkRunStatusTimer,

@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, onBeforeRouteLeave } from "vue-router";
 const router = useRouter();
 
 import {
@@ -151,6 +151,11 @@ const clearMonitorUserLoginTimer = () => {
 };
 
 onUnmounted(() => {
+  clearQrCodeExpiryTimer();
+  clearMonitorUserLoginTimer();
+});
+
+onBeforeRouteLeave(() => {
   clearQrCodeExpiryTimer();
   clearMonitorUserLoginTimer();
 });
