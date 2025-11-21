@@ -1,7 +1,7 @@
 <template>
   <div class="h-full w-full p-2 sm:p-6 flex flex-col items-center">
-    <div class="w-full max-w-6xl space-y-6">
-      <div class="w-full space-y-6 sm:space-y-2">
+    <div class="w-full max-w-6xl space-y-2 sm:space-y-6">
+      <div class="w-full space-y-2 sm:space-y-4">
         <div class="flex justify-between items-end">
           <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">
             设备管理
@@ -21,6 +21,7 @@
         <Message
           severity="secondary"
           :closable="false"
+          size="small"
           class="block sm:hidden mt-2"
         >
           本系统最多允许5台设备登录使用，若新增登录设备数量超过限制，系统会自动将此前登录的设备依次剔除，保证当前仅5台设备有效

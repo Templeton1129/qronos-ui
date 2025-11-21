@@ -35,7 +35,6 @@ import {
   LegendComponent,
   MarkPointComponent,
   DataZoomComponent,
-  // 你还可以加其它组件
 } from "echarts/components";
 
 let currentPrimary = "violet"; // 默认色

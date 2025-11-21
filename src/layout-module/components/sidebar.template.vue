@@ -82,7 +82,9 @@
           ref="refAvatar"
         />
         <div v-if="viewExpanded">
-          <Message severity="secondary" class="h-6 font-mono">v0.4.0</Message>
+          <Message severity="secondary" class="h-6 font-mono"
+            >v{{ store.version }}</Message
+          >
         </div>
         <Menu
           ref="viewUserMenu"

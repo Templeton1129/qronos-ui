@@ -39,8 +39,18 @@
 
   <div
     v-else-if="viewIsLoading === false && viewAccountInfoList.length > 0"
-    class="w-full sm:px-4"
+    class="w-full sm:px-4 space-y-2 sm:space-y-0"
   >
+    <div class="px-0 sm:px-2">
+      <Button
+        icon="pi pi-plus"
+        variant="outlined"
+        class="hidden sm:inline-flex bg-white dark:bg-neutral-800 px-4 w-full sm:w-auto"
+        size="small"
+        label="新增账户"
+        @click="openAddAccountForm"
+      ></Button>
+    </div>
     <Carousel
       :value="viewAccountInfoList"
       :numVisible="2"
@@ -116,7 +126,7 @@
                 <Tag
                   :value="slotProps.data.is_lock ? '禁用状态' : '启用状态'"
                   :severity="slotProps.data.is_lock ? 'danger' : 'success'"
-                  class="hidden sm:inline-flex text-md font-medium cursor-pointer"
+                  class="hidden sm:inline-flex text-md font-medium"
                 >
                 </Tag>
                 <Button
@@ -149,9 +159,10 @@
                   !slotProps.data.account_config.apiKey ||
                   !slotProps.data.account_config.secret
                 "
-                class="text-sm text-center"
+                class="text-sm flex items-center justify-center gap-1"
               >
-                当前未配置API KEY/密钥，请先
+                <i class="pi pi-exclamation-triangle"></i>
+                <span>当前未配置API KEY/密钥，请先</span>
                 <Button
                   size="small"
                   variant="outlined"
@@ -176,12 +187,12 @@
                   class="flex flex-col sm:flex-row sm:justify-between sm:w-full gap-y-1 sm:gap-y-0"
                 >
                   <span
-                    >图更新：<span class="font-bold">{{
+                    >图更新：<span class="text-gray-500 dark:text-gray-300">{{
                       getUpdateDataTime(slotProps.data)
                     }}</span></span
                   >
                   <span
-                    >上次交易：<span class="font-bold">{{
+                    >上次交易：<span class="text-gray-500 dark:text-gray-300">{{
                       getUpdateDataTime(slotProps.data)
                     }}</span></span
                   >
@@ -189,7 +200,7 @@
                 <Tag
                   :value="slotProps.data.is_lock ? '禁用状态' : '启用状态'"
                   :severity="slotProps.data.is_lock ? 'danger' : 'success'"
-                  class="inline-flex sm:hidden text-md font-medium cursor-pointer"
+                  class="inline-flex sm:hidden text-md font-medium"
                 >
                 </Tag>
               </div>
@@ -230,7 +241,7 @@
                   v-if="slotProps.data.strategy_name"
                   class="text-sm flex items-center leading-[22px]"
                 >
-                  <span>当前使用的策略是</span>
+                  <span class="text-gray-600">策略：</span>
                   <span class="font-bold"
                     >“{{ slotProps.data.strategy_name }}”</span
                   >
@@ -338,21 +349,18 @@
     >
       <div class="mb-2 font-bold">调整杠杆</div>
       <div class="flex items-center gap-2 mb-2">
-        <InputText
-          name="leverage"
-          size="small"
-          :value="leverageEditValue"
-          disabled
-          class="w-1/4"
-        />
-        <Slider
-          name="leverage"
-          size="small"
+        <InputNumber
           v-model="leverageEditValue"
+          name="leverage"
+          mode="decimal"
           :min="0"
           :max="2"
-          :step="0.1"
-          class="w-3/4"
+          :step="0.01"
+          :minFractionDigits="0"
+          :maxFractionDigits="2"
+          size="small"
+          class="w-full"
+          showButtons
         />
       </div>
       <div class="flex justify-end gap-2">
@@ -403,6 +411,75 @@
     @refreshAccountInfoList="getAccountInfoListFn"
   />
 
+  <Dialog
+    v-model:visible="viewIsOpenImportOrAddDialog"
+    modal
+    header=""
+    :closable="false"
+    :draggable="false"
+    class="min-w-[90vw] sm:max-w-[90vw] sm:min-w-[40vw]"
+  >
+    <template #default>
+      <div class="flex gap-4">
+        <div
+          @click="viewSelectImport = true"
+          class="flex-1 flex items-center px-4 py-5 border border-gray-200 dark:border-gray-700 rounded-md cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        >
+          <RadioButton
+            v-model="viewSelectImport"
+            inputId="strategy-library"
+            name="strategy-mode"
+            :value="true"
+            class="mr-3"
+          />
+          <div class="text-center flex-1 space-y-1">
+            <div class="font-medium text-gray-800 dark:text-gray-200">
+              导入框架数据压缩包
+            </div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">
+              用于快速迁移或恢复框架数据
+            </div>
+          </div>
+        </div>
+        <div
+          @click="viewSelectImport = false"
+          class="flex-1 flex items-center px-4 py-5 border border-gray-200 dark:border-gray-700 rounded-md cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        >
+          <RadioButton
+            v-model="viewSelectImport"
+            inputId="custom-strategy"
+            name="strategy-mode"
+            :value="false"
+            class="mr-3"
+          />
+          <div class="text-center flex-1 space-y-1">
+            <div class="font-medium text-gray-800 dark:text-gray-200">
+              新增账户
+            </div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">
+              手动创建一个新账户
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+    <template #footer>
+      <div class="flex justify-end gap-3 pt-1">
+        <Button label="确定" variant="outlined" @click="importSelectConfirm" />
+      </div>
+    </template>
+  </Dialog>
+
+  <!-- 导入框架 -->
+  <ImportZipDialogTemplate
+    title="导入框架压缩包"
+    :maxFileSize="50 * 1024 * 1024"
+    :frameWorkId="frameWorkId"
+    :isNoUpdate="true"
+    @onImportSuccess="importFrameWorkSuccess"
+    ref="refImportZipDialogTmpl"
+  />
+
   <!-- 首次强制弹窗新增账户 -->
   <div class="hidden sm:flex">
     <AccountFormTemplate
@@ -420,9 +497,9 @@
   <!-- 首次强制策略导入 -->
   <div class="hidden sm:flex">
     <UploadStrategyFile
-      v-if="viewAccountInfoList.length > 0"
+      v-show="viewAccountInfoList.length > 0"
       ref="refUploadStrategyFile"
-      :isForceAddConfigFile="viewIsForceAddConfigFile"
+      :isForceAddConfigFile="viewIsForceAddStrategyFile"
       :frameWorkId="frameWorkId"
       :accountName="viewActiveAccount?.account_name || ``"
       @refreshForceAddConfigFileStatus="changeForceStrategyStatus"
@@ -433,6 +510,8 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch, defineProps, nextTick, computed } from "vue";
+import { useRouter } from "vue-router";
+const router = useRouter();
 import AccountFormTemplate from "@/strategy-center-module/components/accountForm.template.vue";
 const refAccountFormTemplateAdd = ref<InstanceType<
   typeof AccountFormTemplate
@@ -448,6 +527,11 @@ import LeverageConfirmDialog from "@/strategy-center-module/components/LeverageC
 const refLeverageConfirmDialog = ref<InstanceType<
   typeof LeverageConfirmDialog
 > | null>(null);
+import ImportZipDialogTemplate from "@/common-module/components/importZipDialog.template.vue";
+const refImportZipDialogTmpl = ref<InstanceType<
+  typeof ImportZipDialogTemplate
+> | null>(null);
+
 import {
   getAccountInfo,
   deleteAccount,
@@ -484,17 +568,17 @@ const responsiveOptions = ref([
 ]);
 
 const props = defineProps<{
-  runStatus: string;
+  runStatus: { startup: string; delist: string; monitor: string };
   frameWorkId: string;
   frameWorkType: string;
 }>();
 const viewIsLoading = ref<boolean>(false);
 
-const addAccountDialogVisible = ref(false);
+const addAccountDialogVisible = ref<boolean>(false);
 const viewAccountInfoList = ref<tDbAccountInfoRes[]>([]);
 const viewIsForceAddAccount = ref<boolean>(false);
 
-const viewIsForceAddConfigFile = ref<boolean>(false);
+const viewIsForceAddStrategyFile = ref<boolean>(false);
 const viewActiveAccount = ref<tDbAccountInfoRes>();
 const newBlacklistItem = ref<string>("");
 // 黑名单相关配置
@@ -502,7 +586,10 @@ const op = ref(); // 触发 Popover 的 DOM 元素
 const suggestions = ref<string[]>([]);
 
 const leveragePopoverRef = ref();
-const leverageEditValue = ref(1); // 临时变量
+const leverageEditValue = ref<number>(1); // 临时变量
+
+const viewIsOpenImportOrAddDialog = ref<boolean>(false);
+const viewSelectImport = ref<boolean>(true);
 
 onMounted(() => {
   getAccountInfoListFn();
@@ -522,17 +609,42 @@ const getAccountInfoListFn = async () => {
     viewAccountInfoList.value = res.data;
     // 如果没有账号，强制打开新增弹窗
     if (res.data.length === 0) {
-      viewIsForceAddAccount.value = true;
-      openAddAccountForm();
+      viewIsOpenImportOrAddDialog.value = true;
     } else {
+      viewIsOpenImportOrAddDialog.value = false;
       viewIsForceAddAccount.value = false;
       if (res.data.length === 1) {
         viewActiveAccount.value = res.data[0];
+        if (viewIsForceAddStrategyFile.value === true) {
+          if (refUploadStrategyFile.value) {
+            refUploadStrategyFile.value?.openDialog();
+          }
+        }
       }
       // 获取图表信息数据
       getAccountChartDataFn();
     }
   }
+};
+
+const importSelectConfirm = () => {
+  // 导入框架
+  if (viewSelectImport.value) {
+    if (refImportZipDialogTmpl.value) {
+      refImportZipDialogTmpl.value?.openDialog();
+    }
+  } else {
+    // 新增账户
+    viewIsForceAddAccount.value = true;
+    openAddAccountForm();
+  }
+};
+
+const importFrameWorkSuccess = () => {
+  viewIsOpenImportOrAddDialog.value = false;
+  setTimeout(() => {
+    router.go(0);
+  }, 500);
 };
 
 const getAccountChartDataFn = async () => {
@@ -631,15 +743,16 @@ const openEditAccountForm = () => {
   }
 };
 const changeForceAccountStatus = () => {
-  viewIsForceAddConfigFile.value = true;
+  viewIsOpenImportOrAddDialog.value = false;
+  viewIsForceAddStrategyFile.value = true;
 };
 
 const changeForceStrategyStatus = () => {
-  viewIsForceAddConfigFile.value = false;
+  viewIsForceAddStrategyFile.value = false;
 };
 
 const deleteAccountAction = async () => {
-  if (props.runStatus === dataCenterStatusEnum.start) {
+  if (props.runStatus.startup === dataCenterStatusEnum.start) {
     toast.add({
       severity: "warn",
       summary: "实盘启动状态不可删除子账户！",
@@ -650,7 +763,7 @@ const deleteAccountAction = async () => {
   confirm.require({
     group: viewActiveAccount.value?.account_name,
     header: "删除",
-    message: `您确定要删除${viewActiveAccount.value?.account_name}吗?`,
+    message: `你确定要删除${viewActiveAccount.value?.account_name}吗?`,
     icon: "pi pi-info-circle",
     rejectProps: {
       label: "取消",
@@ -697,7 +810,7 @@ const formatSuggestions = (event: any) => {
     return;
   }
   // 只允许字母和数字
-  if (!/^[a-zA-Z0-9]+$/.test(input)) {
+  if (!/^[a-zA-Z0-9\u4e00-\u9fa5]+$/.test(input)) {
     event.suggestions = [];
     suggestions.value = [];
     return;
@@ -796,6 +909,7 @@ const lockAccountFn = async (accountData: tDbAccountInfoRes) => {
 defineExpose({
   openAddAccountForm,
   frameWorkId: props.frameWorkId,
+  getAccountInfoListFn,
 });
 </script>
 

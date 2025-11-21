@@ -5,7 +5,7 @@
     :header="title"
     :closable="true"
     :draggable="false"
-    class="min-w-[90vw] sm:max-w-[90vw] sm:min-w-[40vw]"
+    class="min-w-[90vw] max-w-[90vw] sm:min-w-[40vw]"
   >
     <template #header>
       <div class="flex items-center gap-2">
@@ -112,8 +112,10 @@ const props = defineProps<{
   title: string;
   maxFileSize: number;
   frameWorkId: string;
+  isNoUpdate?: boolean;
 }>();
 
+const $emit = defineEmits(["onImportSuccess"]);
 const viewIsOpenDialog = ref<boolean>(false);
 const refFileUpload = ref();
 const viewSelectedFile = ref<File | null>(null);
@@ -204,9 +206,13 @@ const uploadAction = async () => {
       life: 3000,
     });
     viewIsOpenDialog.value = false;
-    setTimeout(() => {
-      router.go(0);
-    }, 500);
+    if (!props.isNoUpdate) {
+      setTimeout(() => {
+        router.go(0);
+      }, 500);
+    } else {
+      $emit("onImportSuccess");
+    }
   }
 };
 

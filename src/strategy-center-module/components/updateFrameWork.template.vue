@@ -203,15 +203,13 @@ import {
   frameWorkDownloadStatusEnum,
   frameWorkDataMigration,
   getFrameWorkRunStatus,
-  framwWorkRunStatusEnum,
+  frameWorkRunStatusEnum,
   startOrStopFrameWork,
   dataCenterStatusEnum,
   deleteFrameWork,
 } from "@/common-module/services/service.provider";
 import { useToast } from "primevue/usetoast";
 const toast = useToast();
-import { useRouter } from "vue-router";
-const router = useRouter();
 
 const viewIsOpenDialog = ref<boolean>(false);
 const step = ref<number>(1);
@@ -362,13 +360,14 @@ const stopFrameWorkFn = async () => {
       const isRunning = res.data.some(
         (item) =>
           item.framework_id === viewFrameInfo.value.oldFrameworkId &&
-          item.status === framwWorkRunStatusEnum.online
+          item.status === frameWorkRunStatusEnum.online
       );
       if (isRunning) {
         viewStatusLabel.value = "正在暂停实盘...";
         // 如果框架正在运行中，则需要先暂停框架
         const stopRes = await startOrStopFrameWork({
           framework_id: viewFrameInfo.value.oldFrameworkId,
+          pm_id: null,
           type: dataCenterStatusEnum.stop,
         });
         if (stopRes.result === true) {
@@ -520,7 +519,7 @@ const executeStopFrameWorkStatusCheck = async () => {
       const isStopped = res.data.some(
         (item) =>
           item.framework_id === viewFrameInfo.value.oldFrameworkId &&
-          item.status === framwWorkRunStatusEnum.stopped
+          item.status === frameWorkRunStatusEnum.stopped
       );
 
       if (isStopped) {

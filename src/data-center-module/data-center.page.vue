@@ -270,14 +270,6 @@
                           v-tooltip.top="{
                             value:
                               resDataCenterInfo?.enabled_hour_offsets.join(','),
-                            pt: {
-                              arrow: {
-                                style: {
-                                  borderBottomColor: 'gray-100',
-                                },
-                              },
-                              text: '!bg-gray-100 !font-medium !text-xs !text-gray-600',
-                            },
                           }"
                         >
                           {{
@@ -461,10 +453,11 @@ import {
   frameWorkDownloadStatusEnum,
   dataCenterStatusEnum,
   getFrameWorkRunStatus,
-  framwWorkRunStatusEnum,
+  frameWorkRunStatusEnum,
   getframWorkVersionList,
   updateDataCenter,
 } from "@/common-module/services/service.provider";
+import { hourOffsetList } from "@/common-module/defaultValues";
 import EditDataFormTemplate from "@/data-center-module/components/editDataForm.template.vue";
 import DataTimeLineTemplate from "@/data-center-module/components/dataTimeLine.template.vue";
 const refDataTimeLineTemplate = ref<InstanceType<
@@ -483,20 +476,6 @@ const downloadFrameWorkStatusTimer = ref<ReturnType<typeof setTimeout> | null>(
   null
 );
 
-const hourOffsetList = [
-  "0m",
-  "5m",
-  "10m",
-  "15m",
-  "20m",
-  "25m",
-  "30m",
-  "35m",
-  "40m",
-  "45m",
-  "50m",
-  "55m",
-];
 // 初始化数据
 const initialValues = ref<tDataCenterConfigParams>({
   id: "",
@@ -618,14 +597,14 @@ const pollFrameWorkRunStatus = async () => {
 
       if (temp) {
         if (
-          temp.status === framwWorkRunStatusEnum.online ||
-          temp.status === framwWorkRunStatusEnum.stopped ||
-          temp.status === framwWorkRunStatusEnum.errored
+          temp.status === frameWorkRunStatusEnum.online ||
+          temp.status === frameWorkRunStatusEnum.stopped ||
+          temp.status === frameWorkRunStatusEnum.errored
         ) {
           // 符合停止条件
           viewStatusIsProcessing.value = false;
           currentDataCenterStatus.value =
-            temp.status === framwWorkRunStatusEnum.online
+            temp.status === frameWorkRunStatusEnum.online
               ? dataCenterStatusEnum.start
               : dataCenterStatusEnum.stop;
           return; // 停止轮询
@@ -695,6 +674,7 @@ const operateDataCenter = async (status: dataCenterStatusEnum) => {
   viewStatusIsProcessing.value = true;
   const res = await startOrStopFrameWork({
     framework_id: currentNewFrameWorkId.value,
+    pm_id: null,
     type: status,
   });
   if (res.result) {
@@ -723,7 +703,8 @@ const getLogFn = async () => {
   );
   if (temp) {
     const res = await startOrStopFrameWork({
-      framework_id: temp.pm_id,
+      framework_id: currentNewFrameWorkId.value,
+      pm_id: temp.pm_id,
       type: "log",
       lines: viewLogLines.value || 50,
     });
@@ -784,16 +765,30 @@ const checkForUpdates = async () => {
     dataCenterVesionList = [];
   }
 
-  if (dataCenterVesionList[0].name === viewFrameWorkName.value) {
+  if (
+    dataCenterVesionList &&
+    dataCenterVesionList.length > 0 &&
+    dataCenterVesionList[0].name !== viewFrameWorkName.value
+  ) {
+    // [mk] 2.可升级
+    viewNewVesion.value = dataCenterVesionList[0];
+    viewIsShowUpdateDialog.value = true;
+  } else if (
+    dataCenterVesionList &&
+    dataCenterVesionList.length > 0 &&
+    dataCenterVesionList[0].name === viewFrameWorkName.value
+  ) {
     toast.add({
       severity: "info",
       summary: "当前已是最新版本",
       life: 3000,
     });
   } else {
-    // [mk] 2.可升级
-    viewNewVesion.value = dataCenterVesionList[0];
-    viewIsShowUpdateDialog.value = true;
+    toast.add({
+      severity: "warn",
+      summary: "无版本信息",
+      life: 3000,
+    });
   }
 };
 

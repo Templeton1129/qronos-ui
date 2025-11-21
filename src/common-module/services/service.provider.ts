@@ -27,7 +27,7 @@ export enum frameWorkDownloadStatusEnum {
 }
 
 // 框架运行状态
-export enum framwWorkRunStatusEnum {
+export enum frameWorkRunStatusEnum {
   // 启动
   online = "online",
   // stopped
@@ -122,6 +122,7 @@ export const initAccountInfo: tDbAccountInfoRes = {
     order_swap_money_limit: 5, //合约下单最小金额限制，
     max_one_order_amount: 100, //最大拆单金额
     twap_interval: 2, //下单间隔
+    base_margin: { USDT: 1 } as any,
   },
   min_kline_num: 168,
   get_kline_num: 1500,
@@ -136,6 +137,13 @@ export const initAccountInfo: tDbAccountInfoRes = {
     },
   },
 };
+
+export enum encryptMethodsEnum {
+  aes = "aes",
+  base64 = "base64",
+  sha256 = "sha256",
+  rsa = "rsa",
+}
 
 // ---------------登录鉴权相关接口-------------
 /**
@@ -344,16 +352,19 @@ export const getUserInfoData = (): Promise<
  * home页账户图表数据
  * @returns
  */
-export const getHomeAccountInfo = (): Promise<
-  iProviderOutputArrayWithT<tDbHomeAccountInfoRes>
-> => {
+export const getHomeAccountInfo = (
+  day: number
+): Promise<iProviderOutputArrayWithT<tDbHomeAccountInfoRes>> => {
   return new Promise((resolve, reject) => {
     let output: iProviderOutputArrayWithT<tDbHomeAccountInfoRes> = {
       result: false,
       data: [],
       msg: "",
     };
-    HttpProvider.get(`/basic_code/all_account/statistics`, false).then(
+    HttpProvider.get(
+      `/basic_code/all_account/statistics?query_days=${day}`,
+      false
+    ).then(
       (res) => {
         res = res.data;
         if (res.code === 200) {
@@ -1137,7 +1148,7 @@ export const getAccountInfoChart = (
       msg: "",
     };
     HttpProvider.get(
-      `/basic_code/account/statistics?framework_id=${frameworkId}`,
+      `/basic_code/account/statistics?framework_id=${frameworkId}&query_days=0`,
       false
     ).then(
       (res) => {

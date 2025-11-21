@@ -296,10 +296,18 @@ const dataCenterConfigParams = {
   is_first: false,
 };
 type tDataCenterConfigParams = typeof dataCenterConfigParams & {
-  is_debug?: boolean; //策略页面
+  is_simulate?: string | null; //策略页面
   factor_col_limit?: number; //策略页面
+  is_encrypt?: boolean; //策略页面
 };
 type tDbDataCenterConfigRes = tDataCenterConfigParams & { is_first: boolean };
+
+interface iConfigData {
+  is_simulate: string | null; //debug 调试模式 simulate 模拟实盘 null真实实盘
+  error_webhook_url: string;
+  factor_col_limit: number;
+  is_encrypt: boolean;
+}
 
 const tFrameWorkStatusRes = {
   id: 1,
@@ -321,7 +329,11 @@ const dataCenterStatusParams = {
 };
 type vDataCenterStatusParams = typeof dataCenterStatusParams & {
   lines?: number;
-} & { framework_id: string | number };
+} & {
+  framework_id: string | number;
+  pm_id: string | number | null;
+  secret_key?: string | null;
+};
 
 const tFactorFileUploadRes = {
   saved_files: [],
@@ -347,6 +359,7 @@ const tNewAccountConfigRes = {
   order_swap_money_limit: 5, //合约下单最小金额限制，
   max_one_order_amount: 100, //最大拆单金额
   twap_interval: 2, //下单间隔
+  base_margin: {} as any, //基础保证金
 };
 
 const tAccountInfoRes = {
@@ -369,12 +382,6 @@ const tAccountInfoRes = {
   black_list: ["A-USDT"],
   white_list: ["B-USDT"],
   is_lock: false,
-  rebalance_mode: {
-    mode: "",
-    params: {
-      min_order_usdt_ratio: 0.01, //小数
-    },
-  },
 };
 
 const tStrategyConfigRes = {
@@ -437,11 +444,13 @@ type tDbAccountInfoRes = typeof tAccountInfoRes & {
       net: number[];
     };
   } | null;
+} & {
+  rebalance_mode: any;
 };
 
 const tGlobalConfigDataRes = {
   framework_id: "",
-  is_debug: false,
+  is_simulate: null,
   error_webhook_url: "",
   globalConfigData: 64,
   realtime_data_path: "",

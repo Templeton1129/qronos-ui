@@ -138,11 +138,11 @@ const folderChange = async (e: Event) => {
     return;
   }
 
-  if (pythonFiles.length > 50) {
+  if (pythonFiles.length > 100) {
     toast.add({
       severity: "error",
       summary: "选择文件夹失败",
-      detail: "最多上传50个文件",
+      detail: "最多上传100个文件",
       life: 8000,
     });
     input.value = "";

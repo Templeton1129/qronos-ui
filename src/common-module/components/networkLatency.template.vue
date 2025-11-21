@@ -1,6 +1,6 @@
 <template>
   <div
-    class="fixed top-12 right-1 sm:top-2 sm:right-4 bg-white opacity-80 dark:bg-neutral-600 px-2 py-1.5 rounded-full shadow-md z-2000 flex items-center gap-1 border border-gray-200 dark:border-neutral-700 cursor-default"
+    class="fixed top-12 right-1 sm:top-2 sm:right-4 bg-white opacity-80 dark:bg-neutral-600 px-2 py-1 rounded-full shadow-md z-2000 flex items-center gap-1 border border-gray-200 dark:border-neutral-700 cursor-default"
   >
     <div class="w-2 h-2 rounded-full" :class="latencyBgColorClass"></div>
     <span class="text-xs" :class="latencyTextColorClass"

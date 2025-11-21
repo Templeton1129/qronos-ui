@@ -209,7 +209,7 @@ const toast = useToast();
 import {
   dataCenterStatusEnum,
   getFrameWorkRunStatus,
-  framwWorkRunStatusEnum,
+  frameWorkRunStatusEnum,
   startOrStopFrameWork,
 } from "@/common-module/services/service.provider";
 const props = defineProps<{
@@ -245,15 +245,15 @@ const pollFrameWorkRunStatus = async () => {
 
       if (temp) {
         if (
-          temp.status === framwWorkRunStatusEnum.online ||
-          temp.status === framwWorkRunStatusEnum.stopped ||
-          temp.status === framwWorkRunStatusEnum.errored
+          temp.status === frameWorkRunStatusEnum.online ||
+          temp.status === frameWorkRunStatusEnum.stopped ||
+          temp.status === frameWorkRunStatusEnum.errored
         ) {
           // 符合停止条件
           viewStatusIsProcessing.value = false;
           viewDataCenterInfo.value = temp;
           currentDataCenterStatus.value =
-            temp.status === framwWorkRunStatusEnum.online
+            temp.status === frameWorkRunStatusEnum.online
               ? dataCenterStatusEnum.start
               : dataCenterStatusEnum.stop;
           return; // 停止轮询
@@ -288,6 +288,7 @@ const operateDataCenter = async (status: dataCenterStatusEnum) => {
   viewStatusIsProcessing.value = true;
   const res = await startOrStopFrameWork({
     framework_id: props.currentNewFrameWorkId,
+    pm_id: null,
     type: status,
   });
   if (res.result) {

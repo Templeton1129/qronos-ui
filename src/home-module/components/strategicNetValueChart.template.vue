@@ -91,6 +91,12 @@ const getSubStgOption = () => {
       xAxisIndex: 1,
       yAxisIndex: 0,
       showSymbol: false,
+      lineStyle: {
+        opacity: 0.4,
+      },
+      itemStyle: {
+        opacity: 0.4,
+      },
     };
 
     for (const key in props.sub_stg_eqs) {
@@ -131,7 +137,12 @@ const option = computed(() => {
     },
     grid: {
       top: isFullscreen.value ? 105 : 70,
-      left: 58,
+      left:
+        Math.max(...props.equity) < 1000
+          ? 45
+          : Math.max(...props.equity) < 10000
+          ? 58
+          : 70,
       right: 45,
       bottom: 20,
     },

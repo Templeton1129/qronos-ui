@@ -171,8 +171,7 @@
               :closable="true"
               :pt="{
                 display: {
-                  class:
-                    'hidden sm:block w-full flex justify-end hover:bg-transparent p-1',
+                  class: 'w-full flex justify-end hover:bg-transparent p-1',
                 },
                 content: {
                   class: 'p-1',
@@ -370,21 +369,18 @@
               ><span class="text-red-500 mr-1">*</span>杠杆数</label
             >
             <div class="w-full flex items-center gap-2">
-              <InputText
-                name="leverage"
-                :size="formItemSize || 'normal'"
-                :value="initialValues.leverage"
-                disabled
-                class="w-1/4"
-              />
-              <Slider
-                name="leverage"
-                :size="formItemSize || 'normal'"
+              <InputNumber
                 v-model="initialValues.leverage"
+                name="leverage"
+                mode="decimal"
                 :min="0"
                 :max="2"
-                :step="0.1"
-                class="w-3/4"
+                :step="0.01"
+                :minFractionDigits="0"
+                :maxFractionDigits="2"
+                size="small"
+                class="w-full"
+                showButtons
                 @value-change="leverageChangeAction"
               />
             </div>
@@ -1016,10 +1012,99 @@
                   <template #content>
                     <div
                       class="max-h-[70px] overflow-auto text-xs text-gray-600 dark:text-gray-300 p-2 bg-neutral-50 dark:bg-neutral-800 rounded leading-relaxed"
-                    ></div>
+                    >
+                      平衡不同选币仓位的交易模式，详细介绍敬请期待后续直播
+                    </div>
                   </template>
                 </Inplace>
               </div>
+
+              <!-- 基础保证金 -->
+              <!-- <div>
+                <label class="hidden sm:block text-sm font-medium mb-1"
+                  >基础保证金</label
+                >
+                <div
+                  v-for="(item, index) in initialValues.account_config
+                    .base_margin"
+                  :key="(item as any).coin"
+                  class="w-full flex items-center gap-2 mb-1"
+                >
+                  <InputText
+                    :size="formItemSize || 'normal'"
+                    :model-value="(item as any).coin"
+                    @blur="(e: Event) => formatCoinInput(e, index)"
+                    placeholder="输入币种"
+                  />
+                  <InputNumber
+                    :size="formItemSize || 'normal'"
+                    v-model="(item as any).value"
+                    placeholder="输入资产比例"
+                    class="flex-1"
+                    :min="0"
+                    :max="1"
+                    :minFractionDigits="0"
+                    :maxFractionDigits="2"
+                    mode="decimal"
+                    showButtons
+                    :step="0.01"
+                  />
+                  <Button
+                    icon="pi pi-trash"
+                    size="small"
+                    text
+                    @click="
+                      () => {
+                        removeCoinBaseMargin(index);
+                      }
+                    "
+                  />
+                </div>
+                <div>
+                  <Button
+                    size="small"
+                    icon="pi pi-plus"
+                    variant="outlined"
+                    class="w-full"
+                    @click="addCoinBaseMargin"
+                    >添加一项基础保证金</Button
+                  >
+                </div>
+                <InputText class="hidden" name="base_margin"></InputText>
+                <Message
+                  v-if="$form.base_margin?.invalid"
+                  severity="error"
+                  size="small"
+                  variant="simple"
+                  class="mt-1"
+                  >{{ $form.base_margin.error?.message }}</Message
+                >
+                <Inplace
+                  :closable="true"
+                  class="hidden sm:block"
+                  :pt="{
+                    display: {
+                      class: 'w-full flex justify-end hover:bg-transparent p-1',
+                    },
+                    content: { class: 'p-1' },
+                  }"
+                >
+                  <template #display>
+                    <span
+                      class="text-xs text-primary-500 hover:text-primary-400 cursor-pointer"
+                    >
+                      什么是基础保证金？
+                    </span>
+                  </template>
+                  <template #content>
+                    <div
+                      class="max-h-[70px] overflow-auto text-xs text-gray-600 dark:text-gray-300 p-2 bg-neutral-50 dark:bg-neutral-800 rounded leading-relaxed"
+                    >
+                      使用多种稳定币，共同构成合约交易的保证金池
+                    </div>
+                  </template>
+                </Inplace>
+              </div> -->
             </div>
           </template>
         </Inplace>
@@ -1052,10 +1137,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, watch } from "vue";
 import { useToast } from "primevue/usetoast";
 const toast = useToast();
 import { maskString } from "@/common-module/utils";
+import { hourOffsetList } from "@/common-module/defaultValues";
 import {
   getAccountInfo,
   addOrEditAccountInfo,
@@ -1078,21 +1164,9 @@ const props = defineProps<{
   formItemSize?: "small" | "normal" | "large";
 }>();
 
-const initialValues = ref<tDbAccountInfoRes>({ ...initAccountInfo });
-const hourOffsetList = [
-  "0m",
-  "5m",
-  "10m",
-  "15m",
-  "20m",
-  "25m",
-  "30m",
-  "35m",
-  "40m",
-  "45m",
-  "50m",
-  "55m",
-];
+const initialValues = ref<tDbAccountInfoRes>(
+  JSON.parse(JSON.stringify(initAccountInfo))
+);
 const accountTypeList = ["普通账户", "统一账户"];
 
 const suggestions = ref<string[]>([]);
@@ -1122,18 +1196,18 @@ const rebalanceModeOptions = ref([
 
 const $emit = defineEmits(["refreshAccountInfoList", "refreshForceStatus"]);
 
-onMounted(() => {
-  getAccountInfoListFn();
-});
-
 const openDialog = (formValues: tDbAccountInfoRes | null) => {
-  initialValues.value = { ...initAccountInfo };
-
+  getAccountInfoListFn();
+  initialValues.value = JSON.parse(JSON.stringify(initAccountInfo));
   if (props.type === `修改`) {
     const clonedVal = JSON.parse(JSON.stringify(formValues));
     initialValues.value = {
       ...JSON.parse(JSON.stringify(initialValues.value)),
       ...clonedVal,
+      account_config: {
+        ...initialValues.value.account_config,
+        ...formValues?.account_config,
+      },
     };
     if (initialValues.value.account_config.buy_bnb_value === 0) {
       initialValues.value.account_config.buy_bnb_value = 11;
@@ -1147,9 +1221,29 @@ const openDialog = (formValues: tDbAccountInfoRes | null) => {
         },
       };
     }
+
+    // 基础保证金 对象 转化为数组
+    // if (
+    //   initialValues.value.account_config.base_margin &&
+    //   Object.keys(initialValues.value.account_config.base_margin).length > 0
+    // ) {
+    //   let tempBaseMargin = [];
+    //   for (let item of Object.keys(
+    //     initialValues.value.account_config.base_margin
+    //   )) {
+    //     tempBaseMargin.push({
+    //       coin: item,
+    //       value: (initialValues.value.account_config.base_margin as any)[item],
+    //     });
+    //   }
+    //   initialValues.value.account_config.base_margin = tempBaseMargin as any;
+    // } else {
+    //   initialValues.value.account_config.base_margin = [] as any;
+    // }
   } else {
     coinMarginEditKeys.value = [];
     coinMarginEditValues.value = [];
+    // initialValues.value.account_config.base_margin = [] as any;
   }
 
   viewIsOpenAccountDialog.value = true;
@@ -1222,6 +1316,55 @@ const resolver = ({ values }: any) => {
     errors.reblanceModeParams = [{ message: "该模式下最小金额比例必填" }];
   }
 
+  // base_margin 基础保证金校验
+  // if (
+  //   initialValues.value.account_config.base_margin &&
+  //   (initialValues.value.account_config.base_margin as any).length > 0
+  // ) {
+  //   const baseMarginArray =
+  //     (initialValues.value.account_config.base_margin as any) || [];
+
+  //   // 1. coin名不能重复
+  //   const coinNames = baseMarginArray
+  //     .map((item: any) => item.coin)
+  //     .filter((coin: any) => coin);
+  //   const uniqueCoinNames = [...new Set(coinNames)];
+  //   if (coinNames.length !== uniqueCoinNames.length) {
+  //     errors.base_margin = [{ message: "基础保证金币种不能重复" }];
+  //   }
+
+  //   // 2. coin中必须有一项是USDT
+  //   if (!coinNames.includes("USDT")) {
+  //     errors.base_margin = [{ message: "基础保证金中必须包含USDT币种" }];
+  //   }
+
+  //   // 3. value值加一起必须等于1（允许0.01的误差）
+  //   const totalValue = baseMarginArray.reduce((sum: number, item: any) => {
+  //     return sum + (item.value || 0);
+  //   }, 0);
+  //   if (Math.abs(totalValue - 1) > 0.01) {
+  //     errors.base_margin = [{ message: "基础保证金比例总和必须等于1" }];
+  //   }
+
+  //   // 4. 检查币种名称格式
+  //   const invalidCoins = coinNames.filter(
+  //     (coin: any) => coin && !/^[A-Z]+$/.test(coin)
+  //   );
+  //   if (invalidCoins.length > 0) {
+  //     errors.base_margin = [{ message: "币种名称只能包含大写字母" }];
+  //   }
+
+  //   // 5. 检查比例值范围
+  //   const invalidValues = baseMarginArray.filter(
+  //     (item: any) => item.value <= 0 || item.value > 1
+  //   );
+  //   if (invalidValues.length > 0) {
+  //     errors.base_margin = [
+  //       { message: "基础保证金比例必须在0-1之间，不能等于0" },
+  //     ];
+  //   }
+  // }
+
   return {
     values,
     errors,
@@ -1240,7 +1383,7 @@ const formatSuggestions = (event: any, type = "black_list") => {
     return;
   }
   // 只允许字母和数字
-  if (!/^[a-zA-Z0-9]+$/.test(input)) {
+  if (!/^[a-zA-Z0-9\u4e00-\u9fa5]+$/.test(input)) {
     event.suggestions = [];
     if (type === "black_list") {
       suggestions.value = [];
@@ -1307,19 +1450,36 @@ const refreshApikeyOrSecretValueFn = (cloneValue: string) => {
 
 const formSubmitAction = async ({ valid }: any) => {
   if (valid) {
-    if (initialValues.value.account_config.if_use_bnb_burn === false) {
-      initialValues.value.account_config.buy_bnb_value = 0;
-      initialValues.value.account_config.if_use_bnb_burn = false;
+    let tempInitialValues = JSON.parse(JSON.stringify(initialValues.value));
+    if (tempInitialValues.account_config.if_use_bnb_burn === false) {
+      tempInitialValues.account_config.buy_bnb_value = 0;
+      tempInitialValues.account_config.if_use_bnb_burn = false;
     }
 
-    if (initialValues.value.account_config.account_type === "普通账户") {
-      initialValues.value.account_config.seed_coins = [];
+    if (tempInitialValues.account_config.account_type === "普通账户") {
+      tempInitialValues.account_config.seed_coins = [];
     }
 
-    if (initialValues.value.rebalance_mode.mode === "") {
-      initialValues.value.rebalance_mode = null as any;
+    if (tempInitialValues.rebalance_mode.mode === "") {
+      tempInitialValues.rebalance_mode = null;
     }
-    addOrEditAccountAction(initialValues.value);
+
+    // if (
+    //   initialValues.value.account_config.base_margin &&
+    //   (initialValues.value.account_config.base_margin as any).length > 0
+    // ) {
+    //   let temp: any = {};
+    //   (initialValues.value.account_config.base_margin as any).forEach(
+    //     (item: any) => {
+    //       temp[item.coin] = item.value;
+    //     }
+    //   );
+    //   initialValues.value.account_config.base_margin = temp;
+    // } else {
+    //   initialValues.value.account_config.base_margin = {} as any;
+    // }
+
+    addOrEditAccountAction(tempInitialValues);
   }
 };
 
@@ -1428,6 +1588,23 @@ const updateCoinMargin = () => {
     if (k !== null) obj[k] = coinMarginEditValues.value[i];
   });
   initialValues.value.account_config.coin_margin = obj;
+};
+
+const removeCoinBaseMargin = (index: number) => {
+  (initialValues.value.account_config.base_margin as any).splice(index, 1);
+};
+
+const addCoinBaseMargin = () => {
+  (initialValues.value.account_config.base_margin as any).push({
+    coin: "",
+    value: 0.1,
+  });
+};
+
+const formatCoinInput = (event: any, index: number) => {
+  const upperValue = event?.target?.value.toUpperCase();
+  (initialValues.value.account_config.base_margin as any)[index].coin =
+    upperValue;
 };
 
 defineExpose({

@@ -125,7 +125,7 @@
               <Button
                 v-if="item.status === dataCenterStatusEnum.stop"
                 @click="
-                  operateDataCenter(
+                  operateActualTrading(
                     item.framework_id,
                     dataCenterStatusEnum.start
                   )
@@ -141,7 +141,7 @@
               <Button
                 v-if="item.status === dataCenterStatusEnum.start"
                 @click="
-                  operateDataCenter(
+                  operateActualTrading(
                     item.framework_id,
                     dataCenterStatusEnum.stop
                   )
@@ -160,7 +160,7 @@
         </div>
         <div v-else>
           <div class="text-sm flex items-center">
-            <span>您目前暂无框架，请先</span>
+            <span>你目前暂无框架，请先</span>
             <Button
               size="small"
               variant="outlined"
@@ -276,7 +276,7 @@
               <Button
                 v-if="item.status === dataCenterStatusEnum.stop"
                 @click="
-                  operateDataCenter(
+                  operateActualTrading(
                     item.framework_id,
                     dataCenterStatusEnum.start
                   )
@@ -292,7 +292,7 @@
               <Button
                 v-if="item.status === dataCenterStatusEnum.start"
                 @click="
-                  operateDataCenter(
+                  operateActualTrading(
                     item.framework_id,
                     dataCenterStatusEnum.stop
                   )
@@ -311,7 +311,7 @@
         </div>
         <div v-else>
           <div class="text-sm flex items-center">
-            <span>您目前暂无框架，请先</span>
+            <span>你目前暂无框架，请先</span>
             <Button
               size="small"
               variant="outlined"
@@ -327,6 +327,13 @@
       </template>
     </template>
   </Dialog>
+
+  <!-- 加密模式开启 实盘/监控/启动/停止前需要输入密码 -->
+  <InputEncryptedPwdDialogTmpl
+    ref="refInputEncryptedPwdDialogTmpl"
+    @confirm="passwordConfirmAction"
+    @cancel="viewPendingOperation = null"
+  />
 </template>
 
 <script setup lang="ts">
@@ -336,10 +343,15 @@ import dayjs from "dayjs";
 import {
   dataCenterStatusEnum,
   getFrameWorkRunStatus,
-  framwWorkRunStatusEnum,
+  frameWorkRunStatusEnum,
   getAccountInfo,
   startOrStopFrameWork,
+  getDataCenterConfig,
 } from "@/common-module/services/service.provider";
+import InputEncryptedPwdDialogTmpl from "@/common-module/components/inputEncryptedPwdDialog.template.vue";
+const refInputEncryptedPwdDialogTmpl = ref<InstanceType<
+  typeof InputEncryptedPwdDialogTmpl
+> | null>(null);
 import { useRouter } from "vue-router";
 const router = useRouter();
 const viewIsFullscreen = ref<boolean | null>(false);
@@ -365,6 +377,18 @@ const viewFrameWorkInfoList = ref<
   })[]
 >([]);
 
+const viewGlobalConfigData = ref<iConfigData>({
+  is_simulate: null,
+  error_webhook_url: "",
+  factor_col_limit: 64,
+  is_encrypt: false,
+});
+// 存储当前待执行的操作
+const viewPendingOperation = ref<{
+  status: dataCenterStatusEnum;
+  frameWorkId: string;
+} | null>(null);
+
 onMounted(async () => {
   // 等待 props.frameWorkList 有数据后再开始轮询
   if (props.frameWorkList && props.frameWorkList.length > 0) {
@@ -383,15 +407,6 @@ watch(
   { immediate: true }
 );
 
-const getRunStatus = (framework_id: string) => {
-  let runStatusItem = viewRunStatuslList.value.find(
-    (item) => item.framework_id === framework_id
-  );
-  return runStatusItem?.status === framwWorkRunStatusEnum.online
-    ? dataCenterStatusEnum.start
-    : dataCenterStatusEnum.stop;
-};
-
 const startFrameWorkRunStatusTimer = () => {
   clearFrameWorkRunStatusTimer();
   executeRunStatusCheck();
@@ -408,9 +423,9 @@ const executeRunStatusCheck = async () => {
       let isIngStatus = false;
       for (let item of res.data) {
         if (
-          item.status === framwWorkRunStatusEnum.starting ||
-          item.status === framwWorkRunStatusEnum.stopping ||
-          item.status === framwWorkRunStatusEnum.restarting
+          item.status === frameWorkRunStatusEnum.starting ||
+          item.status === frameWorkRunStatusEnum.stopping ||
+          item.status === frameWorkRunStatusEnum.restarting
         ) {
           isIngStatus = true;
           break;
@@ -421,10 +436,15 @@ const executeRunStatusCheck = async () => {
         viewIsLoading.value = false;
         // 数据合并
         for (let item of viewFrameWorkInfoList.value) {
-          item.status = getRunStatus(item.framework_id);
-          const runStatusItem = res.data.find(
-            (runItem) => runItem.framework_id === item.framework_id
+          const runStatusItem = viewRunStatuslList.value.find(
+            (item1) =>
+              item1.framework_id === item.framework_id &&
+              item1.name === "startup"
           );
+          item.status =
+            runStatusItem?.status === frameWorkRunStatusEnum.online
+              ? dataCenterStatusEnum.start
+              : dataCenterStatusEnum.stop;
           item.pm_uptime = runStatusItem?.pm_uptime || null;
           item.cpu_usage = runStatusItem?.cpu_usage || null;
           item.mem_usage = runStatusItem?.mem_usage || null;
@@ -435,10 +455,14 @@ const executeRunStatusCheck = async () => {
       viewIsLoading.value = false;
       // 数据合并
       for (let item of viewFrameWorkInfoList.value) {
-        item.status = getRunStatus(item.framework_id);
-        const runStatusItem = res.data.find(
-          (runItem) => runItem.framework_id === item.framework_id
+        const runStatusItem = viewRunStatuslList.value.find(
+          (item1) =>
+            item1.framework_id === item.framework_id && item1.name === "startup"
         );
+        item.status =
+          runStatusItem?.status === frameWorkRunStatusEnum.online
+            ? dataCenterStatusEnum.start
+            : dataCenterStatusEnum.stop;
         item.pm_uptime = runStatusItem?.pm_uptime || null;
         item.cpu_usage = runStatusItem?.cpu_usage || null;
         item.mem_usage = runStatusItem?.mem_usage || null;
@@ -460,7 +484,26 @@ const clearFrameWorkRunStatusTimer = () => {
   }
 };
 
-const operateDataCenter = async (
+const getGlobalConfigDataFn = async (framework_id: string) => {
+  const res = await getDataCenterConfig(framework_id);
+  if (res.result === true) {
+    viewGlobalConfigData.value.is_simulate = res.data?.is_simulate || null;
+    viewGlobalConfigData.value.error_webhook_url =
+      res.data?.error_webhook_url || "";
+    viewGlobalConfigData.value.factor_col_limit =
+      res.data?.factor_col_limit || 64;
+    viewGlobalConfigData.value.is_encrypt = res.data?.is_encrypt || false;
+  }
+};
+
+const getPmId = (frameWorkId: string) => {
+  const runStatusItem = viewRunStatuslList.value.find(
+    (item1) => item1.framework_id === frameWorkId && item1.name === "startup"
+  );
+  return (runStatusItem?.pm_id || null) as any;
+};
+
+const operateActualTrading = async (
   frameWorkId: string,
   status: dataCenterStatusEnum
 ) => {
@@ -481,10 +524,40 @@ const operateDataCenter = async (
     }
   }
 
-  const res = await startOrStopFrameWork({
+  await getGlobalConfigDataFn(frameWorkId);
+
+  // 如果是加密模式并且真实实盘 用户需要输入加密时使用的密码
+  if (
+    viewGlobalConfigData.value.is_encrypt === true &&
+    status === dataCenterStatusEnum.start &&
+    refInputEncryptedPwdDialogTmpl.value
+  ) {
+    // 存储待执行的操作
+    viewPendingOperation.value = { status, frameWorkId };
+    // 显示密码输入弹窗
+    refInputEncryptedPwdDialogTmpl.value?.openDialog();
+    return;
+  }
+
+  startOrStopFrameWorkFn(frameWorkId, status);
+};
+
+const startOrStopFrameWorkFn = async (
+  frameWorkId: string,
+  status: dataCenterStatusEnum,
+  secret_key: string = ""
+) => {
+  let temp: vDataCenterStatusParams = {
     framework_id: frameWorkId,
+    pm_id: getPmId(frameWorkId),
     type: status,
-  });
+  };
+  if (secret_key) {
+    temp.secret_key = secret_key;
+  }
+  const res = await startOrStopFrameWork(temp);
+  viewPendingOperation.value = null;
+
   if (res.result) {
     toast.add({ severity: "success", summary: "操作成功", life: 2000 });
     startFrameWorkRunStatusTimer();
@@ -496,6 +569,23 @@ const operateDataCenter = async (
       life: 3000,
     });
   }
+};
+
+// 处理密码确认
+const passwordConfirmAction = (password: string) => {
+  if (!viewPendingOperation.value) {
+    toast.add({
+      severity: "error",
+      summary: "操作失败",
+      detail: "未找到待执行的操作",
+      life: 3000,
+    });
+    return;
+  }
+
+  // 执行待执行的操作
+  const { status, frameWorkId } = viewPendingOperation.value;
+  startOrStopFrameWorkFn(frameWorkId, status, password);
 };
 
 const goToFrameWorkPage = (id: number = 0) => {

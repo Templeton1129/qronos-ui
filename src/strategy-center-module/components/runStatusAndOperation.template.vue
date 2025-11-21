@@ -20,7 +20,7 @@
     </template>
     <template v-else #title>
       <div class="relative">
-        <div class="absolute right-0 top-0 space-x-2 hidden sm:block">
+        <div class="absolute right-0 top-0 space-x-2 hidden sm:flex">
           <Button
             label="导入"
             icon="pi pi-file-import"
@@ -28,6 +28,7 @@
             variant="outlined"
             severity="secondary"
             v-tooltip.left="'导入框架'"
+            class="text-xs"
             @click="openImportZipDialog"
           />
           <Button
@@ -35,41 +36,106 @@
             icon="pi pi-file-export"
             size="small"
             variant="outlined"
+            severity="secondary"
             v-tooltip="'导出框架'"
+            class="text-xs"
             @click="openExportZipDialog"
           />
-        </div>
-        <div class="font-semibold h-[35px] flex justify-center items-end">
-          <span>{{ frameWorkName }}</span>
-        </div>
-        <div
-          class="text-sm text-gray-500 dark:text-gray-300 mt-2 flex flex-wrap items-center justify-center gap-x-1 sm:gap-x-2 gap-y-1"
-        >
-          当前是
-          <Message
-            :severity="globalConfigData.is_debug === true ? `warn` : `success`"
-            size="small"
-            >{{
-              globalConfigData.is_debug === true ? `debug模式` : `真实实盘模式`
-            }}</Message
-          ><Divider layout="vertical" />
-          <Message
-            :severity="
-              runStatus === dataCenterStatusEnum.start ? `success` : `warn`
+          <component
+            :is="globalConfigData.error_webhook_url ? 'div' : OverlayBadge"
+            v-bind="
+              !globalConfigData.error_webhook_url ? { severity: 'danger' } : {}
             "
-            size="small"
-            >{{
-              runStatus === dataCenterStatusEnum.start ? `已启动` : `已暂停`
-            }}</Message
-          ><span>实盘</span><Divider layout="vertical" />
-          <Message
-            :severity="globalConfigData.error_webhook_url ? `success` : `warn`"
-            size="small"
-            >{{
-              globalConfigData.error_webhook_url ? `已配置` : `未配置`
-            }}</Message
-          >全局报错机器人
+          >
+            <Button
+              class="hidden sm:inline-flex text-xs"
+              icon="pi pi-cog"
+              label="设置"
+              variant="outlined"
+              size="small"
+              @click="openConfigDataDialog"
+              :disabled="runStatus.startup === dataCenterStatusEnum.start"
+              v-tooltip.bottom="{
+                value:
+                  runStatus.startup === dataCenterStatusEnum.start
+                    ? '启动状态不可操作设置'
+                    : '配置全局报错机器人，一次性计算多少列因子...',
+              }"
+            />
+          </component>
         </div>
+        <div class="font-semibold flex justify-center items-end">
+          <div class="flex items-center gap-2">
+            <!-- 显示当前是否是加密状态 -->
+            <i
+              :class="[
+                globalConfigData.is_encrypt
+                  ? 'pi pi-lock text-green-500 hover:text-green-400'
+                  : 'pi pi-lock-open text-red-500 hover:text-red-400',
+                'text-lg font-bold !hidden sm:!inline-block cursor-default',
+              ]"
+              v-tooltip="{
+                value: `${
+                  globalConfigData.is_encrypt
+                    ? '安全模式'
+                    : '未开启API KEY/密钥加密（建议开启！）'
+                }`,
+                class: `${globalConfigData.is_encrypt ? '' : 'min-w-65'}`,
+              }"
+            ></i>
+            <span>{{ frameWorkName }}</span>
+          </div>
+        </div>
+        <Card
+          class="absolute left-0 top-0 shadow-lg border-1 border-gray-100 dark:border-neutral-700 hidden sm:block"
+          :pt="{
+            body: 'px-3 py-2',
+          }"
+        >
+          <template #content>
+            <ul
+              class="flex flex-col gap-2 text-xs font-medium list-disc pl-4 tracking-wide"
+            >
+              <li
+                :class="
+                  globalConfigData.is_simulate
+                    ? 'text-gray-500 dark:text-gray-300'
+                    : 'text-green-600'
+                "
+              >
+                {{ getModeText() }}模式
+              </li>
+
+              <li
+                :class="
+                  runStatus.startup === dataCenterStatusEnum.start
+                    ? 'text-green-600'
+                    : 'text-gray-500 dark:text-gray-300'
+                "
+              >
+                {{
+                  runStatus.startup === dataCenterStatusEnum.start
+                    ? `${getModeText()}已启动`
+                    : `${getModeText()}已暂停`
+                }}
+              </li>
+
+              <li
+                :class="
+                  globalConfigData.error_webhook_url
+                    ? 'text-green-600'
+                    : 'text-gray-500 dark:text-gray-300'
+                "
+              >
+                {{
+                  globalConfigData.error_webhook_url
+                    ? "已配置全局报错机器人"
+                    : "未配置全局报错机器人"
+                }}
+              </li>
+            </ul>
+          </template>
+        </Card>
       </div>
     </template>
     <!-- 骨架屏（加载状态） -->
@@ -90,141 +156,264 @@
       </div>
     </template>
     <template v-else #content>
-      <div class="space-y-2 sm:space-y-4">
-        <div class="flex justify-center min-h-30" v-if="runStatus !== null">
-          <Button
-            v-if="runStatus === dataCenterStatusEnum.stop"
-            @click="operateDataCenter(dataCenterStatusEnum.start)"
-            class="w-30 h-30 hover:scale-105 transition-transform duration-300"
-            icon="pi pi-caret-right"
-            iconClass="text-4xl"
-            rounded
-            raised
-            :severity="globalConfigData.is_debug === true ? `info` : `success`"
-            v-tooltip="'启动实盘'"
+      <div class="space-y-2 sm:space-y-4 mt-3">
+        <div
+          class="flex justify-center items-center gap-4 min-h-30"
+          v-if="runStatus !== null"
+        >
+          <div>
+            <Button
+              v-if="runStatus.startup === dataCenterStatusEnum.stop"
+              @click="
+                operateActualTrading(dataCenterStatusEnum.start, 'startup')
+              "
+              class="w-30 h-30 hover:scale-105 transition-transform duration-300"
+              icon="pi pi-caret-right"
+              iconClass="text-4xl"
+              rounded
+              raised
+              :severity="globalConfigData.is_simulate ? `info` : `success`"
+              v-tooltip="`启动${getModeText()}`"
+            />
+            <Button
+              v-if="runStatus.startup === dataCenterStatusEnum.start"
+              @click="
+                operateActualTrading(dataCenterStatusEnum.stop, 'startup')
+              "
+              class="w-30 h-30 hover:scale-105 transition-transform duration-300"
+              icon="pi pi-stop-circle"
+              iconClass="text-4xl"
+              rounded
+              raised
+              :severity="globalConfigData.is_simulate ? `help` : `danger`"
+              v-tooltip="`停止${getModeText()}`"
+            />
+          </div>
+          <Divider
+            layout="vertical"
+            :class="
+              runStatus.startup === dataCenterStatusEnum.start
+                ? `h-25 m-0`
+                : `h-18 m-0`
+            "
           />
-          <Button
-            v-if="runStatus === dataCenterStatusEnum.start"
-            @click="operateDataCenter(dataCenterStatusEnum.stop)"
-            class="w-30 h-30 hover:scale-105 transition-transform duration-300"
-            icon="pi pi-stop-circle"
-            iconClass="text-4xl"
-            rounded
-            raised
-            :severity="globalConfigData.is_debug === true ? `help` : `danger`"
-            v-tooltip="'停止实盘'"
-          />
+          <div class="h-full flex flex-col justify-center gap-1">
+            <div class="flex items-center gap-2">
+              <div
+                class="text-xs sm:text-sm flex items-center gap-1 text-gray-500 dark:text-gray-300"
+              >
+                <i class="pi pi-user text-xs sm:text-sm"></i
+                ><span>账户监控</span>
+              </div>
+              <Button
+                v-if="runStatus.monitor === dataCenterStatusEnum.stop"
+                @click="
+                  operateActualTrading(dataCenterStatusEnum.start, 'monitor')
+                "
+                class="text-xs sm:text-sm py-0.5"
+                icon="pi pi-caret-right"
+                size="small"
+                raised
+                :severity="
+                  runStatus.startup === dataCenterStatusEnum.stop
+                    ? `secondary`
+                    : globalConfigData.is_simulate
+                    ? `info`
+                    : `success`
+                "
+                variant="outlined"
+                v-tooltip="{
+                  value:
+                    runStatus.startup === dataCenterStatusEnum.stop
+                      ? '实盘未启动不可开启账户监控'
+                      : '启动账户监控',
+                }"
+                :disabled="runStatus.startup === dataCenterStatusEnum.stop"
+              />
+              <Button
+                v-if="runStatus.monitor === dataCenterStatusEnum.start"
+                @click="
+                  operateActualTrading(dataCenterStatusEnum.stop, 'monitor')
+                "
+                class="text-xs sm:text-sm py-0.5"
+                icon="pi pi-stop-circle"
+                size="small"
+                raised
+                :severity="globalConfigData.is_simulate ? `help` : `danger`"
+                variant="outlined"
+                v-tooltip="'停止账户监控'"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <div
+                class="flex items-center gap-1 text-gray-500 text-xs sm:text-sm dark:text-gray-300"
+              >
+                <i class="pi pi-chart-line text-xs sm:text-sm"></i
+                ><span>下架监控</span>
+              </div>
+              <Button
+                v-if="runStatus.delist === dataCenterStatusEnum.stop"
+                @click="
+                  operateActualTrading(dataCenterStatusEnum.start, 'delist')
+                "
+                class="text-xs sm:text-sm py-0.5"
+                icon="pi pi-caret-right"
+                size="small"
+                raised
+                :severity="
+                  runStatus.startup === dataCenterStatusEnum.stop
+                    ? `secondary`
+                    : globalConfigData.is_simulate
+                    ? `info`
+                    : `success`
+                "
+                variant="outlined"
+                v-tooltip="{
+                  value:
+                    runStatus.startup === dataCenterStatusEnum.stop
+                      ? '实盘未启动不可开启下架监控'
+                      : '启动下架监控',
+                }"
+                :disabled="runStatus.startup === dataCenterStatusEnum.stop"
+              />
+              <Button
+                v-if="runStatus.delist === dataCenterStatusEnum.start"
+                @click="
+                  operateActualTrading(dataCenterStatusEnum.stop, 'delist')
+                "
+                class="text-xs sm:text-sm py-0.5"
+                icon="pi pi-stop-circle"
+                size="small"
+                raised
+                :severity="globalConfigData.is_simulate ? `help` : `danger`"
+                variant="outlined"
+                v-tooltip="'停止下架监控'"
+              />
+            </div>
+            <div
+              class="flex items-center gap-2"
+              v-show="runStatus.startup === dataCenterStatusEnum.start"
+            >
+              <div
+                class="flex items-center gap-1 text-gray-500 text-xs sm:text-sm dark:text-gray-300"
+              >
+                <i class="pi pi-refresh text-xs sm:text-sm"></i
+                ><span>重启实盘</span>
+              </div>
+              <Button
+                v-show="runStatus.startup === dataCenterStatusEnum.start"
+                icon="pi pi-refresh"
+                @click="
+                  operateActualTrading(dataCenterStatusEnum.restart, 'startup')
+                "
+                raised
+                variant="outlined"
+                size="small"
+                class="text-xs sm:text-sm py-0.5"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <div
+                class="flex items-center gap-1 text-gray-500 text-xs sm:text-sm dark:text-gray-300"
+              >
+                <i class="pi pi-book text-xs sm:text-sm"></i
+                ><span>运行日志</span>
+              </div>
+              <Button
+                type="button"
+                icon="pi pi-book"
+                @click="openLogDialogAction"
+                variant="outlined"
+                severity="secondary"
+                size="small"
+                raised
+                class="text-xs sm:text-sm py-0.5"
+                v-tooltip="'查看运行日志'"
+              />
+            </div>
+          </div>
         </div>
         <div
           class="max-w-full flex gap-2 flex-clo sm:flex-row flex-wrap justify-center items-center"
         >
           <div
-            class="flex justify-center items-center gap-2"
+            class="flex justify-center items-center"
             v-tooltip.bottom="{
               value:
-                runStatus === dataCenterStatusEnum.start
-                  ? '启动状态不可切换debug模式'
+                runStatus.startup === dataCenterStatusEnum.start
+                  ? '实盘运行中不可切换模式，请先停止实盘'
                   : '',
-              pt: {
-                arrow: {
-                  style: {
-                    borderBottomColor: 'gray-100',
-                  },
-                },
-                text: '!bg-gray-100 !font-medium !text-xs !text-gray-600',
-              },
             }"
           >
-            <label class="text-sm">debug模式</label>
-            <!-- 二次确认弹窗！ -->
-            <ConfirmDialog group="changeDebugStatus"></ConfirmDialog>
+            <label for="type" class="text-sm flex items-center gap-1"
+              >模式：</label
+            >
+            <Select
+              v-model="selectValue"
+              :options="modeOpetions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="选择模式"
+              :pt="{
+                label: 'text-sm py-1 pr-0',
+              }"
+              size="small"
+              @value-change="changeConfigDataFn"
+              :disabled="runStatus.startup === dataCenterStatusEnum.start"
+            />
+            <i
+              class="pi pi-question-circle cursor-pointer text-gray-500 ml-1.5"
+              v-tooltip="{
+                value: `1. 实盘交易模式（none）：真实下单交易；<br/>2. 模拟实盘模式（simulate）：每小时计算选币和资金曲线，不下单交易；<br/>3. 实盘调试模式（debug）：一次性检查实盘步骤，不下单交易；`,
+                escape: false,
+                class: 'min-w-108',
+                autoHide: false,
+              }"
+            ></i>
+          </div>
+          <Divider layout="vertical" class="m-2 hidden sm:flex" />
+          <div
+            class="hidden sm:flex justify-center items-center gap-2"
+            v-tooltip.bottom="{
+              value:
+                runStatus.startup === dataCenterStatusEnum.start
+                  ? '启动状态不可切换是否加密'
+                  : '',
+            }"
+          >
+            <label class="text-sm">API KEY/密钥加密</label>
 
             <ToggleSwitch
-              v-model="viewConfigData.is_debug"
-              @value-change="changeDebugStatus"
-              :disabled="runStatus === dataCenterStatusEnum.start"
+              v-model="viewConfigData.is_encrypt"
+              @value-change="changeIsEncryptionStatus"
+              :disabled="runStatus.startup === dataCenterStatusEnum.start"
             />
           </div>
-          <Button
-            class="hidden sm:inline-flex"
-            icon="pi pi-cog"
-            label="设置"
-            severity="secondary"
-            size="small"
-            @click="openConfigDataDialog"
-            :disabled="runStatus === dataCenterStatusEnum.start"
-            v-tooltip.bottom="{
-              value:
-                runStatus === dataCenterStatusEnum.start
-                  ? '启动状态不可操作设置'
-                  : '配置全局报错机器人，一次性计算多少列因子...',
-              pt: {
-                arrow: {
-                  style: {
-                    borderBottomColor: 'gray-100',
-                  },
-                },
-                text: '!bg-gray-100 !font-medium !text-xs !text-gray-600',
-              },
-            }"
-          />
-          <Button
-            class="sm:hidden"
-            icon="pi pi-cog"
-            severity="secondary"
-            size="small"
-            @click="openConfigDataDialog"
-            :disabled="runStatus === dataCenterStatusEnum.start"
-            v-tooltip.bottom="{
-              value:
-                runStatus === dataCenterStatusEnum.start
-                  ? '启动状态不可操作设置'
-                  : '',
-              pt: {
-                arrow: {
-                  style: {
-                    borderBottomColor: 'gray-100',
-                  },
-                },
-                text: '!bg-gray-100 !font-medium !text-xs !text-gray-600',
-              },
-            }"
-          />
-          <Button
-            class="hidden sm:inline-flex"
-            icon="pi pi-plus"
-            label="新增账户"
-            size="small"
-            variant="outlined"
-            @click="openAddAccountForm"
-            v-tooltip.bottom="{
-              value: '添加新的实盘账户',
-              pt: {
-                arrow: {
-                  style: {
-                    borderBottomColor: 'gray-100',
-                  },
-                },
-                text: '!bg-gray-100 !font-medium !text-xs !text-gray-600',
-              },
-            }"
-          />
-          <Button
-            type="button"
-            label="查看运行日志"
-            @click="openLogDialogAction"
-            variant="outlined"
-            severity="secondary"
-            size="small"
-          />
-          <Button
-            v-show="runStatus === dataCenterStatusEnum.start"
-            label="重启"
-            icon="pi pi-refresh"
-            @click="operateDataCenter(dataCenterStatusEnum.restart)"
-            variant="outlined"
-            size="small"
-          />
+          <div class="sm:hidden">
+            <component
+              :is="globalConfigData.error_webhook_url ? 'div' : OverlayBadge"
+              v-bind="
+                !globalConfigData.error_webhook_url
+                  ? { severity: 'danger' }
+                  : {}
+              "
+            >
+              <Button
+                class="sm:hidden text-xs"
+                icon="pi pi-cog"
+                severity="secondary"
+                size="small"
+                @click="openConfigDataDialog"
+                :disabled="runStatus.startup === dataCenterStatusEnum.start"
+                v-tooltip.bottom="{
+                  value:
+                    runStatus.startup === dataCenterStatusEnum.start
+                      ? '启动状态不可操作设置'
+                      : '',
+                }"
+              />
+            </component>
+          </div>
         </div>
       </div>
     </template>
@@ -256,25 +445,27 @@
             v-if="runStatus !== null"
           >
             <Button
-              v-if="runStatus === dataCenterStatusEnum.stop"
-              @click="operateDataCenter(dataCenterStatusEnum.start)"
+              v-if="runStatus.startup === dataCenterStatusEnum.stop"
+              @click="
+                operateActualTrading(dataCenterStatusEnum.start, 'startup')
+              "
               icon="pi pi-caret-right"
               rounded
               raised
-              :severity="
-                globalConfigData.is_debug === true ? `info` : `success`
-              "
+              :severity="globalConfigData.is_simulate ? `info` : `success`"
               v-tooltip="'启动'"
               size="small"
               class="hover:scale-105 transition-transform duration-300"
             />
             <Button
-              v-if="runStatus === dataCenterStatusEnum.start"
-              @click="operateDataCenter(dataCenterStatusEnum.stop)"
+              v-if="runStatus.startup === dataCenterStatusEnum.start"
+              @click="
+                operateActualTrading(dataCenterStatusEnum.stop, 'startup')
+              "
               icon="pi pi-stop-circle"
               rounded
               raised
-              :severity="globalConfigData.is_debug === true ? `help` : `danger`"
+              :severity="globalConfigData.is_simulate ? `help` : `danger`"
               v-tooltip="'停止'"
               size="small"
               class="hover:scale-105 transition-transform duration-300"
@@ -289,10 +480,12 @@
             size="small"
           />
           <Button
-            v-show="runStatus === dataCenterStatusEnum.start"
+            v-show="runStatus.startup === dataCenterStatusEnum.start"
             label="重启"
             icon="pi pi-refresh"
-            @click="operateDataCenter(dataCenterStatusEnum.restart)"
+            @click="
+              operateActualTrading(dataCenterStatusEnum.restart, 'startup')
+            "
             variant="outlined"
             size="small"
           />
@@ -428,14 +621,14 @@
         />
       </div>
       <Tabs
-        v-if="logTypeList.length > 0 && viewCurrentPm_id"
+        v-if="allPmIdTypeList.length > 0 && viewCurrentPm_id"
         :value="viewCurrentPm_id"
         scrollable
         class="flex-1 h-[90%] w-full border-0 bg-transparent"
       >
         <TabList class="flex space-x-2">
           <Tab
-            v-for="tab in logTypeList"
+            v-for="tab in allPmIdTypeList"
             :key="tab.name"
             :value="tab.pm_id"
             @click="tabClick(tab.pm_id)"
@@ -448,7 +641,7 @@
           class="flex-1 border-0 focus:outline-none p-1 overflow-y-auto"
         >
           <TabPanel
-            v-for="tab in logTypeList"
+            v-for="tab in allPmIdTypeList"
             :key="tab.name"
             :value="tab.pm_id"
           >
@@ -474,14 +667,35 @@
     :frameWorkName="frameWorkName"
     ref="refExportZipDialogTemplate"
   />
+
+  <!-- 加密说明弹窗 -->
+  <EncryptionInfoDialogTmpl
+    ref="refEncryptionInfoDialogTmpl"
+    @confirmEncryption="confirmChangeIsEncryptionStatus(true)"
+    @cancelEncryption="viewConfigData.is_encrypt = false"
+  />
+
+  <!-- 关闭加密确认弹窗 -->
+  <DisableEncryptionDialogTmpl
+    ref="refDisableEncryptionDialogTmpl"
+    @confirmDecryption="confirmChangeIsEncryptionStatus(false)"
+    @cancelDecryption="viewConfigData.is_encrypt = true"
+  />
+
+  <!-- 加密模式开启 实盘/监控/启动/停止前需要输入密码 -->
+  <InputEncryptedPwdDialogTmpl
+    ref="refInputEncryptedPwdDialogTmpl"
+    @confirm="passwordConfirmAction"
+    @cancel="viewPendingOperation = null"
+  />
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from "vue";
+import { onUnmounted, ref, watch, computed } from "vue";
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 const route = useRoute();
 const router = useRouter();
-
+import OverlayBadge from "primevue/overlaybadge";
 import { useToast } from "primevue/usetoast";
 const toast = useToast();
 import { useConfirm } from "primevue/useconfirm";
@@ -495,6 +709,22 @@ import ExportZipDialogTemplate from "@/common-module/components/exportZipDialog.
 const refExportZipDialogTemplate = ref<InstanceType<
   typeof ExportZipDialogTemplate
 > | null>(null);
+
+import EncryptionInfoDialogTmpl from "@/strategy-center-module/components/EncryptionInfoDialog.vue";
+const refEncryptionInfoDialogTmpl = ref<InstanceType<
+  typeof EncryptionInfoDialogTmpl
+> | null>(null);
+
+import DisableEncryptionDialogTmpl from "@/strategy-center-module/components/DisableEncryptionDialog.vue";
+const refDisableEncryptionDialogTmpl = ref<InstanceType<
+  typeof DisableEncryptionDialogTmpl
+> | null>(null);
+
+import InputEncryptedPwdDialogTmpl from "@/common-module/components/inputEncryptedPwdDialog.template.vue";
+const refInputEncryptedPwdDialogTmpl = ref<InstanceType<
+  typeof InputEncryptedPwdDialogTmpl
+> | null>(null);
+
 import { useStorageValueOrFn } from "@/common-module/hooks/getOrSetStorage";
 const { strategyLogRefreshTime } = useStorageValueOrFn();
 
@@ -507,12 +737,6 @@ import {
   editGlobalConfig,
 } from "@/common-module/services/service.provider";
 
-interface iConfigData {
-  is_debug: boolean;
-  error_webhook_url: string;
-  factor_col_limit: number;
-}
-
 const props = defineProps<{
   isLoading: boolean;
   tabType: string; //all汇总 item单个
@@ -520,12 +744,13 @@ const props = defineProps<{
   frameWorkName: string;
   frameWorkId: string;
   frameWorkType: string;
-  runStatus: string;
-  logTypeList: tDbFrameWorkRunStatusRes[];
+  runStatus: { startup: string; delist: string; monitor: string };
+  allPmIdTypeList: tDbFrameWorkRunStatusRes[];
   globalConfigData: {
-    is_debug: boolean;
+    is_simulate: string | null;
     error_webhook_url: string;
     factor_col_limit: number;
+    is_encrypt: boolean;
   };
 }>();
 const viewIsOpenLogDialog = ref<boolean>(false);
@@ -546,28 +771,60 @@ const logRefreshTimeList = [
     code: "10",
   },
 ];
+
+const modeOpetions = [
+  {
+    label: "实盘交易",
+    value: "real",
+  },
+  {
+    label: "模拟实盘",
+    value: "simulate",
+  },
+  {
+    label: "实盘调试",
+    value: "debug",
+  },
+];
+
+const selectValue = computed({
+  get() {
+    return viewConfigData.value.is_simulate ?? "real"; // null -> "real"
+  },
+  set(val) {
+    viewConfigData.value.is_simulate = val === "real" ? null : val;
+  },
+});
+
 const viewCurrentPm_id = ref<null | number | string>(null);
 
 const viewConfigData = ref<iConfigData>({
-  is_debug: false,
+  is_simulate: null,
   error_webhook_url: "",
   factor_col_limit: 64,
+  is_encrypt: false,
 });
 const viewOldConfigData = ref<iConfigData>();
 const viewIsOpenConfigDataDialog = ref<boolean>(false);
 
+// 存储当前待执行的操作
+const viewPendingOperation = ref<{
+  status: dataCenterStatusEnum;
+  type: string;
+} | null>(null);
+
 const $emit = defineEmits([
   "refreshRunStatusList",
   "refreshGlobalConfigData",
-  "openAddAccount",
+  "refreshAccountList",
 ]);
 
 watch(
-  () => props.logTypeList,
+  () => props.allPmIdTypeList,
   (val) => {
     if (val.length > 0) {
       viewCurrentPm_id.value =
-        val.find((item) => item.name === "startup")?.pm_id || props.frameWorkId;
+        val.find((item) => item.name === "startup")?.pm_id ?? null;
     }
   },
   { immediate: true }
@@ -590,12 +847,40 @@ watch(
         ...JSON.parse(JSON.stringify(viewConfigData.value)),
         ...clonedVal,
       };
+
+      viewConfigData.value.is_simulate =
+        viewConfigData.value?.is_simulate ?? null;
     }
   },
   { immediate: true, deep: true }
 );
 
-const operateDataCenter = async (status: dataCenterStatusEnum) => {
+const getModeText = () => {
+  if (props.globalConfigData.is_simulate === "debug") {
+    return "实盘调试";
+  } else if (props.globalConfigData.is_simulate === "simulate") {
+    return "模拟实盘";
+  } else {
+    return "实盘交易";
+  }
+};
+
+const getPmId = (type: string) => {
+  let pmIdItem = props.allPmIdTypeList.filter(
+    (item: tDbFrameWorkRunStatusRes) => item.name === type
+  );
+
+  if (pmIdItem && pmIdItem.length > 0) {
+    return pmIdItem[0]?.pm_id ?? null;
+  } else {
+    return null;
+  }
+};
+
+const operateActualTrading = async (
+  status: dataCenterStatusEnum,
+  type: string
+) => {
   // 启动前判断是否已配置
   if (status === dataCenterStatusEnum.start) {
     const accountRes = await getAccountInfo(props.frameWorkId);
@@ -613,12 +898,43 @@ const operateDataCenter = async (status: dataCenterStatusEnum) => {
     }
   }
 
-  const res = await startOrStopFrameWork({
+  // 如果是加密模式并且实盘交易 用户需要输入加密时使用的密码
+  if (
+    viewConfigData.value.is_encrypt === true &&
+    status === dataCenterStatusEnum.start &&
+    refInputEncryptedPwdDialogTmpl.value
+  ) {
+    // 存储待执行的操作
+    viewPendingOperation.value = { status, type };
+    // 显示密码输入弹窗
+    refInputEncryptedPwdDialogTmpl.value?.openDialog();
+    return;
+  }
+  startOrStopFrameWorkFn(status, type);
+};
+
+const startOrStopFrameWorkFn = async (
+  status: dataCenterStatusEnum,
+  type: string,
+  password: string = ""
+) => {
+  let temp: vDataCenterStatusParams = {
     framework_id: props.frameWorkId,
+    pm_id: getPmId(type),
     type: status,
-  });
+  };
+  if (password) {
+    temp.secret_key = password;
+  }
+  const res = await startOrStopFrameWork(temp);
+  // 清除待执行的操作
+  viewPendingOperation.value = null;
   if (res.result) {
-    toast.add({ severity: "success", summary: "操作成功", life: 2000 });
+    toast.add({
+      severity: "success",
+      summary: "操作成功",
+      life: 2000,
+    });
     $emit("refreshRunStatusList");
   } else {
     toast.add({
@@ -630,6 +946,22 @@ const operateDataCenter = async (status: dataCenterStatusEnum) => {
   }
 };
 
+// 处理密码确认
+const passwordConfirmAction = async (password: string) => {
+  if (!viewPendingOperation.value) {
+    toast.add({
+      severity: "error",
+      summary: "操作失败",
+      detail: "未找到待执行的操作",
+      life: 3000,
+    });
+    return;
+  }
+  // 执行待执行的操作
+  const { status, type } = viewPendingOperation.value;
+  startOrStopFrameWorkFn(status, type, password);
+};
+
 const openLogDialogAction = async () => {
   viewIsOpenLogDialog.value = true;
   strategyLogRefreshTime.value = strategyLogRefreshTime.value || "0";
@@ -638,12 +970,9 @@ const openLogDialogAction = async () => {
 };
 
 const getLogFn = async () => {
-  let pm_id =
-    viewCurrentPm_id.value === null
-      ? props.frameWorkId
-      : viewCurrentPm_id.value;
   const res = await startOrStopFrameWork({
-    framework_id: pm_id,
+    framework_id: props.frameWorkId,
+    pm_id: viewCurrentPm_id.value,
     type: "log",
     lines: viewLogLines.value || 50,
   });
@@ -698,33 +1027,6 @@ const closeConfigDataDialog = () => {
   viewIsOpenConfigDataDialog.value = false;
 };
 
-const changeDebugStatus = (value: Boolean) => {
-  confirm.require({
-    group: "changeDebugStatus",
-    message: `确定要${value ? "开启" : "关闭"}debug模式吗？`,
-    icon: "pi pi-exclamation-triangle",
-    header: "提示",
-    rejectProps: {
-      label: "取消",
-      severity: "secondary",
-      outlined: true,
-    },
-    acceptProps: {
-      label: "确定",
-    },
-    accept: () => {
-      changeConfigDataFn();
-    },
-    reject: () => {
-      // 取消时恢复原状态
-      viewConfigData.value.is_debug = !value;
-    },
-    onHide: () => {
-      viewConfigData.value.is_debug = !value;
-    },
-  });
-};
-
 const resolver = ({ values }: any) => {
   const errors: Record<string, any> = {};
   // 简单url正则校验
@@ -755,6 +1057,7 @@ const changeConfigDataFn = async () => {
   const res = await editGlobalConfig({
     framework_id: props.frameWorkId,
     ...viewConfigData.value,
+    is_simulate: viewConfigData.value?.is_simulate || null,
   });
 
   if (res.result === true) {
@@ -764,16 +1067,12 @@ const changeConfigDataFn = async () => {
       life: 3000,
     });
     viewIsOpenConfigDataDialog.value = false;
-    $emit("refreshGlobalConfigData");
   }
+  $emit("refreshGlobalConfigData");
 };
 
 const gotoDetail = () => {
   router.push({ name: route.name, params: { id: props.currentId } });
-};
-
-const openAddAccountForm = () => {
-  $emit("openAddAccount", props.frameWorkId);
 };
 
 const openImportZipDialog = () => {
@@ -786,6 +1085,27 @@ const openExportZipDialog = () => {
   if (refExportZipDialogTemplate.value) {
     refExportZipDialogTemplate.value.openDialog();
   }
+};
+
+const changeIsEncryptionStatus = (value: boolean) => {
+  if (value) {
+    // 开启加密 - 显示加密说明弹窗
+    if (refEncryptionInfoDialogTmpl.value) {
+      refEncryptionInfoDialogTmpl.value.openDialog();
+    }
+  } else {
+    // 关闭加密 - 显示关闭确认弹窗
+    if (refDisableEncryptionDialogTmpl.value) {
+      refDisableEncryptionDialogTmpl.value.openDialog();
+    }
+  }
+};
+
+const confirmChangeIsEncryptionStatus = (isEncryption: boolean) => {
+  viewConfigData.value.is_encrypt = isEncryption;
+  changeConfigDataFn();
+  // 加密状态改变后，刷新账户列表获取最新数据
+  $emit("refreshAccountList", props.frameWorkId);
 };
 
 onUnmounted(() => {

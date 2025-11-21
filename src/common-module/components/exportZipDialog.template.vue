@@ -7,7 +7,7 @@
     :draggable="false"
     :modal="true"
     @hide="viewIsOpenDialog = false"
-    class="min-w-[90vw] sm:max-w-[90vw] sm:min-w-[40vw]"
+    class="min-w-[90vw] max-w-[90vw] sm:min-w-[40vw]"
     :pt="{
       footer: 'justify-between items-center',
     }"

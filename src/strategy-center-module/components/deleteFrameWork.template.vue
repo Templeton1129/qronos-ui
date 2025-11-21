@@ -122,18 +122,18 @@ import { onBeforeRouteLeave } from "vue-router";
 import {
   getFrameWorkRunStatus,
   startOrStopFrameWork,
-  framwWorkRunStatusEnum,
+  frameWorkRunStatusEnum,
   dataCenterStatusEnum,
   deleteFrameWork,
 } from "@/common-module/services/service.provider";
 
-const viewIsOpen = ref(false);
-const viewFrameworkId = ref("");
-const viewFrameworkName = ref("");
-const viewStepNumber = ref(1);
+const viewIsOpen = ref<boolean>(false);
+const viewFrameworkId = ref<string>("");
+const viewFrameworkName = ref<string>("");
+const viewStepNumber = ref<number>(1);
 // const viewIsDeleteAll = ref(false);
-const viewIsLoading = ref(false);
-const viewIsFailed = ref(false);
+const viewIsLoading = ref<boolean>(false);
+const viewIsFailed = ref<boolean>(false);
 const stopFrameWorkStatusTimer = ref<ReturnType<typeof setTimeout> | null>(
   null
 );
@@ -145,6 +145,7 @@ const openDialog = (frameWorkId: string, frameWorkName: string) => {
   viewFrameworkId.value = frameWorkId;
   viewFrameworkName.value = frameWorkName;
   viewIsOpen.value = true;
+  viewIsLoading.value = false;
 };
 
 const nextStep = async () => {
@@ -156,13 +157,14 @@ const nextStep = async () => {
         const isRunning = res.data.some(
           (item) =>
             item.framework_id === viewFrameworkId.value &&
-            item.status === framwWorkRunStatusEnum.online
+            item.status === frameWorkRunStatusEnum.online
         );
         if (isRunning) {
           viewStepNumber.value++;
           // 如果框架正在运行中，则需要先暂停框架
           const res = await startOrStopFrameWork({
             framework_id: viewFrameworkId.value,
+            pm_id: null,
             type: dataCenterStatusEnum.stop,
           });
           if (res.result === true) {
@@ -173,8 +175,9 @@ const nextStep = async () => {
         } else {
           deleteFrameWorkFn();
         }
-      } else {
-        viewStepNumber.value = 3;
+      } else if (res.data && res.data.length === 0) {
+        clearStopFrameWorkStatusTimer();
+        deleteFrameWorkFn();
       }
     } catch (error) {
       viewIsLoading.value = false;
@@ -202,7 +205,7 @@ const executeStopFrameWorkStatusCheck = async () => {
       const isStopped = res.data.some(
         (item) =>
           item.framework_id === viewFrameworkId.value &&
-          item.status === framwWorkRunStatusEnum.stopped
+          item.status === frameWorkRunStatusEnum.stopped
       );
 
       if (isStopped) {
@@ -210,6 +213,10 @@ const executeStopFrameWorkStatusCheck = async () => {
         deleteFrameWorkFn();
         return;
       }
+    } else if (res.data && res.data.length === 0) {
+      clearStopFrameWorkStatusTimer();
+      deleteFrameWorkFn();
+      return;
     }
   } catch (error) {}
 

@@ -28,7 +28,7 @@
         </div>
         <ul class="space-y-3">
           <li
-            v-for="(item, idx) in logList[version]"
+            v-for="(item, idx) in (logList as any)[version]"
             :key="idx"
             class="flex items-start gap-2"
           >
@@ -45,8 +45,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-const version = "0.4.0"; // 当前版本号
-const date = "2025-08-28";
+import { useUserStore } from "@/store/user";
+const store = useUserStore();
+
+const version = store.version; // 当前版本号
+const date = "2025-11-21";
 const logList = {
   "0.3.0": [
     "📊 首页监控状态增加 1 小时、24 小时盈利/亏损币前五名",
@@ -64,9 +67,19 @@ const logList = {
     "📈 持仓数据：首页持仓支持字段排序与筛选，信息更清晰",
     "🌐 网络状态：右上角新增网络延迟显示，实时掌握连接情况",
   ],
+  "0.5.0": [
+    "📈 杠杆范围：支持两位小数，参数设置更精细",
+    "🎨 策略兼容：适配「浪淘沙」填充逻辑，兼容更多策略模板",
+    "📥 策略导入：支持选币策略导入",
+    "🧩 监控开关：账户监控与下架监控支持自定义启用，灵活控制运行",
+    "🕒 数据筛选：首页账户数据支持按时间范围筛选，查看更便捷",
+    "🧪 模式扩展：新增“模拟实盘”模式",
+    "🔐 安全增强：API Key 与密钥支持加密开关，自主控制数据安全级别",
+    "📐 界面优化：整体页面布局升级，交互体验更流畅",
+  ],
 };
 
-const viewIsOpenDialog = ref(false);
+const viewIsOpenDialog = ref<boolean>(false);
 
 onMounted(() => {
   const lastReadVersion = localStorage.getItem("lastReadVersion");

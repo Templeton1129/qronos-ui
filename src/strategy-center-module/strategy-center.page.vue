@@ -118,7 +118,7 @@
             viewFrameWorkStatusList.length === 0
           "
         >
-          您目前暂无框架，请先新增框架！
+          你目前暂无框架，请先新增框架！
         </div>
         <!-- 单个详情 -->
       </div>
@@ -276,7 +276,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import { useToast } from "primevue/usetoast";
 const toast = useToast();

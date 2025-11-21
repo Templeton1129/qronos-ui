@@ -1,5 +1,4 @@
 <template>
-  <!-- 二次确认对话框 -->
   <Dialog
     v-model:visible="viewIsOpenDialog"
     :modal="true"
@@ -9,32 +8,156 @@
     <template #header>
       <div class="text-center text-lg font-bold">{{ inputType }}配置</div>
     </template>
-    <div class="flex flex-col gap-4">
-      <label for="apiKey" class="text-sm text-green-500">
-        输入{{
-          inputType
-        }}和分段数量后我们会将该字符串按照填写的分段数量间隔5s随机顺序进行存储
-      </label>
-      <div class="flex flex-col gap-2">
-        <label class="text-sm font-medium"
-          >分段数量<span class="text-xs text-gray-400"
-            >(最小分4段，最大分32段)</span
-          ></label
-        >
-        <InputNumber
-          v-model="viewUserSplitNumber"
-          :min="4"
-          :max="32"
-          showButtons
-          class="w-full"
-        />
-        <label class="text-sm font-medium">{{ inputType }}</label>
-        <InputText
-          v-model.trim="viewValue"
-          name="account_name"
-          :placeholder="`请输入${inputType}`"
-          class="w-full"
-        />
+    <div class="space-y-4 pt-1">
+      <div class="space-y-2">
+        <!-- 加密模式提示 -->
+        <Message v-if="viewIsEncryption">
+          <div class="flex flex-col gap-2 text-sm">
+            <div
+              class="flex items-center gap-2 text-blue-700 dark:text-blue-400 font-bold"
+            >
+              <i class="pi pi-info-circle text-md"></i>
+              <p>加密模式提示</p>
+            </div>
+
+            <div class="text-sm">
+              <p class="mb-2">
+                当前已开启API KEY/密钥加密，请在此处输入<span class="font-bold"
+                  >加密后的密文</span
+                >，而不是原始明文。
+              </p>
+              <ul class="list-disc text-xs space-y-2 pl-6">
+                <li class="space-y-2">
+                  <div>请使用下载的加密工具对原始{{ inputType }}进行加密</div>
+                  <Button
+                    label="下载加密工具"
+                    icon="pi pi-download"
+                    size="small"
+                    severity="success"
+                    class="px-1.5 py-0.5 text-xs w-fit"
+                    @click="downloadEncryptor"
+                  />
+                </li>
+                <li>确保使用与其他子账户相同的加密密码</li>
+                <li>密文格式要求：Base64编码，长度至少32位且为4的倍数</li>
+                <li>加密后的密文将按分段数量进行安全存储</li>
+              </ul>
+            </div>
+          </div>
+        </Message>
+
+        <!-- 明文模式提示 -->
+        <Message severity="warn">
+          <div class="space-y-1 text-sm">
+            <div
+              class="flex items-center gap-2 font-bold text-yellow-700 dark:text-yellow-400"
+            >
+              <i class="pi pi-exclamation-triangle text-md"></i>
+              <span> 明文模式提醒 </span>
+            </div>
+            <p>当前为明文模式，建议开启API KEY/密钥加密以增强安全性</p>
+          </div>
+        </Message>
+
+        <!-- 操作说明 -->
+        <div class="bg-gray-50 dark:bg-gray-800/50 px-3 py-2 rounded-xl">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="pi pi-info-circle text-gray-600 dark:text-gray-400"></i>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
+              >操作说明</span
+            >
+          </div>
+          <div class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+            <p>
+              1. 请输入{{ inputType }}（{{
+                viewIsEncryption ? "密文" : "明文"
+              }}）并设置分段数量
+            </p>
+            <p>
+              2. 系统会将其分割为指定数量的片段，并在5秒延迟窗口内随机化存储
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 输入表单 -->
+      <div class="space-y-4">
+        <!-- 分段数量设置 -->
+        <div class="space-y-2">
+          <label
+            class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2"
+          >
+            <div class="flex items-center gap-1">
+              <span class="text-red-500">*</span><span> 分段数量 </span>
+            </div>
+            <Tag
+              severity="secondary"
+              :pt="{
+                root: 'text-xs font-medium',
+              }"
+            >
+              4-32段
+            </Tag>
+          </label>
+          <InputNumber
+            v-model="viewUserSplitNumber"
+            :min="4"
+            :max="32"
+            showButtons
+            class="w-full"
+            :pt="{
+              input: 'text-center font-mono',
+              buttonGroup: 'border-gray-300 dark:border-gray-600',
+            }"
+          />
+          <!-- 加密模式下的格式提示 -->
+          <Message
+            v-if="viewUserSplitNumber === null"
+            severity="error"
+            variant="simple"
+            size="small"
+            >请输入分段数量</Message
+          >
+        </div>
+
+        <!-- API KEY/密钥输入 -->
+        <div class="space-y-2">
+          <label
+            class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2"
+          >
+            <div class="flex items-center gap-1">
+              <span class="text-red-500">*</span><span> {{ inputType }} </span>
+            </div>
+            <Tag
+              :severity="viewIsEncryption ? 'info' : 'secondary'"
+              :pt="{
+                root: 'text-xs font-medium',
+              }"
+            >
+              {{ viewIsEncryption ? "密文" : "明文" }}
+            </Tag>
+          </label>
+          <InputText
+            v-model.trim="viewValue"
+            name="account_name"
+            :placeholder="
+              viewIsEncryption
+                ? `请输入加密后的${inputType}密文`
+                : `请输入${inputType}`
+            "
+            class="w-full"
+            :pt="{
+              input: 'font-mono text-sm',
+            }"
+          />
+          <Message
+            v-if="viewIsEncryption && valueErrorLabel && !viewIsLoading"
+            severity="error"
+            variant="simple"
+            size="small"
+            >密文长度至少32位且为4的倍数</Message
+          >
+        </div>
       </div>
       <div class="flex justify-end gap-2">
         <Button
@@ -55,29 +178,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useToast } from "primevue/usetoast";
 const toast = useToast();
-import { maskString } from "@/common-module/utils";
+import { maskString, downloadEncryptor } from "@/common-module/utils";
 import { splitSendApikeyOrSecret } from "@/common-module/services/service.provider";
+import { useStrategyStore } from "@/store/strategy";
+const strategyStore = useStrategyStore();
 
 const viewIsOpenDialog = ref<boolean>(false);
+const viewIsLoading = ref<boolean>(false);
 const viewValue = ref<string>("");
 const cloneValue = ref<string>("");
+const viewIsEncryption = computed(() => strategyStore.isEncryption);
 const viewUserSplitNumber = ref<number>(4); // 默认4段，用户可修改
-const props = defineProps<{
-  inputType: string; //API KEY|密钥
-  frameworkId: string;
-  accountName: string;
-}>();
-const viewIsLoading = ref<boolean>(false);
-
-const openDialog = (value: string) => {
-  viewValue.value = value;
-  cloneValue.value = viewValue.value;
-  viewIsOpenDialog.value = true;
-};
-
 const sendApikeyOrSecretParams = ref<tSendApikeyOrSecretParams>({
   framework_id: "",
   account_name: "",
@@ -87,13 +201,41 @@ const sendApikeyOrSecretParams = ref<tSendApikeyOrSecretParams>({
   total: 4,
 });
 
+const props = defineProps<{
+  inputType: string; //API KEY|密钥
+  frameworkId: string;
+  accountName: string;
+}>();
+const $emit = defineEmits(["refreshApikeyOrSecretValue"]);
+
+const openDialog = (value: string) => {
+  viewValue.value = value;
+  cloneValue.value = viewValue.value;
+  viewIsOpenDialog.value = true;
+};
+
+// 验证加密格式的函数
+const valueErrorLabel = computed(() => {
+  // 长度校验：至少32位且为4的倍数
+  if (
+    !viewValue.value ||
+    viewValue.value.length < 32 ||
+    viewValue.value.length % 4 !== 0
+  ) {
+    return "密文长度至少32位且为4的倍数";
+  }
+
+  // Base64字符校验
+  const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+  if (!base64Regex.test(viewValue.value)) {
+    return "密文应包含有效的Base64编码字符（A-Z, a-z, 0-9, +, /, =）";
+  }
+
+  return "";
+});
+
 const confirmSaveData = async () => {
-  if (!viewValue.value) {
-    toast.add({
-      severity: "warn",
-      summary: "请输入内容",
-      life: 3000,
-    });
+  if (!viewValue.value || (viewIsEncryption.value && valueErrorLabel.value)) {
     return;
   }
 
@@ -207,7 +349,6 @@ const confirmSaveData = async () => {
   }
 };
 
-const $emit = defineEmits(["refreshApikeyOrSecretValue"]);
 defineExpose({
   openDialog,
 });

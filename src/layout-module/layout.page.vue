@@ -14,7 +14,7 @@
         <div class="flex items-center justify-center">
           实盘网页版<Divider layout="vertical" />公测版本
           <Message severity="secondary" size="small" class="h-6 font-mono mx-2"
-            >v0.4.0</Message
+            >v{{ store.version }}</Message
           >© 2025
         </div>
       </footer>
@@ -26,6 +26,6 @@
 import { RouterView } from "vue-router";
 import SidebarTemplate from "@/layout-module/components/sidebar.template.vue";
 import HeaderTemplate from "@/layout-module/components/header.template.vue";
-import { useRoute } from "vue-router";
-const route = useRoute();
+import { useUserStore } from "@/store/user";
+const store = useUserStore();
 </script>

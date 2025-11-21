@@ -213,6 +213,7 @@ const toast = useToast();
 import { useConfirm } from "primevue/useconfirm";
 const confirm = useConfirm();
 
+import { hourOffsetList } from "@/common-module/defaultValues";
 import CustomCheckboxTemplate from "@/common-module/components/customCheckbox.template.vue";
 import {
   editDataCenterConfig,
@@ -225,21 +226,6 @@ const props = defineProps<{
   frameWorkId: string;
   isForceEdit: boolean;
 }>();
-
-const hourOffsetList = [
-  "0m",
-  "5m",
-  "10m",
-  "15m",
-  "20m",
-  "25m",
-  "30m",
-  "35m",
-  "40m",
-  "45m",
-  "50m",
-  "55m",
-];
 
 const viewIsOpenEditDataDialog = ref<boolean>(false);
 

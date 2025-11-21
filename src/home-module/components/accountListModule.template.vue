@@ -1,26 +1,44 @@
 <template>
-  <div class="flex gap-2" v-if="viewData.length > 0">
-    <Button
-      type="button"
-      icon="pi pi-plus"
-      icon-class="text-xs"
-      class="text-xs shadow-sm bg-white dark:bg-neutral-800 border-0 text-gray-500 dark:text-gray-200"
-      label="展开"
-      size="small"
-      @click="expandAll"
-      :disabled="expandedPanels.length === viewData.length"
-    />
-    <Button
-      type="button"
-      variant="outlined"
-      icon-class="text-xs"
-      icon="pi pi-minus"
-      label="折叠"
-      class="text-xs shadow-sm bg-white dark:bg-neutral-800 border-0 text-gray-500 dark:text-gray-200"
-      size="small"
-      @click="collapseAll"
-      :disabled="expandedPanels.length === 0"
-    />
+  <div class="flex justify-between gap-2" v-if="viewData.length > 0">
+    <div class="flex gap-2">
+      <Button
+        type="button"
+        icon="pi pi-plus"
+        icon-class="text-xs"
+        class="text-xs shadow-sm bg-white dark:bg-neutral-800 border-0 text-gray-500 dark:text-gray-200"
+        label="展开"
+        size="small"
+        @click="expandAll"
+        :disabled="expandedPanels.length === viewData.length"
+      />
+      <Button
+        type="button"
+        variant="outlined"
+        icon-class="text-xs"
+        icon="pi pi-minus"
+        label="折叠"
+        class="text-xs shadow-sm bg-white dark:bg-neutral-800 border-0 text-gray-500 dark:text-gray-200"
+        size="small"
+        @click="collapseAll"
+        :disabled="expandedPanels.length === 0"
+      />
+    </div>
+    <div class="flex items-center">
+      <span class="text-gray-500 text-xs dark:text-gray-300">时间范围：</span>
+      <Select
+        v-model="viewSelectedTimeRange"
+        :options="allTimeRangeOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="时间范围"
+        size="small"
+        :pt="{
+          label: 'text-xs py-1',
+          list: 'text-xs',
+        }"
+        @value-change="loadData"
+      />
+    </div>
   </div>
   <!-- 操作器 -->
   <div class="space-y-3 flex-1">
@@ -125,10 +143,26 @@
                     : 'min-w-full sm:min-w-100',
                 ]"
               >
-                <div class="text-md text-center">账户净值</div>
+                <div class="text-md flex items-center justify-center gap-2">
+                  账户净值
+                  <i
+                    :class="[
+                      !viewAccountValueHiddenIdList.includes(item.id)
+                        ? `pi pi-eye`
+                        : `pi pi-eye-slash`,
+                    ]"
+                    class="hover:text-gray-500 hover:dark:text-gray-300 cursor-pointer text-[18px]"
+                    @click="showOrHiddenAction(item.id)"
+                  ></i>
+                </div>
                 <div class="flex-1 flex justify-center items-center">
                   <div
-                    class="flex flex-row items-end flex-wrap justify-center gap-2"
+                    class="flex flex-row flex-wrap justify-center gap-2"
+                    :class="[
+                      !viewAccountValueHiddenIdList.includes(item.id)
+                        ? 'items-end'
+                        : 'items-center',
+                    ]"
                   >
                     <div
                       class="font-bold text-primary-500 font-mono"
@@ -148,6 +182,7 @@
                           : 'text-4xl sm:text-5xl',
                       ]"
                       v-if="
+                        !viewAccountValueHiddenIdList.includes(item.id) &&
                         item?.equity?.equity_amount &&
                         item?.equity?.equity_amount?.length > 0
                       "
@@ -161,6 +196,12 @@
                           .toFixed(2)
                           .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }}
+                    </div>
+                    <div
+                      v-else-if="viewAccountValueHiddenIdList.includes(item.id)"
+                      class="font-bold text-primary-500 font-mono text-4xl sm:text-5xl"
+                    >
+                      ****
                     </div>
                     <div
                       v-else
@@ -187,14 +228,20 @@
                     <div class="flex flex-1 flex-col items-center gap-2">
                       <span>24H盈亏</span>
                       <Tag class="font-medium w-30 font-mono rounded-sm">{{
-                        item?.eq_pnl_24h || "--"
+                        viewAccountValueHiddenIdList.includes(item.id)
+                          ? "****"
+                          : item?.eq_pnl_24h || "--"
                       }}</Tag>
                     </div>
                     <Divider layout="vertical" />
                     <div class="flex flex-1 flex-col items-center gap-2">
                       <span>24H收益率</span>
                       <Tag class="font-medium w-30 font-mono rounded-sm"
-                        >{{ item?.eq_pct_24h || "--" }}%</Tag
+                        >{{
+                          viewAccountValueHiddenIdList.includes(item.id)
+                            ? "****"
+                            : item?.eq_pct_24h || "--"
+                        }}%</Tag
                       >
                     </div>
                   </div>
@@ -204,14 +251,18 @@
                     <div class="flex flex-1 flex-col items-center gap-2">
                       <span>24H最大净值</span>
                       <Tag class="font-medium w-30 font-mono rounded-sm">{{
-                        item?.eq_max_24h || "--"
+                        viewAccountValueHiddenIdList.includes(item.id)
+                          ? "****"
+                          : item?.eq_max_24h || "--"
                       }}</Tag>
                     </div>
                     <Divider layout="vertical" />
                     <div class="flex flex-1 flex-col items-center gap-2">
                       <span>24H最小净值</span>
                       <Tag class="font-medium w-30 font-mono rounded-sm">{{
-                        item?.eq_min_24h || "--"
+                        viewAccountValueHiddenIdList.includes(item.id)
+                          ? "****"
+                          : item?.eq_min_24h || "--"
                       }}</Tag>
                     </div>
                   </div>
@@ -243,12 +294,14 @@
                   />
                 </template>
                 <template v-else>
-                  <div class="flex-1 flex flex-col items-center justify-center">
+                  <div class="flex-1 flex flex-col items-center px-4 py-3">
                     <div class="text-md text-center">策略净值曲线图</div>
-                    <img
-                      src="@/assets/home-img/no-data.png"
-                      class="w-40 h-auto"
-                    />
+                    <div class="flex-1 flex items-center justify-center">
+                      <img
+                        src="@/assets/home-img/no-data.png"
+                        class="w-40 h-auto"
+                      />
+                    </div>
                   </div>
                 </template>
               </div>
@@ -282,19 +335,27 @@
                   />
                 </template>
                 <template v-else>
-                  <div class="flex-1 flex flex-col items-center justify-center">
+                  <div class="flex-1 flex flex-col items-center px-4 py-3">
                     <div class="text-md text-center">多空统计</div>
-                    <img
-                      src="@/assets/home-img/no-data.png"
-                      class="w-40 h-auto"
-                    />
+                    <div class="flex-1 flex items-center justify-center">
+                      <img
+                        src="@/assets/home-img/no-data.png"
+                        class="w-40 h-auto"
+                      />
+                    </div>
                   </div>
                 </template>
               </div>
               <!-- 持仓模块 表格 -->
               <div
                 class="pt-3 flex flex-col content-between bg-gray-50 dark:bg-neutral-900 rounded-lg"
-                :class="[viewfullscreenId === item.id ? 'max-h-120' : '']"
+                :class="[
+                  viewfullscreenId === item.id
+                    ? 'max-h-120'
+                    : item?.pos_swap || item?.pos_spot
+                    ? ''
+                    : 'min-w-full sm:min-w-100',
+                ]"
               >
                 <SelectButton
                   v-model="item.selectValue"
@@ -456,8 +517,8 @@
                     size="small"
                   />
                   <Select
-                    v-model="selectedTimeRange"
-                    :options="timeRangeOptions"
+                    v-model="pnlSelectedTimeRange"
+                    :options="pnlTimeRangeOptions"
                     optionLabel="label"
                     optionValue="value"
                     placeholder="时间范围"
@@ -856,11 +917,19 @@ const viewCurrentFactorList = ref<{
   filterListPost: [],
 });
 
-const selectedTimeRange = ref<string>("1h");
-const timeRangeOptions = [
+const pnlSelectedTimeRange = ref<string>("1h");
+const pnlTimeRangeOptions = [
   { label: "最近1小时", value: "1h" },
   { label: "最近24小时", value: "24h" },
 ];
+
+const viewSelectedTimeRange = ref<number>(0);
+const allTimeRangeOptions = [
+  { label: "最近7天", value: 7 },
+  { label: "最近30天", value: 30 },
+  { label: "全部时间", value: 0 },
+];
+
 const coinSortTypeOptions = ref<string[]>(["盈利", "亏损"]);
 const colorList = ref<string[]>([
   "bg-green-500",
@@ -870,6 +939,8 @@ const colorList = ref<string[]>([
   "bg-teal-500",
 ]);
 
+const viewAccountValueHiddenIdList = ref<number[]>([]);
+
 onMounted(() => {
   loadData();
 });
@@ -877,7 +948,7 @@ onMounted(() => {
 // 获取图表数据
 const loadData = async () => {
   viewIsLoading.value = true;
-  const res = await getHomeAccountInfo();
+  const res = await getHomeAccountInfo(viewSelectedTimeRange.value);
   viewData.value = res.data;
   viewData.value.forEach((item) => {
     item.selectValue = "持仓合约";
@@ -906,18 +977,18 @@ const formatStrategyPool = () => {
 const getPnlHistory = (item: any) => {
   if (
     item?.pnl_history &&
-    selectedTimeRange.value &&
-    item.pnl_history[selectedTimeRange.value] &&
-    item.pnl_history[selectedTimeRange.value].length > 0
+    pnlSelectedTimeRange.value &&
+    item.pnl_history[pnlSelectedTimeRange.value] &&
+    item.pnl_history[pnlSelectedTimeRange.value].length > 0
   ) {
     // 根据coinSortType取total_pnl>0/<0的币排序,截取前五名展示
     if (item.coinSortType === "盈利") {
-      return item.pnl_history[selectedTimeRange.value]
+      return item.pnl_history[pnlSelectedTimeRange.value]
         .filter((coin: any) => coin.total_pnl > 0)
         .sort((a: any, b: any) => b.total_pnl - a.total_pnl)
         .slice(0, 5);
     } else {
-      return item.pnl_history[selectedTimeRange.value]
+      return item.pnl_history[pnlSelectedTimeRange.value]
         .filter((coin: any) => coin.total_pnl < 0)
         .sort((a: any, b: any) => a.total_pnl - b.total_pnl)
         .slice(0, 5);
@@ -971,6 +1042,15 @@ const viewFactorSelectChange = () => {
     viewFactorList.value = [...viewCurrentFactorList.value.filterList];
   } else if (viewFactorSelect.value === "后置因子") {
     viewFactorList.value = [...viewCurrentFactorList.value.filterListPost];
+  }
+};
+
+const showOrHiddenAction = (itemId: number) => {
+  if (viewAccountValueHiddenIdList.value.includes(itemId)) {
+    viewAccountValueHiddenIdList.value =
+      viewAccountValueHiddenIdList.value.filter((id: number) => id !== itemId);
+  } else {
+    viewAccountValueHiddenIdList.value.push(itemId);
   }
 };
 </script>

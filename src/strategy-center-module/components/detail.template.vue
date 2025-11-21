@@ -7,8 +7,12 @@
     >
       <!-- 跑马灯 -->
       <MarqueeTemplate
-        v-if="tabType === `item` && viewGlobalConfigData?.is_debug === true"
-        content="当前是debug模式，不会真正下单产生真实的金钱交易！"
+        v-if="tabType === `item` && viewGlobalConfigData?.is_simulate !== null"
+        :content="`当前是${
+          viewGlobalConfigData?.is_simulate === 'debug'
+            ? ' “实盘调试模式” '
+            : ' “模拟实盘模式” (每小时计算选币和资金曲线)'
+        }，不会真正下单产生真实的金钱交易！`"
       />
       <!--框架运行情况及控制  -->
       <RunStatusAndOperationTemplate
@@ -19,13 +23,13 @@
         :frameWorkId="frameWorkDataItem.framework_id"
         :frameWorkType="frameWorkDataItem.type"
         :runStatus="getRunStatus(frameWorkDataItem.framework_id)"
-        :logTypeList="getLogTypeList(frameWorkDataItem.framework_id)"
+        :allPmIdTypeList="getLogTypeList(frameWorkDataItem.framework_id)"
         :globalConfigData="viewGlobalConfigData"
         @refreshGlobalConfigData="
           getGlobalConfigDataFn(frameWorkDataItem.framework_id)
         "
         @refreshRunStatusList="startFrameWorkRunStatusTimer"
-        @openAddAccount="(frameWorkId:string) => openAddAccountForm(frameWorkId)"
+        @refreshAccountList="(frameWorkId:string) => onRefreshAccountList(frameWorkId)"
       />
 
       <AccountManageTemplate
@@ -80,15 +84,17 @@ const refAccountManageTemplate = ref<
   InstanceType<typeof AccountManageTemplate>[]
 >([]);
 import UploadFilesTemplate from "@/strategy-center-module/components/uploadFiles.template.vue";
-
 import {
   getFrameWorkRunStatus,
-  framwWorkRunStatusEnum,
+  frameWorkRunStatusEnum,
   dataCenterStatusEnum,
   getDataCenterConfig,
   uploadFolderEnum,
   frameWorkTypeEnum,
 } from "@/common-module/services/service.provider";
+import { useStrategyStore } from "@/store/strategy";
+const strategyStore = useStrategyStore();
+
 const props = defineProps<{
   tabType: string; //all汇总 item单个
   framWorkData: tDbFrameWorkStatusRes[];
@@ -96,24 +102,42 @@ const props = defineProps<{
 const viewIsLoading = ref(true); // 新增加载状态
 const runStatuslList = ref<tDbFrameWorkRunStatusRes[]>([]);
 const frameWorkStatusTimer = ref<ReturnType<typeof setTimeout> | null>(null);
-const viewGlobalConfigData = ref({
-  is_debug: false,
+const viewGlobalConfigData = ref<iConfigData>({
+  is_simulate: null,
   error_webhook_url: "",
   factor_col_limit: 64,
+  is_encrypt: false,
 });
 
 onMounted(async () => {
+  runStatuslList.value = [];
   startFrameWorkRunStatusTimer();
 });
 
 const getRunStatus = (framework_id: string) => {
-  let runStatusItem = runStatuslList.value.find(
-    (item) => item.framework_id === framework_id
+  const tempRunStatuslList = JSON.parse(JSON.stringify(runStatuslList.value));
+  let runStatusItem = tempRunStatuslList.filter(
+    (item: any) => item.framework_id === framework_id
   );
 
-  return runStatusItem?.status === framwWorkRunStatusEnum.online
-    ? dataCenterStatusEnum.start
-    : dataCenterStatusEnum.stop;
+  let temp: any = {
+    startup: dataCenterStatusEnum.stop,
+    delist: dataCenterStatusEnum.stop,
+    monitor: dataCenterStatusEnum.stop,
+  };
+  if (runStatusItem && runStatusItem.length > 0) {
+    runStatusItem.forEach((item: tDbFrameWorkRunStatusRes) => {
+      // 检查键名是否存在
+      if (item.name in temp) {
+        temp[item.name] =
+          item.status === frameWorkRunStatusEnum.online
+            ? dataCenterStatusEnum.start
+            : dataCenterStatusEnum.stop;
+      }
+    });
+  }
+
+  return JSON.parse(JSON.stringify(temp));
 };
 
 const startFrameWorkRunStatusTimer = () => {
@@ -131,9 +155,9 @@ const executeRunStatusCheck = async () => {
       let isIngStatus = false;
       for (let item of res.data) {
         if (
-          item.status === framwWorkRunStatusEnum.starting ||
-          item.status === framwWorkRunStatusEnum.stopping ||
-          item.status === framwWorkRunStatusEnum.restarting
+          item.status === frameWorkRunStatusEnum.starting ||
+          item.status === frameWorkRunStatusEnum.stopping ||
+          item.status === frameWorkRunStatusEnum.restarting
         ) {
           isIngStatus = true;
           break;
@@ -164,11 +188,21 @@ const clearFrameWorkRunStatusTimer = () => {
 };
 
 const getLogTypeList = (framework_id: string) => {
+  let tempRunStatuslList = JSON.parse(JSON.stringify(runStatuslList.value));
   let output: tDbFrameWorkRunStatusRes[] = [];
-  let currentFarmWorkData = runStatuslList.value.filter(
-    (item) => item.framework_id === framework_id
+  let currentFarmWorkData = tempRunStatuslList.filter(
+    (item: any) => item.framework_id === framework_id
   );
   if (currentFarmWorkData) {
+    currentFarmWorkData = currentFarmWorkData.map(
+      (item: tDbFrameWorkRunStatusRes) => {
+        item.status =
+          item?.status === frameWorkRunStatusEnum.online
+            ? dataCenterStatusEnum.start
+            : dataCenterStatusEnum.stop;
+        return item;
+      }
+    );
     output = currentFarmWorkData;
   }
 
@@ -178,11 +212,13 @@ const getLogTypeList = (framework_id: string) => {
 const getGlobalConfigDataFn = async (framework_id: string) => {
   const res = await getDataCenterConfig(framework_id);
   if (res.result === true) {
-    viewGlobalConfigData.value.is_debug = res.data?.is_debug || false;
+    viewGlobalConfigData.value.is_simulate = res.data?.is_simulate || null;
     viewGlobalConfigData.value.error_webhook_url =
       res.data?.error_webhook_url || "";
     viewGlobalConfigData.value.factor_col_limit =
       res.data?.factor_col_limit || 64;
+    viewGlobalConfigData.value.is_encrypt = res.data?.is_encrypt || false;
+    strategyStore.setIsEncryption(res.data?.is_encrypt || false);
   }
 };
 
@@ -194,14 +230,15 @@ onBeforeRouteLeave(() => {
   clearFrameWorkRunStatusTimer();
 });
 
-const openAddAccountForm = async (frameWorkId: string) => {
+const onRefreshAccountList = async (frameWorkId: string) => {
+  // 当加密状态改变后，刷新账户列表
   await nextTick();
   if (refAccountManageTemplate.value) {
     const targetComponent = refAccountManageTemplate.value.find(
       (component) => component.frameWorkId === frameWorkId
     );
     if (targetComponent) {
-      targetComponent.openAddAccountForm();
+      targetComponent.getAccountInfoListFn();
     }
   }
 };
