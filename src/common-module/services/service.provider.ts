@@ -463,11 +463,13 @@ export const formatFramWorkVersionList = (
   if (list && list.length > 0) {
     if (isDataCenter) {
       list = list.filter(
-        (item: tDbFrameWorkItem) => item.id === frameworkTypeIdEnum.data_center
+        (item: tDbFrameWorkItem) =>
+          item.framework_type === frameWorkTypeEnum.data_center
       );
     } else {
       list = list.filter(
-        (item: tDbFrameWorkItem) => item.id !== frameworkTypeIdEnum.data_center
+        (item: tDbFrameWorkItem) =>
+          item.framework_type !== frameWorkTypeEnum.data_center
       );
     }
 
@@ -485,18 +487,23 @@ export const formatFramWorkVersionList = (
         item.versions.map((versionItem: tDbFrameWorkVersionVersionItem) => {
           output.push({
             // 分类id
-            classId: item.id,
+            framework_type: item.framework_type,
             frameWorkName: item.title,
             name: versionItem.file.name,
             id: versionItem.file.id,
             status: frameWorkDownloadStatusEnum.notDownloaded,
             hidden: versionItem.hidden,
             time: versionItem.time,
+            course_name: item.course_name,
           });
         });
       }
     });
   }
+  // 根据时间再次排序
+  output.sort((a: vFrameWorkVersionItem, b: vFrameWorkVersionItem) => {
+    return new Date(b.time).getTime() - new Date(a.time).getTime();
+  });
   // 过滤掉已经下架的
   output = output.filter((item) => item.hidden === false);
   return output;
@@ -625,7 +632,8 @@ export const getFrameWorkStatus = (
           if (isSelectDataCenterType == true) {
             res.data = res.data
               .filter(
-                (item: tDbFrameWorkStatusRes) => item.type === "data_center"
+                (item: tDbFrameWorkStatusRes) =>
+                  item.type === "data_center" && item.status !== "failed"
               )
               .sort((a: tDbFrameWorkStatusRes, b: tDbFrameWorkStatusRes) => {
                 return new Date(b.time).getTime() - new Date(a.time).getTime();

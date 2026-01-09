@@ -1020,7 +1020,7 @@
               </div>
 
               <!-- 基础保证金 -->
-              <!-- <div>
+              <div>
                 <label class="hidden sm:block text-sm font-medium mb-1"
                   >基础保证金</label
                 >
@@ -1033,7 +1033,7 @@
                   <InputText
                     :size="formItemSize || 'normal'"
                     :model-value="(item as any).coin"
-                    @blur="(e: Event) => formatCoinInput(e, index)"
+                    @blur="(e: Event) => formatCoinInput(e, index as number)"
                     placeholder="输入币种"
                   />
                   <InputNumber
@@ -1055,7 +1055,7 @@
                     text
                     @click="
                       () => {
-                        removeCoinBaseMargin(index);
+                        removeCoinBaseMargin(index as number);
                       }
                     "
                   />
@@ -1104,7 +1104,7 @@
                     </div>
                   </template>
                 </Inplace>
-              </div> -->
+              </div>
             </div>
           </template>
         </Inplace>
@@ -1223,27 +1223,27 @@ const openDialog = (formValues: tDbAccountInfoRes | null) => {
     }
 
     // 基础保证金 对象 转化为数组
-    // if (
-    //   initialValues.value.account_config.base_margin &&
-    //   Object.keys(initialValues.value.account_config.base_margin).length > 0
-    // ) {
-    //   let tempBaseMargin = [];
-    //   for (let item of Object.keys(
-    //     initialValues.value.account_config.base_margin
-    //   )) {
-    //     tempBaseMargin.push({
-    //       coin: item,
-    //       value: (initialValues.value.account_config.base_margin as any)[item],
-    //     });
-    //   }
-    //   initialValues.value.account_config.base_margin = tempBaseMargin as any;
-    // } else {
-    //   initialValues.value.account_config.base_margin = [] as any;
-    // }
+    if (
+      initialValues.value.account_config.base_margin &&
+      Object.keys(initialValues.value.account_config.base_margin).length > 0
+    ) {
+      let tempBaseMargin = [];
+      for (let item of Object.keys(
+        initialValues.value.account_config.base_margin
+      )) {
+        tempBaseMargin.push({
+          coin: item,
+          value: (initialValues.value.account_config.base_margin as any)[item],
+        });
+      }
+      initialValues.value.account_config.base_margin = tempBaseMargin as any;
+    } else {
+      initialValues.value.account_config.base_margin = [] as any;
+    }
   } else {
     coinMarginEditKeys.value = [];
     coinMarginEditValues.value = [];
-    // initialValues.value.account_config.base_margin = [] as any;
+    initialValues.value.account_config.base_margin = [] as any;
   }
 
   viewIsOpenAccountDialog.value = true;
@@ -1317,53 +1317,65 @@ const resolver = ({ values }: any) => {
   }
 
   // base_margin 基础保证金校验
-  // if (
-  //   initialValues.value.account_config.base_margin &&
-  //   (initialValues.value.account_config.base_margin as any).length > 0
-  // ) {
-  //   const baseMarginArray =
-  //     (initialValues.value.account_config.base_margin as any) || [];
+  if (
+    initialValues.value.account_config.base_margin &&
+    (initialValues.value.account_config.base_margin as any).length > 0
+  ) {
+    const baseMarginArray =
+      (initialValues.value.account_config.base_margin as any) || [];
 
-  //   // 1. coin名不能重复
-  //   const coinNames = baseMarginArray
-  //     .map((item: any) => item.coin)
-  //     .filter((coin: any) => coin);
-  //   const uniqueCoinNames = [...new Set(coinNames)];
-  //   if (coinNames.length !== uniqueCoinNames.length) {
-  //     errors.base_margin = [{ message: "基础保证金币种不能重复" }];
-  //   }
+    // 1. coin名不能重复
+    let coinNames = baseMarginArray.map((item: any) => item.coin);
 
-  //   // 2. coin中必须有一项是USDT
-  //   if (!coinNames.includes("USDT")) {
-  //     errors.base_margin = [{ message: "基础保证金中必须包含USDT币种" }];
-  //   }
+    let filterCoinNames = coinNames.filter((item: any) => item !== "");
 
-  //   // 3. value值加一起必须等于1（允许0.01的误差）
-  //   const totalValue = baseMarginArray.reduce((sum: number, item: any) => {
-  //     return sum + (item.value || 0);
-  //   }, 0);
-  //   if (Math.abs(totalValue - 1) > 0.01) {
-  //     errors.base_margin = [{ message: "基础保证金比例总和必须等于1" }];
-  //   }
+    const uniqueCoinNames = [...new Set(filterCoinNames)];
+    if (coinNames.length !== uniqueCoinNames.length) {
+      errors.base_margin = [{ message: "基础保证金币种不能重复" }];
+    }
 
-  //   // 4. 检查币种名称格式
-  //   const invalidCoins = coinNames.filter(
-  //     (coin: any) => coin && !/^[A-Z]+$/.test(coin)
-  //   );
-  //   if (invalidCoins.length > 0) {
-  //     errors.base_margin = [{ message: "币种名称只能包含大写字母" }];
-  //   }
+    // coin名不能为空
+    if (
+      coinNames.includes("") ||
+      coinNames.includes(null) ||
+      coinNames.includes(undefined)
+    ) {
+      errors.base_margin = [{ message: "基础保证金币种不能为空" }];
+    }
 
-  //   // 5. 检查比例值范围
-  //   const invalidValues = baseMarginArray.filter(
-  //     (item: any) => item.value <= 0 || item.value > 1
-  //   );
-  //   if (invalidValues.length > 0) {
-  //     errors.base_margin = [
-  //       { message: "基础保证金比例必须在0-1之间，不能等于0" },
-  //     ];
-  //   }
-  // }
+    // 2. coin中必须有一项是USDT
+    if (!coinNames.includes("USDT")) {
+      errors.base_margin = [{ message: "基础保证金中必须包含USDT币种" }];
+    }
+
+    // 3. value值加一起必须等于1
+    const totalValue = baseMarginArray.reduce((sum: number, item: any) => {
+      return sum + (item.value || 0);
+    }, 0);
+    if (totalValue !== 1) {
+      errors.base_margin = [{ message: "基础保证金比例总和必须等于1" }];
+    }
+
+    // 4. 检查币种名称格式
+    const invalidCoins = coinNames.filter(
+      (coin: any) => coin && !/^[A-Z]+$/.test(coin)
+    );
+    if (invalidCoins.length > 0) {
+      errors.base_margin = [{ message: "币种名称只能包含大写字母" }];
+    }
+
+    // 5. 检查比例值范围
+    const invalidValues = baseMarginArray.filter(
+      (item: any) => item.value <= 0 || item.value > 1
+    );
+    if (invalidValues.length > 0) {
+      errors.base_margin = [
+        { message: "基础保证金比例必须在0-1之间，不能等于0" },
+      ];
+    }
+  } else {
+    errors.base_margin = [{ message: "基础保证金必须包含USDT币种" }];
+  }
 
   return {
     values,
@@ -1464,20 +1476,20 @@ const formSubmitAction = async ({ valid }: any) => {
       tempInitialValues.rebalance_mode = null;
     }
 
-    // if (
-    //   initialValues.value.account_config.base_margin &&
-    //   (initialValues.value.account_config.base_margin as any).length > 0
-    // ) {
-    //   let temp: any = {};
-    //   (initialValues.value.account_config.base_margin as any).forEach(
-    //     (item: any) => {
-    //       temp[item.coin] = item.value;
-    //     }
-    //   );
-    //   initialValues.value.account_config.base_margin = temp;
-    // } else {
-    //   initialValues.value.account_config.base_margin = {} as any;
-    // }
+    if (
+      tempInitialValues.account_config.base_margin &&
+      (tempInitialValues.account_config.base_margin as any).length > 0
+    ) {
+      let temp: any = {};
+      (tempInitialValues.account_config.base_margin as any).forEach(
+        (item: any) => {
+          temp[item.coin] = item.value;
+        }
+      );
+      tempInitialValues.account_config.base_margin = temp;
+    } else {
+      tempInitialValues.account_config.base_margin = {};
+    }
 
     addOrEditAccountAction(tempInitialValues);
   }
@@ -1591,6 +1603,14 @@ const updateCoinMargin = () => {
 };
 
 const removeCoinBaseMargin = (index: number) => {
+  if (initialValues.value.account_config.base_margin[index].coin === "USDT") {
+    toast.add({
+      severity: "warn",
+      summary: "USDT是默认配置，不允许删除",
+      life: 2000,
+    });
+    return;
+  }
   (initialValues.value.account_config.base_margin as any).splice(index, 1);
 };
 

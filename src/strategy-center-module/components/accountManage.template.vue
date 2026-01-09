@@ -509,7 +509,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, defineProps, nextTick, computed } from "vue";
+import { onMounted, ref, watch, nextTick, computed } from "vue";
 import { useRouter } from "vue-router";
 const router = useRouter();
 import AccountFormTemplate from "@/strategy-center-module/components/accountForm.template.vue";

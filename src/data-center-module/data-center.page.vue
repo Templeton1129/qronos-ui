@@ -407,15 +407,18 @@
             size="small"
           />
         </div>
-        <Select
-          v-model="dataLogRefreshTime"
-          :options="logRefreshTimeList"
-          optionLabel="name"
-          optionValue="code"
-          placeholder="刷新频率"
-          @value-change="refreshTimeChangeAction"
-          size="small"
-        />
+        <div class="space-x-2">
+          <label class="text-sm flex-shrink-0">刷新频率:</label>
+          <Select
+            v-model="dataLogRefreshTime"
+            :options="logRefreshTimeList"
+            optionLabel="name"
+            optionValue="code"
+            placeholder="刷新频率"
+            @value-change="refreshTimeChangeAction"
+            size="small"
+          />
+        </div>
       </div>
       <p v-html="viewDataLog" class="flex-1 overflow-y-auto"></p>
     </div>
@@ -806,7 +809,7 @@ const confirmUpdate = async () => {
         life: 3000,
       });
       // 重新加载数据
-      loadDataFn();
+      startDownloadFrameWorkStatusTimer();
     }
   } finally {
     viewUpdateIsLoading.value = false;

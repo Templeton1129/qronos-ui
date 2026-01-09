@@ -273,17 +273,20 @@ const tFrameWorkItem = {
   title: "25分享会-选币实盘框架𝓟𝓻𝓸",
   versions: [tDbFrameWorkVersionVersionItem],
   white: 0,
+  // 2026新增
+  framework_type: frameWorkTypeEnum.position, //select_coin position data_center
 };
 type tDbFrameWorkItem = typeof tFrameWorkItem;
 
 type vFrameWorkVersionItem = {
-  classId: string; //仓管/选币/实盘
+  framework_type: string; //仓管/选币/实盘
   frameWorkName: string;
   name: string;
   id: string;
   status: string;
   hidden: boolean;
   time: string;
+  course_name: string;
 };
 
 const dataCenterConfigParams = {
@@ -303,7 +306,7 @@ type tDataCenterConfigParams = typeof dataCenterConfigParams & {
 type tDbDataCenterConfigRes = tDataCenterConfigParams & { is_first: boolean };
 
 interface iConfigData {
-  is_simulate: string | null; //debug 调试模式 simulate 模拟实盘 null真实实盘
+  is_simulate: string; //"debug" 调试模式 "simulate" 模拟实盘 "none"真实实盘
   error_webhook_url: string;
   factor_col_limit: number;
   is_encrypt: boolean;
@@ -450,7 +453,7 @@ type tDbAccountInfoRes = typeof tAccountInfoRes & {
 
 const tGlobalConfigDataRes = {
   framework_id: "",
-  is_simulate: null,
+  is_simulate: "debug",
   error_webhook_url: "",
   globalConfigData: 64,
   realtime_data_path: "",

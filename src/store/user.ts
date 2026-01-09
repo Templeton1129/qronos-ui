@@ -3,7 +3,7 @@ import { defineStore } from "pinia";
 export const useUserStore = defineStore("user", {
   state: () => ({
     isBoundGA: true as boolean,
-    version: "0.5.0",
+    version: "0.5.1",
   }),
   actions: {
     setIsBoundGA(val: boolean) {

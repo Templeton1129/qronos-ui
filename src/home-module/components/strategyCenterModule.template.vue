@@ -378,7 +378,7 @@ const viewFrameWorkInfoList = ref<
 >([]);
 
 const viewGlobalConfigData = ref<iConfigData>({
-  is_simulate: null,
+  is_simulate: "debug",
   error_webhook_url: "",
   factor_col_limit: 64,
   is_encrypt: false,
@@ -487,7 +487,7 @@ const clearFrameWorkRunStatusTimer = () => {
 const getGlobalConfigDataFn = async (framework_id: string) => {
   const res = await getDataCenterConfig(framework_id);
   if (res.result === true) {
-    viewGlobalConfigData.value.is_simulate = res.data?.is_simulate || null;
+    viewGlobalConfigData.value.is_simulate = res.data?.is_simulate || "debug";
     viewGlobalConfigData.value.error_webhook_url =
       res.data?.error_webhook_url || "";
     viewGlobalConfigData.value.factor_col_limit =

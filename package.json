@@ -1,7 +1,7 @@
 {
   "name": "qronos-ui",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.1",
   "type": "module",
   "scripts": {
     "dev": "cross-env VITE_APP_ENV=development vite",

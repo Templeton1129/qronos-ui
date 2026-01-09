@@ -87,8 +87,8 @@ const getSubStgOption = () => {
     let tempObj = {
       name: "",
       type: "line",
-      data: [] as number[],
-      xAxisIndex: 1,
+      data: [] as any[],
+      xAxisIndex: 0,
       yAxisIndex: 0,
       showSymbol: false,
       lineStyle: {
@@ -100,8 +100,11 @@ const getSubStgOption = () => {
     };
 
     for (const key in props.sub_stg_eqs) {
+      const times = (props.sub_stg_eqs[key].candle_begin_time || []).map((t) =>
+        t.replace("T", " ")
+      );
       tempObj.name = key;
-      tempObj.data = props.sub_stg_eqs[key].net;
+      tempObj.data = times.map((t, i) => [t, props.sub_stg_eqs[key].net[i]]);
       output.push({ ...tempObj });
     }
   }
@@ -148,22 +151,34 @@ const option = computed(() => {
     },
     xAxis: [
       {
-        type: "category",
-        data: props.dateTime,
+        type: "time",
         axisLabel: {
           rotate: 0,
           fontSize: 8,
+          hideOverlap: true,
+          showMinLabel: true,
+          showMaxLabel: true,
+          margin: 12,
+          formatter: (value: number | string) => {
+            const d = new Date(value);
+            const y = d.getFullYear();
+            const m = (d.getMonth() + 1).toString().padStart(2, "0");
+            const day = d.getDate().toString().padStart(2, "0");
+            const hh = d.getHours().toString().padStart(2, "0");
+            const mm = d.getMinutes().toString().padStart(2, "0");
+            return `${y}-${m}-${day} ${hh}:${mm}`;
+          },
         },
       },
-      {
-        type: "category",
-        data: subStgDataTime.value,
-        axisLabel: {
-          rotate: 0,
-          fontSize: 8,
-        },
-        show: false,
-      },
+      // {
+      //   type: "category",
+      //   data: subStgDataTime.value,
+      //   axisLabel: {
+      //     rotate: 0,
+      //     fontSize: 8,
+      //   },
+      //   show: false,
+      // },
     ],
     yAxis: [
       {
@@ -191,18 +206,21 @@ const option = computed(() => {
         start: 0,
         end: 100,
       },
-      {
-        type: "inside",
-        xAxisIndex: 1,
-        start: 0,
-        end: 100,
-      },
+      // {
+      //   type: "inside",
+      //   xAxisIndex: 1,
+      //   start: 0,
+      //   end: 100,
+      // },
     ],
     series: [
       {
         name: "Equity",
         type: "line",
-        data: props.equity,
+        data: props.equity.map((v, i) => [
+          props.dateTime[i]?.replace("T", " "),
+          v,
+        ]),
         yAxisIndex: 0,
         showSymbol: false,
         lineStyle: { color: "#f5a623", width: 2 },
@@ -231,7 +249,10 @@ const option = computed(() => {
       {
         name: "dd2here",
         type: "line",
-        data: props.dd2here,
+        data: props.dd2here.map((v, i) => [
+          props.dateTime[i]?.replace("T", " "),
+          v,
+        ]),
         areaStyle: {
           color: "#bbbbbb",
           opacity: 0.3,

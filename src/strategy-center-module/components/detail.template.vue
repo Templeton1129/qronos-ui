@@ -7,7 +7,9 @@
     >
       <!-- 跑马灯 -->
       <MarqueeTemplate
-        v-if="tabType === `item` && viewGlobalConfigData?.is_simulate !== null"
+        v-if="
+          tabType === `item` && viewGlobalConfigData?.is_simulate !== 'none'
+        "
         :content="`当前是${
           viewGlobalConfigData?.is_simulate === 'debug'
             ? ' “实盘调试模式” '
@@ -75,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
 import MarqueeTemplate from "@/common-module/components/marquee.template.vue";
 import RunStatusAndOperationTemplate from "@/strategy-center-module/components/runStatusAndOperation.template.vue";
@@ -103,7 +105,7 @@ const viewIsLoading = ref(true); // 新增加载状态
 const runStatuslList = ref<tDbFrameWorkRunStatusRes[]>([]);
 const frameWorkStatusTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const viewGlobalConfigData = ref<iConfigData>({
-  is_simulate: null,
+  is_simulate: "debug",
   error_webhook_url: "",
   factor_col_limit: 64,
   is_encrypt: false,
@@ -212,7 +214,7 @@ const getLogTypeList = (framework_id: string) => {
 const getGlobalConfigDataFn = async (framework_id: string) => {
   const res = await getDataCenterConfig(framework_id);
   if (res.result === true) {
-    viewGlobalConfigData.value.is_simulate = res.data?.is_simulate || null;
+    viewGlobalConfigData.value.is_simulate = res.data?.is_simulate || "debug";
     viewGlobalConfigData.value.error_webhook_url =
       res.data?.error_webhook_url || "";
     viewGlobalConfigData.value.factor_col_limit =

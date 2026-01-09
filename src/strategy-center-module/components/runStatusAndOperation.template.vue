@@ -98,7 +98,7 @@
             >
               <li
                 :class="
-                  globalConfigData.is_simulate
+                  globalConfigData.is_simulate !== 'none'
                     ? 'text-gray-500 dark:text-gray-300'
                     : 'text-green-600'
                 "
@@ -172,7 +172,9 @@
               iconClass="text-4xl"
               rounded
               raised
-              :severity="globalConfigData.is_simulate ? `info` : `success`"
+              :severity="
+                globalConfigData.is_simulate !== 'none' ? `info` : `success`
+              "
               v-tooltip="`启动${getModeText()}`"
             />
             <Button
@@ -185,7 +187,9 @@
               iconClass="text-4xl"
               rounded
               raised
-              :severity="globalConfigData.is_simulate ? `help` : `danger`"
+              :severity="
+                globalConfigData.is_simulate !== 'none' ? `help` : `danger`
+              "
               v-tooltip="`停止${getModeText()}`"
             />
           </div>
@@ -217,7 +221,7 @@
                 :severity="
                   runStatus.startup === dataCenterStatusEnum.stop
                     ? `secondary`
-                    : globalConfigData.is_simulate
+                    : globalConfigData.is_simulate !== 'none'
                     ? `info`
                     : `success`
                 "
@@ -239,7 +243,9 @@
                 icon="pi pi-stop-circle"
                 size="small"
                 raised
-                :severity="globalConfigData.is_simulate ? `help` : `danger`"
+                :severity="
+                  globalConfigData.is_simulate !== 'none' ? `help` : `danger`
+                "
                 variant="outlined"
                 v-tooltip="'停止账户监控'"
               />
@@ -263,7 +269,7 @@
                 :severity="
                   runStatus.startup === dataCenterStatusEnum.stop
                     ? `secondary`
-                    : globalConfigData.is_simulate
+                    : globalConfigData.is_simulate !== 'none'
                     ? `info`
                     : `success`
                 "
@@ -285,7 +291,9 @@
                 icon="pi pi-stop-circle"
                 size="small"
                 raised
-                :severity="globalConfigData.is_simulate ? `help` : `danger`"
+                :severity="
+                  globalConfigData.is_simulate !== 'none' ? `help` : `danger`
+                "
                 variant="outlined"
                 v-tooltip="'停止下架监控'"
               />
@@ -358,7 +366,7 @@
                 label: 'text-sm py-1 pr-0',
               }"
               size="small"
-              @value-change="changeConfigDataFn"
+              @value-change="changeConfigDataFn(true)"
               :disabled="runStatus.startup === dataCenterStatusEnum.start"
             />
             <i
@@ -452,7 +460,9 @@
               icon="pi pi-caret-right"
               rounded
               raised
-              :severity="globalConfigData.is_simulate ? `info` : `success`"
+              :severity="
+                globalConfigData.is_simulate !== 'none' ? `info` : `success`
+              "
               v-tooltip="'启动'"
               size="small"
               class="hover:scale-105 transition-transform duration-300"
@@ -465,7 +475,9 @@
               icon="pi pi-stop-circle"
               rounded
               raised
-              :severity="globalConfigData.is_simulate ? `help` : `danger`"
+              :severity="
+                globalConfigData.is_simulate !== 'none' ? `help` : `danger`
+              "
               v-tooltip="'停止'"
               size="small"
               class="hover:scale-105 transition-transform duration-300"
@@ -610,15 +622,18 @@
             size="small"
           />
         </div>
-        <Select
-          v-model="strategyLogRefreshTime"
-          :options="logRefreshTimeList"
-          optionLabel="name"
-          optionValue="code"
-          placeholder="刷新频率"
-          @value-change="refreshTimeChangeAction"
-          size="small"
-        />
+        <div class="space-x-2">
+          <label class="text-sm flex-shrink-0">刷新频率:</label>
+          <Select
+            v-model="strategyLogRefreshTime"
+            :options="logRefreshTimeList"
+            optionLabel="name"
+            optionValue="code"
+            placeholder="刷新频率"
+            @value-change="refreshTimeChangeAction"
+            size="small"
+          />
+        </div>
       </div>
       <Tabs
         v-if="allPmIdTypeList.length > 0 && viewCurrentPm_id"
@@ -775,7 +790,7 @@ const logRefreshTimeList = [
 const modeOpetions = [
   {
     label: "实盘交易",
-    value: "real",
+    value: "none",
   },
   {
     label: "模拟实盘",
@@ -787,23 +802,15 @@ const modeOpetions = [
   },
 ];
 
-const selectValue = computed({
-  get() {
-    return viewConfigData.value.is_simulate ?? "real"; // null -> "real"
-  },
-  set(val) {
-    viewConfigData.value.is_simulate = val === "real" ? null : val;
-  },
-});
-
 const viewCurrentPm_id = ref<null | number | string>(null);
 
 const viewConfigData = ref<iConfigData>({
-  is_simulate: null,
+  is_simulate: "debug",
   error_webhook_url: "",
   factor_col_limit: 64,
   is_encrypt: false,
 });
+const selectValue = ref<string>("debug");
 const viewOldConfigData = ref<iConfigData>();
 const viewIsOpenConfigDataDialog = ref<boolean>(false);
 
@@ -849,7 +856,10 @@ watch(
       };
 
       viewConfigData.value.is_simulate =
-        viewConfigData.value?.is_simulate ?? null;
+        viewConfigData.value?.is_simulate || "debug";
+      selectValue.value = JSON.parse(
+        JSON.stringify(viewConfigData.value.is_simulate)
+      );
     }
   },
   { immediate: true, deep: true }
@@ -860,7 +870,7 @@ const getModeText = () => {
     return "实盘调试";
   } else if (props.globalConfigData.is_simulate === "simulate") {
     return "模拟实盘";
-  } else {
+  } else if (props.globalConfigData.is_simulate === "none") {
     return "实盘交易";
   }
 };
@@ -901,7 +911,8 @@ const operateActualTrading = async (
   // 如果是加密模式并且实盘交易 用户需要输入加密时使用的密码
   if (
     viewConfigData.value.is_encrypt === true &&
-    status === dataCenterStatusEnum.start &&
+    (status === dataCenterStatusEnum.start ||
+      status === dataCenterStatusEnum.restart) &&
     refInputEncryptedPwdDialogTmpl.value
   ) {
     // 存储待执行的操作
@@ -1053,11 +1064,17 @@ const submitConfigDataAction = ({ valid }: any) => {
   }
 };
 
-const changeConfigDataFn = async () => {
+const changeConfigDataFn = async (isSelectChange: boolean = false) => {
+  if (isSelectChange === true) {
+    viewConfigData.value.is_simulate = JSON.parse(
+      JSON.stringify(selectValue.value)
+    );
+  }
+
   const res = await editGlobalConfig({
     framework_id: props.frameWorkId,
     ...viewConfigData.value,
-    is_simulate: viewConfigData.value?.is_simulate || null,
+    is_simulate: viewConfigData.value.is_simulate,
   });
 
   if (res.result === true) {

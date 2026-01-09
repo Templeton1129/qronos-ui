@@ -72,107 +72,134 @@ const isFullscreen = ref<boolean>(false);
 // 图表重新渲染的key
 const chartKey = ref<number>(0);
 
-const longRatioOption = computed(() => ({
-  backgroundColor: themeMode.value === "dark" ? "#171717" : "",
-  color: ["#22c55e", "#ef4444", "#9ca3af"],
-  title: {
-    text: "多空比例",
-    left: "center",
-    textStyle: {
-      fontSize: 14,
-      fontWeight: "normal",
-    },
-    top: 8,
-  },
-  tooltip: {
-    trigger: "axis",
-    z: 1000,
-    textStyle: {
-      fontSize: 10,
-    },
-  },
-  legend: {
-    data: ["Long", "Short", "empty"],
-    top: 32,
-    textStyle: {
-      fontSize: 10,
-    },
-  },
-  grid: {
-    top: 54,
-    left: 40,
-    right: 5,
-    bottom: 20,
-  },
-  xAxis: {
-    type: "category",
-    data: props.dateTime,
-    axisLabel: {
-      rotate: 0,
-      fontSize: 8,
-    },
-  },
-  yAxis: {
-    type: "value",
-    min: 0.0,
-    max: 1.0,
-    name: "Ratio",
-    position: "left",
-    nameTextStyle: {
-      fontSize: 10,
-    },
-  },
-  // 图表可缩放 拖拽 滚动
-  dataZoom: [
-    {
-      type: "inside",
-      xAxisIndex: 0,
-      start: 0,
-      end: 100,
-    },
-  ],
-  series: [
-    {
-      name: "Long",
-      type: "line",
-      data: props.long,
-      showSymbol: false,
-      areaStyle: {
-        color: "#22c55e",
-        opacity: 0.6,
+const longRatioOption = computed(() => {
+  const L = props.long || [];
+  const S = props.short || [];
+  const E = props.empty || [];
+  const len = Math.max(L.length, S.length, E.length);
+  const normLong: number[] = [];
+  const normShort: number[] = [];
+  const normEmpty: number[] = [];
+  for (let i = 0; i < len; i++) {
+    const vl = L[i] ?? 0;
+    const vs = S[i] ?? 0;
+    const ve = E[i] ?? 0;
+    const sum = vl + vs + ve;
+    if (sum > 0) {
+      normLong.push(Number((vl / sum).toFixed(3)));
+      normShort.push(Number((vs / sum).toFixed(3)));
+      normEmpty.push(Number((ve / sum).toFixed(3)));
+    } else {
+      normLong.push(0);
+      normShort.push(0);
+      normEmpty.push(0);
+    }
+  }
+
+  return {
+    backgroundColor: themeMode.value === "dark" ? "#171717" : "",
+    color: ["#22c55e", "#ef4444", "#9ca3af"],
+    title: {
+      text: "多空比例",
+      left: "center",
+      textStyle: {
+        fontSize: 14,
+        fontWeight: "normal",
       },
-      lineStyle: {
-        color: "#22c55e",
+      top: 8,
+    },
+    tooltip: {
+      trigger: "axis",
+      z: 1000,
+      textStyle: {
+        fontSize: 10,
       },
     },
-    {
-      name: "Short",
-      type: "line",
-      showSymbol: false,
-      data: props.short,
-      areaStyle: {
-        color: "#ef4444",
-        opacity: 0.6,
-      },
-      lineStyle: {
-        color: "#ef4444",
+    legend: {
+      data: ["Long", "Short", "empty"],
+      top: 32,
+      textStyle: {
+        fontSize: 10,
       },
     },
-    {
-      name: "empty",
-      type: "line",
-      showSymbol: false,
-      data: props.empty,
-      areaStyle: {
-        color: "#9ca3af",
-        opacity: 0.6,
-      },
-      lineStyle: {
-        color: "#9ca3af",
+    grid: {
+      top: 54,
+      left: 40,
+      right: 5,
+      bottom: 20,
+    },
+    xAxis: {
+      type: "category",
+      data: props.dateTime,
+      axisLabel: {
+        rotate: 0,
+        fontSize: 8,
       },
     },
-  ],
-}));
+    yAxis: {
+      type: "value",
+      min: 0.0,
+      max: 1.0,
+      name: "Ratio",
+      position: "left",
+      nameTextStyle: {
+        fontSize: 10,
+      },
+    },
+    dataZoom: [
+      {
+        type: "inside",
+        xAxisIndex: 0,
+        start: 0,
+        end: 100,
+      },
+    ],
+    series: [
+      {
+        name: "Long",
+        type: "line",
+        stack: "ratio",
+        data: normLong,
+        showSymbol: false,
+        areaStyle: {
+          color: "#22c55e",
+          opacity: 0.6,
+        },
+        lineStyle: {
+          color: "#22c55e",
+        },
+      },
+      {
+        name: "Short",
+        type: "line",
+        stack: "ratio",
+        showSymbol: false,
+        data: normShort,
+        areaStyle: {
+          color: "#ef4444",
+          opacity: 0.6,
+        },
+        lineStyle: {
+          color: "#ef4444",
+        },
+      },
+      {
+        name: "empty",
+        type: "line",
+        stack: "ratio",
+        showSymbol: false,
+        data: normEmpty,
+        areaStyle: {
+          color: "#9ca3af",
+          opacity: 0.6,
+        },
+        lineStyle: {
+          color: "#9ca3af",
+        },
+      },
+    ],
+  };
+});
 
 const coinNumOption = computed(() => ({
   backgroundColor: themeMode.value === "dark" ? "#171717" : "",

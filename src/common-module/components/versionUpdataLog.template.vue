@@ -49,7 +49,7 @@ import { useUserStore } from "@/store/user";
 const store = useUserStore();
 
 const version = store.version; // 当前版本号
-const date = "2025-11-21";
+const date = "2026-1-9";
 const logList = {
   "0.3.0": [
     "📊 首页监控状态增加 1 小时、24 小时盈利/亏损币前五名",
@@ -77,6 +77,7 @@ const logList = {
     "🔐 安全增强：API Key 与密钥支持加密开关，自主控制数据安全级别",
     "📐 界面优化：整体页面布局升级，交互体验更流畅",
   ],
+  "0.5.1": ["✨ 升级至 2026 分享会版本"],
 };
 
 const viewIsOpenDialog = ref<boolean>(false);

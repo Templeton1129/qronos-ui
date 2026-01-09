@@ -37,12 +37,12 @@
                     </span>
                     <div class="flex items-center">
                       <Button
-                        ref="refUpdateFrameWorkButton"
                         v-if="
                           tab.id !== 0 &&
                           getNewFramWorkInfo(
                             tab.framework_name,
-                            tab.framework_id
+                            tab.framework_id,
+                            tab.type
                           )
                         "
                         icon="pi pi-arrow-up"
@@ -53,7 +53,11 @@
                         severity="success"
                         v-tooltip="'升级框架'"
                         @click.stop="
-                          upateFrameWork(tab.framework_id, tab.framework_name)
+                          upateFrameWork(
+                            tab.framework_name,
+                            tab.framework_id,
+                            tab.type
+                          )
                         "
                       />
                       <Button
@@ -184,7 +188,19 @@
                       :key="item.id"
                     >
                       <template v-if="item.id === slotProps.value">
-                        <div>{{ item.name }}</div>
+                        <div class="flex gap-1 items-center">
+                          <template v-if="item.course_name.split('-')[1]">
+                            <Tag
+                              :severity="
+                                yearSeverityMap[item.course_name.split('-')[1]]
+                              "
+                              class="text-xs font-mono p-1 py-0.5"
+                              >{{ item.course_name.split("-")[1] }}</Tag
+                            >
+                          </template>
+
+                          <div>{{ item.name }}</div>
+                        </div>
                         <i
                           v-if="
                             item.status === frameWorkDownloadStatusEnum.finished
@@ -208,7 +224,23 @@
                 </template>
                 <template #option="slotProps">
                   <div class="flex items-center justify-between w-full">
-                    <div>{{ slotProps.option.name }}</div>
+                    <div class="flex gap-2 items-center">
+                      <template
+                        v-if="slotProps.option.course_name.split('-')[1]"
+                      >
+                        <Tag
+                          class="text-xs font-mono p-1 py-0.5"
+                          :severity="
+                            yearSeverityMap[
+                              slotProps.option.course_name.split('-')[1]
+                            ]
+                          "
+                          >{{ slotProps.option.course_name.split("-")[1] }}</Tag
+                        >
+                      </template>
+
+                      <div>{{ slotProps.option.name }}</div>
+                    </div>
                     <i
                       v-if="
                         slotProps.option.status ===
@@ -330,7 +362,11 @@ const isOpenAddFrameWorkDialog = ref<boolean>(false);
 
 const viewAddType = ref<string>("official"); //official官方提供 custom自定义
 const viewCustomFrameWorkPath = ref<string>("");
-const refUpdateFrameWorkButton = ref<any>(null);
+
+let yearSeverityMap: { [key: string]: string } = {
+  "2025": "",
+  "2026": "info",
+};
 
 onMounted(() => {
   loadData();
@@ -534,25 +570,17 @@ const deleteFrameWork = (frameworkId: string, frameworkName: string) => {
  */
 const getNewFramWorkInfo = (
   oldFrameworkName: string,
-  framework_id: string
+  framework_id: string,
+  framework_type: string
 ): vFrameWorkVersionItem | null => {
   // 如果没有版本列表数据，直接返回null
   if (!viewFrameWorkVersionList.value?.length) {
     return null;
   }
 
-  // 获取当前框架的分类ID
-  const currentFramework = viewFrameWorkVersionList.value.find(
-    (item: vFrameWorkVersionItem) => item.id === framework_id
-  );
-
-  if (!currentFramework?.classId) {
-    return null;
-  }
-
   // 获取同类型框架的版本列表并按时间排序
   const versionList = viewFrameWorkVersionList.value
-    .filter((item) => item.classId === currentFramework.classId)
+    .filter((item) => item.framework_type === framework_type)
     .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
   // 检查是否存在新版本
@@ -569,10 +597,15 @@ const getNewFramWorkInfo = (
 };
 
 // 升级框架
-const upateFrameWork = (oldFrameworkId: string, oldFrameworkName: string) => {
+const upateFrameWork = (
+  oldFrameworkName: string,
+  oldFrameworkId: string,
+  framework_type: string
+) => {
   const newFramework: vFrameWorkVersionItem | null = getNewFramWorkInfo(
     oldFrameworkName,
-    oldFrameworkId
+    oldFrameworkId,
+    framework_type
   );
   if (newFramework) {
     if (refUpdateFrameWorkDialog.value) {
