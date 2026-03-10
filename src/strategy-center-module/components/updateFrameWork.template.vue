@@ -4,6 +4,7 @@
     :header="`升级框架`"
     :modal="true"
     :closable="false"
+    :draggable="false"
     class="min-w-[60vw] max-w-[90vw]"
     :pt="{
       content: {
@@ -12,7 +13,7 @@
     }"
   >
     <template #default>
-      <Stepper v-model:value="step" linear class="basis-[50rem]">
+      <Stepper v-model:value="step" linear class="basis-[50rem] px-10">
         <StepList>
           <Step
             :value="1"
@@ -68,9 +69,37 @@
               class="flex flex-col justify-center gap-4 pt-6 h-45 w-full items-center"
             >
               <template v-if="viewIsDownload === false">
+                <div class="space-y-4">
+                  <ul
+                    class="flex flex-col gap-2 text-xs text-gray-700 list-disc"
+                  >
+                    <li>
+                      <span class="text-red-500 font-medium"
+                        >迁移过程中可能会丢失因子相关数据</span
+                      >， 请务必先通过页面
+                      <span class="text-primary-500 font-semibold"
+                        >“导出”按钮</span
+                      >
+                      备份后再升级。
+                    </li>
+
+                    <li>
+                      升级完成后，可通过
+                      <span class="text-primary-500 font-semibold"
+                        >“导入”按钮</span
+                      >
+                      恢复备份文件。
+                    </li>
+                  </ul>
+                  <div class="flex items-center gap-2 justify-center">
+                    <Checkbox v-model="viewIsConfirmDownload" binary />
+                    <label class="text-sm">我已备份配置并确认下载新框架</label>
+                  </div>
+                </div>
                 <Button
                   :label="`下载新框架《${viewFrameInfo?.newFrameworkName}》`"
                   icon="pi pi-download"
+                  :disabled="!viewIsConfirmDownload"
                   @click="
                     () => {
                       viewIsDownload = true;
@@ -194,9 +223,6 @@
 <script setup lang="ts">
 import { ref, onUnmounted } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
-import ProgressBar from "primevue/progressbar";
-import ProgressSpinner from "primevue/progressspinner";
-import Button from "primevue/button";
 import {
   addFrameWorkVersion,
   getFrameWorkStatus,
@@ -219,6 +245,7 @@ const viewIsFailed = ref<boolean>(false);
 const viewStatusLabel = ref<string>("");
 const viewProgressValue = ref<number>(0);
 const viewTimer = ref<ReturnType<typeof setInterval> | null>(null);
+const viewIsConfirmDownload = ref<boolean>(false);
 
 const downloadFrameWorkStatusTimer = ref<ReturnType<typeof setTimeout> | null>(
   null
@@ -256,6 +283,7 @@ const resetStepState = () => {
   viewStatusLabel.value = "";
   viewProgressValue.value = 0;
   viewIsDownload.value = false;
+  viewIsConfirmDownload.value = false;
   clearTimer();
   clearDownloadFrameWorkStatusTimer();
 };

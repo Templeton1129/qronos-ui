@@ -84,7 +84,9 @@
                     severity="success"
                     class="text-xs font-medium cursor-pointer"
                     v-tooltip.top="'杠杆'"
-                    @click="(e:Event) => toggleLeveragePopover(e, slotProps.data)"
+                    @click="
+                      (e: Event) => toggleLeveragePopover(e, slotProps.data)
+                    "
                   ></Tag>
                   <Tag
                     size="small"
@@ -94,7 +96,9 @@
                     rounded
                     severity="warn"
                     class="text-xs font-medium cursor-pointer"
-                    @click="(e:Event) => toggleBlacklistPopover(e, slotProps.data)"
+                    @click="
+                      (e: Event) => toggleBlacklistPopover(e, slotProps.data)
+                    "
                   >
                   </Tag>
                   <Tag
@@ -135,7 +139,7 @@
                   severity="secondary"
                   aria-haspopup="true"
                   aria-controls="overlay_menu"
-                  @click="(event:Event)=>toggle(event,slotProps.data)"
+                  @click="(event: Event) => toggle(event, slotProps.data)"
                   class="border-0"
                 />
                 <Menu
@@ -231,9 +235,12 @@
                     src="@/assets/home-img/no-data.png"
                     class="w-40 h-auto"
                   />
-                  <span class="text-sm text-gray-500 dark:text-gray-300"
-                    >暂无策略净值曲线图</span
-                  >
+                  <span class="text-sm text-gray-500 dark:text-gray-300">
+                    最近七天暂无策略净值数据
+                  </span>
+                  <span class="text-xs text-gray-400 dark:text-gray-400">
+                    可在首页切换时间范围，查看完整净值曲线
+                  </span>
                 </div>
 
                 <!-- 策略信息 -->
@@ -241,7 +248,7 @@
                   v-if="slotProps.data.strategy_name"
                   class="text-sm flex items-center leading-[22px]"
                 >
-                  <span class="text-gray-600">策略：</span>
+                  <span class="text-gray-600 dark:text-gray-300">策略：</span>
                   <span class="font-bold"
                     >“{{ slotProps.data.strategy_name }}”</span
                   >
@@ -648,7 +655,7 @@ const importFrameWorkSuccess = () => {
 };
 
 const getAccountChartDataFn = async () => {
-  const res = await getAccountInfoChart(props.frameWorkId);
+  const res = await getAccountInfoChart(props.frameWorkId, 7);
   viewIsLoading.value = false;
   if (res.result === true) {
     viewAccountInfoList.value.forEach((accountItem) => {

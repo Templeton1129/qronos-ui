@@ -222,8 +222,8 @@
                   runStatus.startup === dataCenterStatusEnum.stop
                     ? `secondary`
                     : globalConfigData.is_simulate !== 'none'
-                    ? `info`
-                    : `success`
+                      ? `info`
+                      : `success`
                 "
                 variant="outlined"
                 v-tooltip="{
@@ -270,8 +270,8 @@
                   runStatus.startup === dataCenterStatusEnum.stop
                     ? `secondary`
                     : globalConfigData.is_simulate !== 'none'
-                    ? `info`
-                    : `success`
+                      ? `info`
+                      : `success`
                 "
                 variant="outlined"
                 v-tooltip="{
@@ -537,6 +537,7 @@
           type="text"
           placeholder="请填写企业微信机器人url"
           class="w-full"
+          size="small"
         />
         <Message
           v-if="$form.error_webhook_url?.invalid"
@@ -570,6 +571,7 @@
           name="factor_col_limit"
           placeholder="请填写一次性计算多少列因子"
           class="w-full"
+          size="small"
         />
         <Message
           v-if="$form.factor_col_limit?.invalid"
@@ -578,6 +580,80 @@
           variant="simple"
           class="mt-1"
           >{{ $form.factor_col_limit.error?.message }}</Message
+        >
+      </div>
+      <div class="space-y-2">
+        <label
+          for="lookback_days"
+          class="text-sm font-medium flex items-center gap-1"
+          >回看多久的数据
+          <i
+            class="pi pi-question-circle cursor-pointer"
+            v-tooltip="{
+              value: `用来裁切保留选币&因子值，方便实盘与回测对比，实盘使用该配置会影响部分速度<br/>配置 0: 不生效<br/>配置 7: 保留最近 7 天的选币&因子值数据`,
+              escape: false,
+              class: 'min-w-80',
+              autoHide: false,
+            }"
+          ></i
+        ></label>
+        <InputGroup>
+          <InputNumber
+            v-model="viewConfigData.lookback_days"
+            :min="0"
+            mode="decimal"
+            showButtons
+            name="lookback_days"
+            placeholder="请填写回看多久的数据"
+            class="w-full"
+          />
+          <InputGroupAddon>天</InputGroupAddon>
+        </InputGroup>
+        <Message
+          v-if="$form.lookback_days?.invalid"
+          severity="error"
+          size="small"
+          variant="simple"
+          class="mt-1"
+          >{{ $form.lookback_days.error?.message }}</Message
+        >
+      </div>
+      <div class="space-y-2">
+        <label
+          for="incremental_lookback_hours"
+          class="text-sm font-medium flex items-center gap-1"
+          >增量计算资金曲线时长
+          <i
+            class="pi pi-question-circle cursor-pointer"
+            v-tooltip="{
+              value: `增量计算时回退N小时重新模拟，0表示不回退<br/>
+              配置 0: 不生效<br/>配置 7: 从最近 7 小时前开始模拟回测，同时增量更新最近 7 小时资金曲线数据incremental_lookback_hours = 0  # 增量计算时最大支持更新最近多少小时资金曲线(建议最大不超过 24)`,
+              escape: false,
+              class: 'min-w-90',
+              autoHide: false,
+            }"
+          ></i
+        ></label>
+        <InputGroup>
+          <InputNumber
+            v-model="viewConfigData.incremental_lookback_hours"
+            :min="0"
+            :max="40"
+            mode="decimal"
+            showButtons
+            name="incremental_lookback_hours"
+            placeholder="请填写增量计算资金曲线时长"
+            size="small"
+          />
+          <InputGroupAddon size="small">小时</InputGroupAddon>
+        </InputGroup>
+        <Message
+          v-if="$form.incremental_lookback_hours?.invalid"
+          severity="error"
+          size="small"
+          variant="simple"
+          class="mt-1"
+          >{{ $form.incremental_lookback_hours.error?.message }}</Message
         >
       </div>
       <div class="flex justify-end pt-4 gap-2">
@@ -766,6 +842,8 @@ const props = defineProps<{
     error_webhook_url: string;
     factor_col_limit: number;
     is_encrypt: boolean;
+    lookback_days: number;
+    incremental_lookback_hours: number;
   };
 }>();
 const viewIsOpenLogDialog = ref<boolean>(false);
@@ -809,6 +887,8 @@ const viewConfigData = ref<iConfigData>({
   error_webhook_url: "",
   factor_col_limit: 64,
   is_encrypt: false,
+  lookback_days: 0,
+  incremental_lookback_hours: 0,
 });
 const selectValue = ref<string>("debug");
 const viewOldConfigData = ref<iConfigData>();
@@ -1051,6 +1131,20 @@ const resolver = ({ values }: any) => {
 
   if (!viewConfigData.value.factor_col_limit) {
     errors.factor_col_limit = [{ message: "一次性计算多少列因子不能为空" }];
+  }
+
+  if (viewConfigData.value.lookback_days == null) {
+    errors.lookback_days = [
+      { message: "回看多久的数据不能为空,若不想启用配置可填写0代表不生效" },
+    ];
+  }
+
+  if (viewConfigData.value.incremental_lookback_hours == null) {
+    errors.incremental_lookback_hours = [
+      {
+        message: "增量计算资金曲线时长不能为空,若不想启用配置可填写0代表不生效",
+      },
+    ];
   }
   return {
     values,

@@ -1,53 +1,55 @@
 <template>
-  <div
-    class="w-full flex-1 flex flex-col"
-    :class="[
-      isFullscreen === true
-        ? 'w-screen h-screen fixed inset-0 z-[9999] bg-white dark:bg-neutral-900 p-4'
-        : 'relative',
-    ]"
-  >
-    <!-- 放大按钮 -->
-    <div class="absolute top-1 right-2 z-10">
-      <Button
-        v-if="isFullscreen === false"
-        icon="pi pi-window-maximize"
-        text
-        rounded
-        severity="secondary"
-        size="small"
-        @click="isFullscreen = true"
-        v-tooltip="'放大显示'"
+  <teleport to="body" :disabled="isFullscreen === false">
+    <div
+      class="w-full flex-1 flex flex-col"
+      :class="[
+        isFullscreen === true
+          ? 'w-screen h-screen fixed inset-0 z-[9999] bg-white dark:bg-neutral-900 p-4'
+          : 'relative',
+      ]"
+    >
+      <!-- 放大按钮 -->
+      <div class="absolute top-1 right-2 z-10">
+        <Button
+          v-if="isFullscreen === false"
+          icon="pi pi-window-maximize"
+          text
+          rounded
+          severity="secondary"
+          size="small"
+          @click="isFullscreen = true"
+          v-tooltip="'放大显示'"
+        />
+        <Button
+          v-else
+          icon="pi pi-window-minimize"
+          text
+          rounded
+          severity="secondary"
+          size="small"
+          @click="isFullscreen = false"
+          v-tooltip="'退出放大'"
+        />
+      </div>
+
+      <v-chart
+        ref="refChart1"
+        :key="`longRatio-${chartKey}`"
+        :option="longRatioOption"
+        :theme="themeMode === `dark` ? `dark` : `light`"
+        class="w-full flex-1"
+        autoresize
       />
-      <Button
-        v-else
-        icon="pi pi-window-minimize"
-        text
-        rounded
-        severity="secondary"
-        size="small"
-        @click="isFullscreen = false"
-        v-tooltip="'退出放大'"
+      <v-chart
+        ref="refChart2"
+        :key="`coinNum-${chartKey}`"
+        :option="coinNumOption"
+        :theme="themeMode === `dark` ? `dark` : `light`"
+        class="w-full flex-1"
+        autoresize
       />
     </div>
-
-    <v-chart
-      ref="refChart1"
-      :key="`longRatio-${chartKey}`"
-      :option="longRatioOption"
-      :theme="themeMode === `dark` ? `dark` : `light`"
-      class="w-full flex-1"
-      autoresize
-    />
-    <v-chart
-      ref="refChart2"
-      :key="`coinNum-${chartKey}`"
-      :option="coinNumOption"
-      :theme="themeMode === `dark` ? `dark` : `light`"
-      class="w-full flex-1"
-      autoresize
-    />
-  </div>
+  </teleport>
 </template>
 
 <script setup lang="ts">

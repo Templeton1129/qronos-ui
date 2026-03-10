@@ -190,7 +190,7 @@
                   class="max-h-[70px] overflow-auto text-xs text-gray-600 dark:text-gray-300 p-2 bg-neutral-50 dark:bg-neutral-800 rounded leading-relaxed"
                 >
                   子账户转账的密钥。创建和设置请参考：<a
-                    href="https://bbs.quantclass.cn/thread/46812"
+                    href="https://bbs.quantclass.cn/thread/9521"
                     target="_blank"
                     class="text-xs text-primary-500 dark:text-primary-300 hover:text-primary-400"
                   >

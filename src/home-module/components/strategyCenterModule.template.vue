@@ -382,6 +382,8 @@ const viewGlobalConfigData = ref<iConfigData>({
   error_webhook_url: "",
   factor_col_limit: 64,
   is_encrypt: false,
+  lookback_days: 0,
+  incremental_lookback_hours: 0,
 });
 // 存储当前待执行的操作
 const viewPendingOperation = ref<{
@@ -493,6 +495,9 @@ const getGlobalConfigDataFn = async (framework_id: string) => {
     viewGlobalConfigData.value.factor_col_limit =
       res.data?.factor_col_limit || 64;
     viewGlobalConfigData.value.is_encrypt = res.data?.is_encrypt || false;
+    viewGlobalConfigData.value.lookback_days = res.data?.lookback_days ?? 0;
+    viewGlobalConfigData.value.incremental_lookback_hours =
+      res.data?.incremental_lookback_hours ?? 0;
   }
 };
 

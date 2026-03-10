@@ -363,7 +363,11 @@ export const getHomeAccountInfo = (
     };
     HttpProvider.get(
       `/basic_code/all_account/statistics?query_days=${day}`,
-      false
+      false,
+      {},
+      {
+        timeoutSeconds: 60,
+      }
     ).then(
       (res) => {
         res = res.data;
@@ -1147,7 +1151,8 @@ export const lockAccount = (
  * @returns
  */
 export const getAccountInfoChart = (
-  frameworkId: string
+  frameworkId: string,
+  day: number = 0
 ): Promise<iProviderOutputArrayWithT<tDbHomeAccountInfoRes>> => {
   return new Promise((resolve, reject) => {
     let output: iProviderOutputArrayWithT<tDbHomeAccountInfoRes> = {
@@ -1156,8 +1161,12 @@ export const getAccountInfoChart = (
       msg: "",
     };
     HttpProvider.get(
-      `/basic_code/account/statistics?framework_id=${frameworkId}&query_days=0`,
-      false
+      `/basic_code/account/statistics?framework_id=${frameworkId}&query_days=${day}`,
+      false,
+      {},
+      {
+        timeoutSeconds: 60,
+      }
     ).then(
       (res) => {
         res = res.data;
@@ -1195,7 +1204,11 @@ export const getDateCenterUpdateStatusList = (
     };
     HttpProvider.get(
       `/data_center/operations?framework_id=${frameworkId}&hours=${hours}`,
-      false
+      false,
+      {},
+      {
+        timeoutSeconds: 60,
+      }
     ).then(
       (res) => {
         res = res.data;
@@ -1233,7 +1246,11 @@ export const frameWorkDataMigration = (
     };
     HttpProvider.get(
       `/basic_code/data/migration?raw_framework_id=${oldFrameworkId}&target_framework_id=${newFrameworkId}`,
-      false
+      false,
+      {},
+      {
+        timeoutSeconds: 60,
+      }
     ).then(
       (res) => {
         res = res.data;

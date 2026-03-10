@@ -302,6 +302,8 @@ type tDataCenterConfigParams = typeof dataCenterConfigParams & {
   is_simulate?: string | null; //策略页面
   factor_col_limit?: number; //策略页面
   is_encrypt?: boolean; //策略页面
+  lookback_days?: number; //策略页面
+  incremental_lookback_hours?: number; //策略页面
 };
 type tDbDataCenterConfigRes = tDataCenterConfigParams & { is_first: boolean };
 
@@ -310,6 +312,8 @@ interface iConfigData {
   error_webhook_url: string;
   factor_col_limit: number;
   is_encrypt: boolean;
+  lookback_days: number;
+  incremental_lookback_hours: number;
 }
 
 const tFrameWorkStatusRes = {
@@ -499,7 +503,8 @@ const tHomeAccountInfoRes = {
           strategy: "Strategy_大学生多头",
           offset_list: [7, 10],
           hold_period: "24H",
-          is_use_spot: true,
+          is_use_spot: true, //老策略字段兼容
+          market: "mix_swap", //新策略使用的字段 is_use_spot market 两者只会存在一者
           cap_weight: 0.25,
           long_cap_weight: 1,
           short_cap_weight: 0,

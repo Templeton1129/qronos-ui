@@ -1,5 +1,8 @@
 <template>
-  <div class="flex justify-between gap-2" v-if="viewData.length > 0">
+  <div
+    class="flex sm:gap-8 justify-between sm:justify-start"
+    v-if="viewData.length > 0"
+  >
     <div class="flex gap-2">
       <Button
         type="button"
@@ -24,7 +27,7 @@
       />
     </div>
     <div class="flex items-center">
-      <span class="text-gray-500 text-xs dark:text-gray-300">时间范围：</span>
+      <span class="text-gray-500 text-sm dark:text-gray-300">时间范围：</span>
       <Select
         v-model="viewSelectedTimeRange"
         :options="allTimeRangeOptions"
@@ -155,6 +158,7 @@
                     @click="showOrHiddenAction(item.id)"
                   ></i>
                 </div>
+
                 <div class="flex-1 flex justify-center items-center">
                   <div
                     class="flex flex-row flex-wrap justify-center gap-2"
@@ -174,12 +178,12 @@
                         ] < 1000
                           ? 'text-6xl sm:text-7xl'
                           : item?.equity?.equity_amount &&
-                            item?.equity?.equity_amount?.length > 0 &&
-                            item?.equity?.equity_amount[
-                              item?.equity?.equity_amount?.length - 1
-                            ] < 100000
-                          ? 'text-5xl sm:text-6xl'
-                          : 'text-4xl sm:text-5xl',
+                              item?.equity?.equity_amount?.length > 0 &&
+                              item?.equity?.equity_amount[
+                                item?.equity?.equity_amount?.length - 1
+                              ] < 100000
+                            ? 'text-5xl sm:text-6xl'
+                            : 'text-4xl sm:text-5xl',
                       ]"
                       v-if="
                         !viewAccountValueHiddenIdList.includes(item.id) &&
@@ -211,6 +215,19 @@
                     </div>
                     <div class="text-sm text-gray-500">USDT</div>
                   </div>
+                </div>
+                <div
+                  v-if="
+                    (!item ||
+                      !item?.equity?.equity_amount ||
+                      item?.equity?.equity_amount?.length === 0) &&
+                    viewSelectedTimeRange !== 0
+                  "
+                  class="flex justify-center items-center"
+                >
+                  <span class="text-xs text-gray-400">
+                    最近 {{ viewSelectedTimeRange }} 天暂无账户净值数据
+                  </span>
                 </div>
                 <Divider class="m-0" />
                 <div class="text-xs text-center sm:hidden">
@@ -296,11 +313,21 @@
                 <template v-else>
                   <div class="flex-1 flex flex-col items-center px-4 py-3">
                     <div class="text-md text-center">策略净值曲线图</div>
-                    <div class="flex-1 flex items-center justify-center">
+                    <div
+                      class="flex-1 flex flex-col gap-2 items-center justify-center"
+                    >
                       <img
                         src="@/assets/home-img/no-data.png"
                         class="w-40 h-auto"
                       />
+                      <div
+                        v-if="viewSelectedTimeRange !== 0"
+                        class="flex justify-center items-center"
+                      >
+                        <span class="text-xs text-gray-400">
+                          最近 {{ viewSelectedTimeRange }} 天暂无策略净值数据
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </template>
@@ -337,11 +364,21 @@
                 <template v-else>
                   <div class="flex-1 flex flex-col items-center px-4 py-3">
                     <div class="text-md text-center">多空统计</div>
-                    <div class="flex-1 flex items-center justify-center">
+                    <div
+                      class="flex-1 flex flex-col gap-2 items-center justify-center"
+                    >
                       <img
                         src="@/assets/home-img/no-data.png"
                         class="w-40 h-auto"
                       />
+                      <div
+                        v-if="viewSelectedTimeRange !== 0"
+                        class="flex justify-center items-center"
+                      >
+                        <span class="text-xs text-gray-400">
+                          最近 {{ viewSelectedTimeRange }} 天暂无多空统计数据
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </template>
@@ -353,8 +390,8 @@
                   viewfullscreenId === item.id
                     ? 'max-h-120'
                     : item?.pos_swap || item?.pos_spot
-                    ? ''
-                    : 'min-w-full sm:min-w-100',
+                      ? ''
+                      : 'min-w-full sm:min-w-100',
                 ]"
               >
                 <SelectButton
@@ -491,11 +528,21 @@
                   </DataTable>
                 </template>
                 <template v-else>
-                  <div class="flex-1 flex items-center justify-center">
+                  <div
+                    class="flex-1 flex flex-col gap-2 items-center justify-center"
+                  >
                     <img
                       src="@/assets/home-img/no-data.png"
                       class="w-40 h-auto"
                     />
+                    <div
+                      v-if="viewSelectedTimeRange !== 0"
+                      class="flex justify-center items-center"
+                    >
+                      <span class="text-xs text-gray-400">
+                        最近 {{ viewSelectedTimeRange }} 天暂无持仓数据
+                      </span>
+                    </div>
                   </div>
                 </template>
               </div>
@@ -539,7 +586,7 @@
                         <div
                           :class="[
                             'w-2 h-2 rounded-full',
-                            colorList[index] || 'bg-gray-500',
+                            colorList[Number(index)] || 'bg-gray-500',
                           ]"
                         ></div>
                         <div class="flex-1 flex flex-col justify-center gap-1">
@@ -578,11 +625,21 @@
                   </div>
                 </template>
                 <template v-else>
-                  <div class="flex-1 flex items-center justify-center">
+                  <div
+                    class="flex-1 flex flex-col gap-2 items-center justify-center"
+                  >
                     <img
                       src="@/assets/home-img/no-data.png"
                       class="w-40 h-auto"
                     />
+                    <div
+                      v-if="viewSelectedTimeRange !== 0"
+                      class="flex justify-center items-center"
+                    >
+                      <span class="text-xs text-gray-400">
+                        暂无盈利/亏损币数据
+                      </span>
+                    </div>
                   </div>
                 </template>
                 <div
@@ -684,14 +741,44 @@
                         </div>
                       </template>
                     </Column>
-                    <!-- true 现货 -->
-                    <Column field="is_use_spot" header="现货/合约模式">
+                    <Column
+                      field="is_use_spot"
+                      header="现货/合约模式"
+                      class="min-w-20"
+                    >
                       <template #body="{ data }">
-                        <Tag
-                          class="font-medium text-xs w-11"
-                          :severity="data.is_use_spot ? 'success' : 'info'"
-                          >{{ data.is_use_spot ? "现货" : "合约" }}</Tag
+                        <template v-if="data?.market">
+                          <Tag
+                            class="font-medium text-[10px] px-1.5"
+                            severity="info"
+                            v-tooltip="{
+                              value:
+                                marketOptionMapDesc[
+                                  data.market as keyof typeof marketOptionMapDesc
+                                ] ?? '-',
+                              class: 'min-w-55',
+                            }"
+                          >
+                            {{
+                              marketOptionMap[
+                                data.market as keyof typeof marketOptionMap
+                              ] ?? "-"
+                            }}
+                          </Tag>
+                        </template>
+                        <template
+                          v-else-if="
+                            data.is_use_spot !== undefined ||
+                            data.is_use_spot !== null
+                          "
                         >
+                          <Tag
+                            class="font-medium text-xs w-11"
+                            :severity="data.is_use_spot ? 'success' : 'info'"
+                            >{{ data.is_use_spot ? "现货" : "合约" }}</Tag
+                          >
+                        </template>
+                        <template v-else>--</template>
                       </template>
                     </Column>
                     <Column field="long_cap_weight" header="多头权重">
@@ -758,6 +845,11 @@
                     src="@/assets/home-img/no-data.png"
                     class="w-40 h-auto"
                   />
+                  <div class="flex justify-center items-center">
+                    <span class="text-xs text-gray-400">
+                      暂无策略配置数据
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -802,8 +894,8 @@
             viewFactorSelect === '因子'
               ? '因子'
               : viewFactorSelect === '过滤因子'
-              ? '过滤因子'
-              : '后置因子'
+                ? '过滤因子'
+                : '后置因子'
           "
           :style="{ width: '100px' }"
         >
@@ -854,10 +946,10 @@
                   <span>降序</span><i class="pi pi-arrow-down text-xs"></i>
                 </div>
               </div>
-            </div>
-            <div v-else class="font-medium text-xss">
-              <div class="space-x-2">
-                <span>升序</span><i class="pi pi-arrow-up text-xs"></i>
+              <div v-else class="font-medium text-xss">
+                <div class="space-x-2">
+                  <span>升序</span><i class="pi pi-arrow-up text-xs"></i>
+                </div>
               </div>
             </div> </template
         ></Column>
@@ -885,11 +977,25 @@ import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 const router = useRouter();
 import { FilterMatchMode } from "@primevue/core/api";
-const viewfullscreenId = ref<number | null>(null);
-
 import StrategicNetValueChart from "@/home-module/components/strategicNetValueChart.template.vue";
 import LongChart from "@/home-module/components/longChart.template.vue";
 import { getHomeAccountInfo } from "@/common-module/services/service.provider";
+const marketOptionMap = {
+  spot_spot: "纯现货",
+  swap_swap: "纯合约",
+  mix_spot: "现货与合约-现货优先",
+  mix_swap: "现货与合约-合约优先",
+  spot_swap: "现货选币合约优先",
+};
+const marketOptionMapDesc = {
+  spot_spot: "纯现货(spot_spot)",
+  swap_swap: "纯合约(swap_swap)",
+  mix_spot: "现货与合约-现货优先(mix_spot)",
+  mix_swap: "现货与合约-合约优先(mix_swap)",
+  spot_swap: "现货选币合约优先(spot_swap)",
+};
+
+const viewfullscreenId = ref<number | null>(null);
 const viewIsLoading = ref<boolean>(false);
 const viewData = ref<tDbHomeAccountInfoRes[]>([]);
 
@@ -923,7 +1029,7 @@ const pnlTimeRangeOptions = [
   { label: "最近24小时", value: "24h" },
 ];
 
-const viewSelectedTimeRange = ref<number>(0);
+const viewSelectedTimeRange = ref<number>(7);
 const allTimeRangeOptions = [
   { label: "最近7天", value: 7 },
   { label: "最近30天", value: 30 },

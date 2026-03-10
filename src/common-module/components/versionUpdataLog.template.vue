@@ -49,7 +49,7 @@ import { useUserStore } from "@/store/user";
 const store = useUserStore();
 
 const version = store.version; // 当前版本号
-const date = "2026-1-9";
+const date = "2026-3-9";
 const logList = {
   "0.3.0": [
     "📊 首页监控状态增加 1 小时、24 小时盈利/亏损币前五名",
@@ -78,6 +78,12 @@ const logList = {
     "📐 界面优化：整体页面布局升级，交互体验更流畅",
   ],
   "0.5.1": ["✨ 升级至 2026 分享会版本"],
+  "0.5.2": [
+    `⚙️ 新增：全局设置支持自定义“回看数据时长”与“增量计算资金曲线时长”`,
+    `🧠 优化：首页及策略管理页默认加载最近 7 天数据，大幅提升页面加载速度`,
+    `🌐 优化：数据统计接口优化，增加缓存机制，提升接口响应速度`,
+    `🛠 修复：修复已知问题，提升整体稳定性`,
+  ],
 };
 
 const viewIsOpenDialog = ref<boolean>(false);
