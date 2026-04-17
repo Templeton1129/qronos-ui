@@ -40,6 +40,11 @@ export enum frameWorkRunStatusEnum {
   restarting = "restarting",
 }
 
+export const enum frameWorkSourceEnum {
+  official = "official",
+  imported = "imported",
+}
+
 // 因子类型
 export enum uploadFolderEnum {
   // 时序因子
@@ -62,6 +67,7 @@ export enum frameWorkTypeEnum {
   data_center = "data_center",
 }
 
+// 框架类型对应网站的唯一ID （暂时无用）
 export enum frameworkTypeIdEnum {
   selectCoinId = "6780e5efffed44b938b25671",
   positionId = "678915a96ae722eaa2fe2ca2",
@@ -74,6 +80,7 @@ export enum accountTypeEnum {
   standard = "普通账户",
 }
 
+// 数据中心操作类型
 export enum dataCenterOperationTypeEnum {
   update_cycle = "更新周期",
   exchange_info = "获取交易所信息",
@@ -88,7 +95,7 @@ export enum dataCenterOperationTypeEnum {
   other = "其他",
 }
 
-// 用于时间线
+// 用于时间线 状态
 export enum dateCenterOperationStatusEnum {
   in_progress = "进行中",
   completed = "已完成",
@@ -137,13 +144,6 @@ export const initAccountInfo: tDbAccountInfoRes = {
     },
   },
 };
-
-export enum encryptMethodsEnum {
-  aes = "aes",
-  base64 = "base64",
-  sha256 = "sha256",
-  rsa = "rsa",
-}
 
 // ---------------登录鉴权相关接口-------------
 /**
@@ -1478,8 +1478,8 @@ export const getExportFrameWorkZip = (
 };
 
 export const importFrameWorkZip = (
-  framework_id: string,
-  formData: FormData
+  formData: FormData,
+  framework_id: string | undefined
 ): Promise<iProviderOutputWithT<null>> => {
   return new Promise((resolve, reject) => {
     let output: iProviderOutputWithT<null> = {
@@ -1489,6 +1489,84 @@ export const importFrameWorkZip = (
     };
     HttpProvider.post(
       `/basic_code/data/import?framework_id=${framework_id}`,
+      false,
+      formData,
+      {
+        contentType: contentTypeEnum.formData,
+      }
+    ).then(
+      (res) => {
+        res = res.data;
+        if (res.code === 200) {
+          output.result = true;
+          output.data = res.data;
+        } else {
+          output.msg = res.msg;
+        }
+        resolve(output);
+      },
+      (err) => {
+        output.msg = err.msg;
+        resolve(output);
+      }
+    );
+  });
+};
+
+/**
+ * 晒单数据
+ * @returns
+ */
+export const getSharePosterInfo = (
+  framework_id: string,
+  account_name: string,
+  query_days: number
+): Promise<iProviderOutputWithT<tDbSharePosterInfo>> => {
+  return new Promise((resolve, reject) => {
+    let output: iProviderOutputWithT<tDbSharePosterInfo> = {
+      result: false,
+      data: null,
+      msg: "",
+    };
+    HttpProvider.get(
+      `/basic_code/account/showcase/statistics?framework_id=${framework_id}&account_name=${account_name}&query_days=${query_days}`,
+      false,
+      {},
+      {
+        timeoutSeconds: 60,
+      }
+    ).then(
+      (res) => {
+        res = res.data;
+        if (res.code === 200) {
+          output.result = true;
+          output.data = res.data;
+        } else {
+          output.msg = res.msg;
+        }
+        resolve(output);
+      },
+      (err) => {
+        output.msg = err.msg;
+        resolve(output);
+      }
+    );
+  });
+};
+
+// 导入自研框架
+export const importCustomFrameWorkZip = (
+  formData: FormData,
+  framework_name: string
+): Promise<iProviderOutputWithT<null>> => {
+  return new Promise((resolve, reject) => {
+    let output: iProviderOutputWithT<null> = {
+      result: false,
+      data: null,
+      msg: "",
+    };
+    HttpProvider.post(
+      `/basic_code/import?framework_name=${encodeURIComponent(framework_name)}`,
       false,
       formData,
       {

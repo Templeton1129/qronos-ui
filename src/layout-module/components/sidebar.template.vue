@@ -79,7 +79,6 @@
           shape="circle"
           class="cursor-pointer w-[42px] h-[42px] shadow-lg shadow-primary-200 dark:shadow-none"
           @click="toggleUserMenu"
-          ref="refAvatar"
         />
         <div v-if="viewExpanded">
           <Message severity="secondary" class="h-6 font-mono"
@@ -165,7 +164,6 @@ const menuClick = (item: any) => {
 };
 
 const viewUserMenu = ref();
-const refAvatar = ref();
 const toggleUserMenu = (event: MouseEvent) => {
   viewUserMenu.value.toggle(event);
 };

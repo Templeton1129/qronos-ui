@@ -12,3 +12,18 @@ export const hourOffsetList = [
   "50m",
   "55m",
 ];
+
+export const logRefreshTimeList = [
+  {
+    name: "不自动更新日志",
+    code: "0",
+  },
+  {
+    name: "5s自动更新日志",
+    code: "5",
+  },
+  {
+    name: "10s自动更新日志",
+    code: "10",
+  },
+];

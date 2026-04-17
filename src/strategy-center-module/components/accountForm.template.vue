@@ -3,6 +3,7 @@
     v-model:visible="viewIsOpenAccountDialog"
     :header="type === `新增` ? `新增账户` : initialValues.account_name"
     :closable="!isForceAddAccount"
+    :draggable="false"
     modal
     appendTo="self"
     class="w-[90vw] sm:w-150 max-w-full z-200"

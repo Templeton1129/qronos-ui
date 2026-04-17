@@ -124,6 +124,7 @@
     v-model:visible="viewIsOpenDialog"
     header="数据中心控制"
     modal
+    :draggable="false"
     class="hidden sm:block w-[90vw] sm:w-[600px] max-w-full"
   >
     <template #default>

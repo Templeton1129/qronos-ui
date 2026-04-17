@@ -105,6 +105,7 @@
       header="确认强制下线"
       :modal="true"
       :closable="false"
+      :draggable="false"
       class="max-w-[90vw] min-w-[80vw] sm:min-w-[35vw]"
     >
       <div class="flex flex-col gap-4">

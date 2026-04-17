@@ -1,4 +1,5 @@
 <template>
+  <!-- 单个框架 -->
   <Card
     v-if="tabType === `item`"
     class="w-full max-w-6xl dark:border-1 dark:border-[#3d3d3d]"
@@ -426,6 +427,7 @@
       </div>
     </template>
   </Card>
+  <!-- 汇总框架 -->
   <Card v-else class="w-full max-w-6xl dark:border-1 dark:border-[#3d3d3d]">
     <template #content>
       <!-- 骨架屏（加载状态） -->
@@ -442,11 +444,25 @@
       </div>
       <div
         v-else
-        class="flex justify-between items-center flex-wrap sm:flex-nowrap space-y-2 gap-2"
+        class="flex justify-between items-center flex-wrap sm:flex-nowrap gap-2"
       >
-        <div class="font-semibold">
+        <div class="font-semibold flex items-center gap-2">
           {{ frameWorkName }}
+          <Tag
+            :value="
+              frameWorkSourceLabelMap[
+                frameWorkSource as keyof typeof frameWorkSourceLabelMap
+              ] || '未知来源'
+            "
+            :severity="
+              frameWorkSourceSeverityMap[
+                frameWorkSource as keyof typeof frameWorkSourceSeverityMap
+              ] || 'secondary'
+            "
+            class="text-xs shrink-0"
+          />
         </div>
+
         <div class="flex justify-center items-center space-x-2 sm:space-x-4">
           <div
             class="flex justify-center items-center space-x-2 sm:space-x-4 min-w-8"
@@ -520,6 +536,7 @@
     modal
     class="w-[90vw] sm:w-[600px] max-w-full"
     :closable="false"
+    :draggable="false"
   >
     <Form
       v-slot="$form"
@@ -745,10 +762,12 @@
   </Drawer>
 
   <!-- 导入框架 -->
-  <ImportZipTemplate
+  <ImportZipDialogTemplate
     title="导入框架压缩包"
     :maxFileSize="50 * 1024 * 1024"
+    :isUpdate="true"
     :frameWorkId="frameWorkId"
+    :uploadRequest="importFrameWorkZip"
     ref="refImportZipDialogTmpl"
   />
 
@@ -782,19 +801,17 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, ref, watch, computed } from "vue";
+import { onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 const route = useRoute();
 const router = useRouter();
 import OverlayBadge from "primevue/overlaybadge";
 import { useToast } from "primevue/usetoast";
 const toast = useToast();
-import { useConfirm } from "primevue/useconfirm";
-const confirm = useConfirm();
 
-import ImportZipTemplate from "@/common-module/components/importZipDialog.template.vue";
+import ImportZipDialogTemplate from "@/common-module/components/importZipDialog.template.vue";
 const refImportZipDialogTmpl = ref<InstanceType<
-  typeof ImportZipTemplate
+  typeof ImportZipDialogTemplate
 > | null>(null);
 import ExportZipDialogTemplate from "@/common-module/components/exportZipDialog.template.vue";
 const refExportZipDialogTemplate = ref<InstanceType<
@@ -826,13 +843,17 @@ import {
   logTypeEnum,
   getAccountInfo,
   editGlobalConfig,
+  importFrameWorkZip,
+  frameWorkSourceEnum,
 } from "@/common-module/services/service.provider";
+import { logRefreshTimeList } from "@/common-module/defaultValues";
 
 const props = defineProps<{
   isLoading: boolean;
   tabType: string; //all汇总 item单个
   currentId: number;
   frameWorkName: string;
+  frameWorkSource: string;
   frameWorkId: string;
   frameWorkType: string;
   runStatus: { startup: string; delist: string; monitor: string };
@@ -846,24 +867,20 @@ const props = defineProps<{
     incremental_lookback_hours: number;
   };
 }>();
+const frameWorkSourceLabelMap = {
+  [frameWorkSourceEnum.official]: "官方",
+  [frameWorkSourceEnum.imported]: "自研",
+};
+
+const frameWorkSourceSeverityMap = {
+  [frameWorkSourceEnum.official]: "primary",
+  [frameWorkSourceEnum.imported]: "info",
+};
+
 const viewIsOpenLogDialog = ref<boolean>(false);
 const viewDataLog = ref<string>("<h1>暂无日志</h1>");
 const viewLogLines = ref<number>(50);
 const logRefreshTimer = ref<ReturnType<typeof setInterval> | null>(null);
-const logRefreshTimeList = [
-  {
-    name: "不自动更新日志",
-    code: "0",
-  },
-  {
-    name: "5s自动更新日志",
-    code: "5",
-  },
-  {
-    name: "10s自动更新日志",
-    code: "10",
-  },
-];
 
 const modeOpetions = [
   {

@@ -225,6 +225,7 @@
                     :equity="slotProps.data.equity.net"
                     :dd2here="slotProps.data.equity.dd2here"
                     :sub_stg_eqs="slotProps.data.sub_stg_eqs"
+                    :isShowFullscreen="true"
                   />
                 </div>
                 <div
@@ -482,7 +483,8 @@
     title="导入框架压缩包"
     :maxFileSize="50 * 1024 * 1024"
     :frameWorkId="frameWorkId"
-    :isNoUpdate="true"
+    :isUpdate="false"
+    :uploadRequest="importFrameWorkZip"
     @onImportSuccess="importFrameWorkSuccess"
     ref="refImportZipDialogTmpl"
   />
@@ -546,6 +548,7 @@ import {
   addOrEditAccountInfo,
   lockAccount,
   getAccountInfoChart,
+  importFrameWorkZip,
 } from "@/common-module/services/service.provider";
 import StrategicNetValueChart from "@/home-module/components/strategicNetValueChart.template.vue";
 

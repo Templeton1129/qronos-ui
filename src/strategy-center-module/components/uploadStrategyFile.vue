@@ -6,6 +6,7 @@
       :header="`${accountName}策略导入`"
       appendTo="self"
       :closable="!isForceAddConfigFile"
+      :draggable="false"
       modal
       class="max-w-[90vw] min-w-[50vw] z-100"
     >

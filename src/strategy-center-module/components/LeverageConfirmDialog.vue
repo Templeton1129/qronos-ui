@@ -2,6 +2,7 @@
   <Dialog
     v-model:visible="viewIsOpenDialog"
     :closable="false"
+    :draggable="false"
     :modal="true"
     class="max-w-[90vw]"
   >

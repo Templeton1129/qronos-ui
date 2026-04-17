@@ -22,6 +22,7 @@
         :tabType="tabType"
         :currentId="frameWorkDataItem.id"
         :frameWorkName="frameWorkDataItem.framework_name"
+        :frameWorkSource="frameWorkDataItem.source"
         :frameWorkId="frameWorkDataItem.framework_id"
         :frameWorkType="frameWorkDataItem.type"
         :runStatus="getRunStatus(frameWorkDataItem.framework_id)"

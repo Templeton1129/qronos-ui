@@ -5,6 +5,7 @@
     modal
     class="w-[90vw] sm:w-[600px] max-w-full"
     :closable="false"
+    :draggable="false"
     :pt="{
       footer: 'w-full justify-between',
     }"

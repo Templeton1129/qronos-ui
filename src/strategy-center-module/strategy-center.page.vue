@@ -79,12 +79,11 @@
               </TabList>
             </Tabs>
           </div>
-          <Button
-            class="hidden sm:inline-flex"
-            label="新增框架"
-            icon="pi pi-plus"
-            @click="openFrameWorkDialog"
-            variant="text"
+          <AddFrameWork
+            :frameWorkVersionList="viewFrameWorkVersionList"
+            :frameWorkStatusList="viewFrameWorkStatusList"
+            @onOfficialDownload="onOfficialDownloadAction"
+            @onImportSuccess="loadData"
           />
         </template>
       </div>
@@ -134,165 +133,6 @@
     <div class="sm:hidden text-xs text-gray-400 text-center pt-2">
       新增框架，账户配置，因子库导入等功能请在PC端操作！
     </div>
-    <!-- 新增框架弹窗 -->
-    <Dialog
-      v-model:visible="isOpenAddFrameWorkDialog"
-      header="新增框架"
-      :modal="true"
-      :closable="true"
-      class="w-[90vw] sm:w-[600px] max-w-full"
-    >
-      <template #default>
-        <div class="px-4 py-2 flex flex-col gap-6">
-          <RadioButtonGroup v-model="viewAddType" class="flex gap-6">
-            <div class="flex gap-2 items-center">
-              <RadioButton inputId="official" name="addType" value="official" />
-              <label for="official" class="mr-4">下载官网框架</label>
-            </div>
-            <div class="flex gap-2 items-center">
-              <RadioButton
-                inputId="custom"
-                name="addType"
-                value="custom"
-                :disabled="true"
-              />
-              <label for="custom">自定义框架(目前不支持)</label>
-            </div>
-          </RadioButtonGroup>
-
-          <div class="space-y-4">
-            <template v-if="viewAddType === 'official'">
-              <Select
-                v-model="selectFarmWorkId"
-                name="id"
-                :options="viewFrameWorkVersionList"
-                optionValue="id"
-                optionLabel="name"
-                filter
-                placeholder="请选择框架版本"
-                emptyFilterMessage="无该框架版本"
-                emptyMessage="暂无新框架"
-                class="w-full min-h-10"
-                :optionDisabled="
-                  (option) =>
-                    option.status === frameWorkDownloadStatusEnum.finished
-                "
-              >
-                <template #value="slotProps">
-                  <div
-                    v-if="slotProps.value"
-                    class="flex items-center justify-between w-full"
-                  >
-                    <template
-                      v-for="item in viewFrameWorkVersionList"
-                      :key="item.id"
-                    >
-                      <template v-if="item.id === slotProps.value">
-                        <div class="flex gap-1 items-center">
-                          <template v-if="item.course_name.split('-')[1]">
-                            <Tag
-                              :severity="
-                                yearSeverityMap[item.course_name.split('-')[1]]
-                              "
-                              class="text-xs font-mono p-1 py-0.5"
-                              >{{ item.course_name.split("-")[1] }}</Tag
-                            >
-                          </template>
-
-                          <div>{{ item.name }}</div>
-                        </div>
-                        <i
-                          v-if="
-                            item.status === frameWorkDownloadStatusEnum.finished
-                          "
-                          class="pi pi-check-circle text-green-400"
-                        ></i>
-                        <i
-                          v-else-if="
-                            item.status ===
-                            frameWorkDownloadStatusEnum.downloading
-                          "
-                          class="pi pi-spinner-dotted"
-                        ></i>
-                        <i v-else class="pi pi-arrow-circle-down"></i>
-                      </template>
-                    </template>
-                  </div>
-                  <span v-else class="flex items-center justify-between w-full">
-                    {{ slotProps.placeholder }}
-                  </span>
-                </template>
-                <template #option="slotProps">
-                  <div class="flex items-center justify-between w-full">
-                    <div class="flex gap-2 items-center">
-                      <template
-                        v-if="slotProps.option.course_name.split('-')[1]"
-                      >
-                        <Tag
-                          class="text-xs font-mono p-1 py-0.5"
-                          :severity="
-                            yearSeverityMap[
-                              slotProps.option.course_name.split('-')[1]
-                            ]
-                          "
-                          >{{ slotProps.option.course_name.split("-")[1] }}</Tag
-                        >
-                      </template>
-
-                      <div>{{ slotProps.option.name }}</div>
-                    </div>
-                    <i
-                      v-if="
-                        slotProps.option.status ===
-                        frameWorkDownloadStatusEnum.finished
-                      "
-                      class="pi pi-check-circle text-green-400"
-                    ></i>
-                    <i
-                      v-else-if="
-                        slotProps.option.status ===
-                        frameWorkDownloadStatusEnum.downloading
-                      "
-                      class="pi pi-spinner-dotted"
-                    ></i>
-                    <i v-else class="pi pi-arrow-circle-down"></i>
-                  </div>
-                </template>
-              </Select>
-            </template>
-            <template v-else>
-              <div>
-                <label class="block text-sm font-medium mb-1"
-                  ><span class="text-red-500 mr-1">*</span
-                  >本地框架路径(绝对路径)</label
-                >
-                <InputText
-                  v-model="viewCustomFrameWorkPath"
-                  class="w-full"
-                  placeholder="如 /home/youruser/myproject/xxx"
-                />
-              </div>
-            </template>
-          </div>
-        </div>
-      </template>
-      <template #footer>
-        <Button
-          label="取消"
-          text
-          severity="secondary"
-          @click="isOpenAddFrameWorkDialog = false"
-          autofocus
-        />
-        <Button
-          label="确定"
-          outlined
-          @click="downloadFrameWorkAction"
-          autofocus
-          :disabled="!selectFarmWorkId"
-        />
-      </template>
-    </Dialog>
 
     <!-- 升级框架 -->
     <UpdateFrameWorkDialog
@@ -314,6 +154,7 @@ import { useToast } from "primevue/usetoast";
 const toast = useToast();
 
 import Detail from "@/strategy-center-module/components/detail.template.vue";
+import AddFrameWork from "@/strategy-center-module/components/addFrameWork.template.vue";
 import UpdateFrameWorkDialog from "@/strategy-center-module/components/updateFrameWork.template.vue";
 const refUpdateFrameWorkDialog = ref<InstanceType<
   typeof UpdateFrameWorkDialog
@@ -328,7 +169,6 @@ import {
   getframWorkVersionList,
   getFrameWorkStatus,
   frameWorkDownloadStatusEnum,
-  addFrameWorkVersion,
 } from "@/common-module/services/service.provider";
 
 const route = useRoute();
@@ -346,6 +186,7 @@ const viewTabList = computed(() => {
       time: "",
       framework_name: "汇总框架",
       path: "",
+      source: "",
     },
     ...viewFrameWorkStatusList.value,
   ];
@@ -358,15 +199,6 @@ const downloadFrameWorkStatusTimer = ref<ReturnType<typeof setTimeout> | null>(
 );
 
 const selectFarmWorkId = ref<string | null>(null);
-const isOpenAddFrameWorkDialog = ref<boolean>(false);
-
-const viewAddType = ref<string>("official"); //official官方提供 custom自定义
-const viewCustomFrameWorkPath = ref<string>("");
-
-let yearSeverityMap: { [key: string]: string } = {
-  "2025": "",
-  "2026": "info",
-};
 
 onMounted(() => {
   loadData();
@@ -528,25 +360,11 @@ const formatData = () => {
   }
 };
 
-const openFrameWorkDialog = () => {
-  isOpenAddFrameWorkDialog.value = true;
-};
-
-const downloadFrameWorkAction = async () => {
-  if (selectFarmWorkId.value) {
-    const res = await addFrameWorkVersion(selectFarmWorkId.value);
-    if (res.result === true) {
-      isOpenAddFrameWorkDialog.value = false;
-      toast.add({
-        severity: "success",
-        summary: "框架下载请求已提交",
-        life: 2000,
-      });
-      setTimeout(() => {
-        startDownloadFrameWorkStatusTimer(true);
-      }, 2000);
-    }
-  }
+const onOfficialDownloadAction = (frameworkId: string) => {
+  selectFarmWorkId.value = frameworkId;
+  setTimeout(() => {
+    startDownloadFrameWorkStatusTimer(true);
+  }, 2000);
 };
 
 const tabClick = (tabValue: number) => {

@@ -4,6 +4,7 @@
     :modal="true"
     class="min-w-[50vw] max-w-[90vw]"
     :closable="false"
+    :draggable="false"
     header="删除框架"
   >
     <template #default>
@@ -37,27 +38,6 @@
         <ProgressSpinner style="width: 40px; height: 40px" strokeWidth="4" />
         <div class="text-gray-700">实盘框架正在暂停中，请稍候...</div>
       </div>
-
-      <!-- 是否删除所有信息 目前不需要 -->
-      <!-- <div
-        v-if="viewStepNumber === 3"
-        class="flex flex-col items-center gap-y-4 py-2"
-      >
-        <div class="flex items-center gap-x-2">
-          <Checkbox
-            v-model="viewIsDeleteAll"
-            :binary="true"
-            inputId="deleteAll"
-            :disabled="true"
-          />
-          <label for="deleteAll" class="text-gray-700 font-medium"
-            >是否删除所有信息</label
-          >
-        </div>
-        <div class="text-xs text-gray-500">
-          目前暂不支持勾选，删除操作只删除数据库中的数据，不会删除框架文件，请放心操作
-        </div>
-      </div> -->
 
       <!-- 步骤3：删除成功 -->
       <div
@@ -131,7 +111,6 @@ const viewIsOpen = ref<boolean>(false);
 const viewFrameworkId = ref<string>("");
 const viewFrameworkName = ref<string>("");
 const viewStepNumber = ref<number>(1);
-// const viewIsDeleteAll = ref(false);
 const viewIsLoading = ref<boolean>(false);
 const viewIsFailed = ref<boolean>(false);
 const stopFrameWorkStatusTimer = ref<ReturnType<typeof setTimeout> | null>(

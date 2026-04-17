@@ -243,11 +243,10 @@ const tFrameWorkVersionVersionItem = {
   },
   file: {
     ct: "2025-01-10 17:10",
-    description:
-      "### 框架重要功能\n- **支持“纯合约模式”**：多头和空头都是合约。\n- **支持“现货+合约模式”**：多头可以包含现货、合约，空头包含合约。\n- **纯多功能**：全部仓位只买入策略的多头。不交易空头。\n- **统一账户功能**：可以在 `传统的非统一账户` 和 `统一账户`模式 之间选择。任何模式下，原有功能都保留\n- **分钟偏移功能**：支持任意时间开始的小时级别K线\n- **多账户功能**：一个程序可以同时在多个账户下运行策略。\n- **多offset功能**\n\n-----\n\n### 策略级别功能\n- **多策略融合功能（大杂烩）**：一个账户下可以同时运行多个选币策略。例如可以在一个账户下，使用一份资金，运行策略A（参数1）、策略A（参数2）、策略A（参数3）、策略B（参数1）、策略B（参数2）。以此类推。\n- **多策略资金配比功能**：一个账户运行多个策略时，每个策略可以配置不同的资金比例。\n- **多空分离选币**：多头和空头可以使用不一样的策略。\n- **多空分离过滤（前置）**：多头和空头的前置过滤条件可以不同。\n- **多空分离过滤（后置）**：多头和空头的后置过滤条件可以不同。\n- **数据整理支持自定义数据**：支持在策略中加入量价数据之外的任意第三方数据\n\n-----\n\n### 其他功能\n- **自动rebalance功能**。默认开启，可以关闭后手动rebalance\n  - rebalance时，可以设定最小下单量。例如设置为50u，可以显著降低无效换手。\n- **动态拆单功能**\n- **BNB抵扣手续费功能**。开启BNB燃烧，抵扣手续费\n- **小额资产自动兑换BNB功能**\n- **企业微信机器人通知功能**。开启企业微信机器人\n- **交易黑名单与白名单功能**。开启选币黑名单与白名单",
+    description: "",
     extra_permissions: [],
     filenames: [],
-    id: "6780e3f55bc883b52cb2566d",
+    id: "",
     is_hidden: null,
     location: "fen-2025",
     name: "选币策略框架𝓟𝓻𝓸(实盘)v1.2.0",
@@ -318,12 +317,13 @@ interface iConfigData {
 
 const tFrameWorkStatusRes = {
   id: 1,
-  framework_id: "67c17920385b886f613131b3",
+  framework_id: "",
   framework_name: "选币策略框架𝓟𝓻𝓸(实盘)v1.2.0",
   status: "finished",
   type: "data_center",
   time: "2025-01-17 11:22",
-  path: "/Users/muzihang/PycharmProjects/qronos/data/firm/7448dc0db7_position-mgmt-trading_v1",
+  path: "",
+  source: frameWorkSourceEnum.official,
 };
 type tDbFrameWorkStatusRes = typeof tFrameWorkStatusRes;
 
@@ -350,7 +350,7 @@ type tDbFactorFileUploadRes = typeof tFactorFileUploadRes;
 const tFramwWorkRunStatusRes = {
   pm_id: 5,
   name: "coin-realtime-data_v1.1.1_realtime_data",
-  framework_id: "6859193ccd1ae7cd52424467",
+  framework_id: "",
   status: frameWorkRunStatus.online,
   restart_time: 191,
   mem_usage: "0.0MB",
@@ -370,7 +370,7 @@ const tNewAccountConfigRes = {
 };
 
 const tAccountInfoRes = {
-  framework_id: "682d6e8b3adbfebc224d2cac",
+  framework_id: "",
   account_name: "账户1",
   account_config: {
     account_type: "普通账户",
@@ -489,7 +489,7 @@ const tHomeAccountInfoRes = {
   coinSortType: "盈利",
   //跳转到框架页面的id
   edit_id: 1,
-  framework_id: "685d01ea59ea5960a881a420",
+  framework_id: "",
   framework_name: "仓位管理实盘框架v1.3.3",
   account_name: "账户2",
   hour_offset: "5m",
@@ -537,6 +537,9 @@ const tHomeAccountInfoRes = {
     long_ratio: [0, 0],
     short_ratio: [0.16, 0.16],
     empty_ratio: [0.84, 0.84],
+    // 仓位敞口
+    exposure_short: [0.16, 0.16],
+    exposure_long: [0, 0],
   },
   // 现货持仓（前端处理过后的格式）
   pos_spot: [
@@ -602,8 +605,44 @@ const tHomeAccountInfoRes = {
 };
 type tDbHomeAccountInfoRes = typeof tHomeAccountInfoRes;
 
+const tSharePosterInfo = {
+  framework_id: "",
+  framework_name: "实盘框架v1.3.11",
+  account_name: "",
+  strategy_name: "",
+  query_days: 0,
+  status_text: "已停止",
+  running_days: 19,
+  start_at: "2025-07-18 12:05:00",
+  end_at: "2025-08-05 14:05:00",
+  eq_pct: -4.06,
+  eq_drawdown: -7.13,
+  eq_annualized: -56.68,
+  eq_pct_24h: 1.19,
+  long_ratio: 0.47,
+  short_ratio: 0.46,
+  empty_ratio: 0.07,
+  long_coin_num: 135,
+  short_coin_num: 137,
+  exposure_long: null,
+  exposure_short: null,
+  equity: {
+    time: [],
+    net: [],
+    long_ratio: [],
+    short_ratio: [],
+    empty_ratio: [],
+    long_coin_num: [],
+    short_coin_num: [],
+    exposure_long: [],
+    exposure_short: [],
+  },
+};
+
+type tDbSharePosterInfo = typeof tSharePosterInfo;
+
 const tDataCenterUpdateStatusRes = {
-  id: "20250716104500",
+  id: "",
   start_time: "2025-07-16 10:40:07",
   end_time: "2025-07-16 10:54:10",
   runtime: "2025-07-16 10:45:00+08:00",
@@ -625,10 +664,10 @@ const tDataCenterUpdateStatusRes = {
 type tDbDataCenterUpdateStatusRes = typeof tDataCenterUpdateStatusRes;
 
 const tDeviceInfo = {
-  id: "d36d8f68010d38ebc7808c0f4b87ac29ff49abeb388470c15d33d95c781ffb4c",
+  id: "",
   device_type: "pc",
   browser_info: "unknown browser",
-  ip_address: "192.168.100.146",
+  ip_address: "",
   last_active_time: "2025-08-14 11:58:36",
   created_time: "2025-08-14 11:27:29",
   is_current: true,

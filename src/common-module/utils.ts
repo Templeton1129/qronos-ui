@@ -34,7 +34,7 @@ export const formatOutputLog = (text: string) => {
       }
       const spaces = line.match(/^\s*/)?.[0]?.length || 0;
       const spaceString = "&nbsp;".repeat(spaces);
-      return `<span class="block leading-5 whitespace-pre text-xs">${spaceString}${line.trimLeft()}</span>`;
+      return `<span class="block leading-5 whitespace-pre text-xs">${spaceString}${line.trimStart()}</span>`;
     })
     .join("");
 

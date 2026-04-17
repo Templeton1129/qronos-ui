@@ -107,12 +107,15 @@ const router = useRouter();
 import { useToast } from "primevue/usetoast";
 const toast = useToast();
 
-import { importFrameWorkZip } from "@/common-module/services/service.provider";
 const props = defineProps<{
   title: string;
   maxFileSize: number;
-  frameWorkId: string;
-  isNoUpdate?: boolean;
+  frameWorkId?: string;
+  isUpdate?: boolean;
+  uploadRequest: (
+    formData: FormData,
+    frameWorkId?: string
+  ) => Promise<{ result: boolean; msg?: string }>;
 }>();
 
 const $emit = defineEmits(["onImportSuccess"]);
@@ -192,27 +195,39 @@ const uploadAction = async () => {
   }
 
   viewIsloading.value = true;
+  viewErrorMessage.value = "";
 
-  const formData = new FormData();
-  formData.append("file", viewSelectedFile.value);
+  try {
+    const formData = new FormData();
+    formData.append("file", viewSelectedFile.value);
 
-  const res = await importFrameWorkZip(props.frameWorkId, formData);
-  viewIsloading.value = false;
+    const res =
+      props.frameWorkId !== undefined
+        ? await props.uploadRequest(formData, props.frameWorkId)
+        : await props.uploadRequest(formData);
 
-  if (res.result === true) {
-    toast.add({
-      severity: "success",
-      summary: `导入成功`,
-      life: 3000,
-    });
-    viewIsOpenDialog.value = false;
-    if (!props.isNoUpdate) {
-      setTimeout(() => {
-        router.go(0);
-      }, 500);
-    } else {
-      $emit("onImportSuccess");
+    if (res.result === true) {
+      toast.add({
+        severity: "success",
+        summary: `导入成功`,
+        life: 3000,
+      });
+      viewIsOpenDialog.value = false;
+      if (props.isUpdate) {
+        setTimeout(() => {
+          router.go(0);
+        }, 500);
+      } else {
+        $emit("onImportSuccess");
+      }
+      return;
     }
+
+    viewErrorMessage.value = res.msg || "导入失败，请稍后重试";
+  } catch (error: any) {
+    viewErrorMessage.value = error?.message || "导入失败，请稍后重试";
+  } finally {
+    viewIsloading.value = false;
   }
 };
 

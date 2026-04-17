@@ -107,37 +107,56 @@
                 </div>
               </div>
             </template>
-            <template #icons
-              ><Button
-                v-if="viewfullscreenId !== item.id"
-                icon="pi pi-window-maximize"
-                text
-                rounded
-                severity="secondary"
-                size="small"
-                @click="viewfullscreenId = item.id"
-                v-tooltip="'全屏显示'"
-                class="hidden sm:inline-flex" />
+            <template #icons>
               <Button
-                v-else
-                icon="pi pi-window-minimize"
-                text
-                rounded
-                severity="secondary"
+                icon="pi pi-share-alt"
+                label="分享海报"
+                outlined
                 size="small"
-                @click="viewfullscreenId = null"
-                v-tooltip="'退出全屏'"
-                class="hidden sm:inline-flex"
-            /></template>
+                @click="openSharePoster(item)"
+                class="hidden sm:inline-flex text-xs mr-2 py-1"
+              />
+              <Button
+                icon="pi pi-share-alt"
+                text
+                size="small"
+                @click="openSharePoster(item)"
+                class="inline-flex sm:hidden text-xs"
+              />
+              <template v-if="expandedPanels.includes(item.id)">
+                <Button
+                  v-if="viewfullscreenId !== item.id"
+                  icon="pi pi-window-maximize"
+                  text
+                  rounded
+                  severity="secondary"
+                  size="small"
+                  @click="viewfullscreenId = item.id"
+                  v-tooltip="'全屏显示'"
+                  class="hidden sm:inline-flex"
+                />
+                <Button
+                  v-else
+                  icon="pi pi-window-minimize"
+                  text
+                  rounded
+                  severity="secondary"
+                  size="small"
+                  @click="viewfullscreenId = null"
+                  v-tooltip="'退出全屏'"
+                  class="hidden sm:inline-flex"
+                />
+              </template>
+            </template>
             <div
-              class="flex gap-3 px-4 pb-1"
+              class="flex gap-2 sm:gap-3 px-2 sm:px-4 pb-1"
               :class="[
                 viewfullscreenId === item.id
                   ? `grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3`
                   : `overflow-x-auto flex-nowrap scrollbar-thin max-h-120 box-content`,
               ]"
             >
-              <!-- 账户净值 -->
+              <!-- 1.账户净值 -->
               <div
                 class="px-4 py-3 flex flex-col gap-4 bg-gray-50 dark:bg-neutral-900 rounded-lg"
                 :class="[
@@ -285,7 +304,7 @@
                   </div>
                 </div>
               </div>
-              <!-- 策略净值曲线图 -->
+              <!-- 2.策略净值曲线图 -->
               <div
                 class="box-border flex flex-col justify-end gap-4 bg-gray-50 dark:bg-neutral-900 rounded-lg overflow-hidden"
                 :class="[
@@ -308,6 +327,7 @@
                     :equity="item.equity.net"
                     :dd2here="item.equity.dd2here"
                     :sub_stg_eqs="item.sub_stg_eqs"
+                    :isShowFullscreen="true"
                   />
                 </template>
                 <template v-else>
@@ -332,7 +352,7 @@
                   </div>
                 </template>
               </div>
-              <!-- 多空统计 -->
+              <!-- 3.多空统计(多空比例，仓位敞口，多空数量) -->
               <div
                 class="flex bg-gray-50 dark:bg-neutral-900 rounded-lg overflow-hidden"
                 :class="[
@@ -359,6 +379,9 @@
                     :empty="item.equity.empty_ratio"
                     :long_coin_num="item.equity.long_coin_num"
                     :short_coin_num="item.equity.short_coin_num"
+                    :exposure_short="item.equity.exposure_short || []"
+                    :exposure_long="item.equity.exposure_long || []"
+                    :isShowFullscreen="true"
                   />
                 </template>
                 <template v-else>
@@ -383,7 +406,7 @@
                   </div>
                 </template>
               </div>
-              <!-- 持仓模块 表格 -->
+              <!-- 4.持仓模块表格 -->
               <div
                 class="pt-3 flex flex-col content-between bg-gray-50 dark:bg-neutral-900 rounded-lg"
                 :class="[
@@ -399,6 +422,7 @@
                   :options="viewPostSelectOptions"
                   size="small"
                   class="pl-4"
+                  :allowEmpty="false"
                 />
                 <template v-if="item?.pos_swap || item?.pos_spot">
                   <DataTable
@@ -546,7 +570,7 @@
                   </div>
                 </template>
               </div>
-              <!-- 盈利/亏损币排名 -->
+              <!-- 5.盈利/亏损币排名 -->
               <div
                 class="px-4 py-3 flex flex-col gap-3 bg-gray-50 dark:bg-neutral-900 rounded-lg"
                 :class="[
@@ -562,6 +586,7 @@
                     v-model="item.coinSortType"
                     :options="coinSortTypeOptions"
                     size="small"
+                    :allowEmpty="false"
                   />
                   <Select
                     v-model="pnlSelectedTimeRange"
@@ -573,13 +598,13 @@
                   />
                 </div>
 
-                <template v-if="getPnlHistory(item).length > 0">
+                <template v-if="getTop5Coins(item).length > 0">
                   <div class="flex-1 flex flex-col px-2 w-full">
                     <div
                       class="divide-y divide-gray-100 dark:divide-neutral-700"
                     >
                       <div
-                        v-for="(coin, index) in getPnlHistory(item)"
+                        v-for="(coin, index) in getTop5Coins(item)"
                         :key="coin.symbol"
                         class="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
                       >
@@ -648,209 +673,12 @@
                   开平仓币种数据可能还不准确，后续会优化
                 </div>
               </div>
-              <!-- 策略配置信息 -->
+              <!-- 6.策略配置信息表格-->
               <div
                 class="pt-3 flex flex-col gap-2 bg-gray-50 dark:bg-neutral-900 rounded-lg"
                 :class="[viewfullscreenId === item.id ? 'max-h-120' : '']"
               >
-                <div class="flex px-4 justify-between">
-                  <span class="text-md hidden sm:block"> 策略配置信息 </span>
-                  <div
-                    v-if="item?.strategy_name"
-                    class="flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-300"
-                  >
-                    当前使用的策略是
-                    <Tag class="text-xs" severity="secondary">{{
-                      item.strategy_name || "--"
-                    }}</Tag>
-                  </div>
-                </div>
-                <div v-if="item?.strategy_name" class="flex flex-col">
-                  <DataTable
-                    :value="item?.strategy_pool || []"
-                    paginator
-                    :rows="5"
-                    class="!bg-transparent flex-1 flex flex-col"
-                    :pt="{
-                      tableContainer: {
-                        class: 'flex-1',
-                      },
-                      table: {
-                        class: 'text-xs !bg-transparent h-full',
-                      },
-                    }"
-                    rowGroupMode="rowspan"
-                    groupRowsBy="name"
-                    :center="true"
-                  >
-                    <Column field="name" header="策略">
-                      <template #body="{ data }">
-                        <div class="w-20 flex">
-                          <Tag class="font-medium text-xs">{{ data.name }}</Tag>
-                        </div>
-                      </template>
-                    </Column>
-                    <Column field="strategy" header="子策略权重">
-                      <template #body="{ data }">
-                        <div class="w-20 text-center">
-                          {{ data.cap_weight.toFixed(2) * 100 }}%{{
-                            data.strategy
-                          }}
-                        </div>
-                      </template>
-                    </Column>
-                    <Column field="hold_period" header="持仓周期">
-                      <template #body="{ data }">
-                        <div class="w-12 text-center">
-                          {{ data.hold_period }}
-                        </div>
-                      </template>
-                    </Column>
-                    <Column
-                      field="offset_list"
-                      header="offset_list"
-                      class="min-w-25"
-                    >
-                      <template #body="{ data }">
-                        <div
-                          class="flex items-center gap-1 flex-wrap"
-                          v-if="data.offset_list && data.offset_list.length"
-                        >
-                          <template
-                            v-for="(item, idx) in data.offset_list.slice(0, 3)"
-                            :key="item"
-                          >
-                            <Tag
-                              class="font-medium text-xs"
-                              severity="secondary"
-                              >{{ item }}</Tag
-                            >
-                          </template>
-                          <template v-if="data.offset_list.length > 3">
-                            <span
-                              class="cursor-pointer text-xs text-primary-500 dark:text-primary-300"
-                              v-tooltip.bottom="{
-                                value: `所有的offset：${data.offset_list.join(
-                                  ', '
-                                )}`,
-                                autoHide: false,
-                              }"
-                              >+{{ data.offset_list.length - 3 }}</span
-                            >
-                          </template>
-                        </div>
-                      </template>
-                    </Column>
-                    <Column
-                      field="is_use_spot"
-                      header="现货/合约模式"
-                      class="min-w-20"
-                    >
-                      <template #body="{ data }">
-                        <template v-if="data?.market">
-                          <Tag
-                            class="font-medium text-[10px] px-1.5"
-                            severity="info"
-                            v-tooltip="{
-                              value:
-                                marketOptionMapDesc[
-                                  data.market as keyof typeof marketOptionMapDesc
-                                ] ?? '-',
-                              class: 'min-w-55',
-                            }"
-                          >
-                            {{
-                              marketOptionMap[
-                                data.market as keyof typeof marketOptionMap
-                              ] ?? "-"
-                            }}
-                          </Tag>
-                        </template>
-                        <template
-                          v-else-if="
-                            data.is_use_spot !== undefined ||
-                            data.is_use_spot !== null
-                          "
-                        >
-                          <Tag
-                            class="font-medium text-xs w-11"
-                            :severity="data.is_use_spot ? 'success' : 'info'"
-                            >{{ data.is_use_spot ? "现货" : "合约" }}</Tag
-                          >
-                        </template>
-                        <template v-else>--</template>
-                      </template>
-                    </Column>
-                    <Column field="long_cap_weight" header="多头权重">
-                      <template #body="{ data }">
-                        <div class="w-12 text-center">
-                          {{ data.long_cap_weight.toFixed(2) * 100 }}%
-                        </div>
-                      </template></Column
-                    >
-                    <Column field="short_cap_weight" header="空头权重">
-                      <template #body="{ data }">
-                        <div class="w-12 text-center">
-                          {{ data.short_cap_weight.toFixed(2) * 100 }}%
-                        </div>
-                      </template>
-                    </Column>
-                    <Column field="long_select_coin_num" header="多头选币数量">
-                      <template #body="{ data }">
-                        <div class="w-12 text-center">
-                          {{ data.long_select_coin_num }}
-                        </div>
-                      </template>
-                    </Column>
-                    <Column field="short_select_coin_num" header="空头选币数量">
-                      <template #body="{ data }">
-                        <div class="w-12 text-center">
-                          {{ data.short_select_coin_num }}
-                        </div>
-                      </template>
-                    </Column>
-                    <Column field="factor_list" header="因子/过滤因子/后置因子">
-                      <template #body="{ data }">
-                        <div class="flex items-center gap-2">
-                          <Button
-                            class="text-xs w-34"
-                            size="small"
-                            variant="text"
-                            severity="secondary"
-                            @click="
-                              showFactorDialog(
-                                data.factor_list,
-                                data.filter_list,
-                                data.filter_list_post
-                              )
-                            "
-                          >
-                            查看因子信息
-                          </Button>
-                        </div>
-                      </template></Column
-                    >
-                    <template #empty>
-                      <div class="flex items-center justify-center h-full">
-                        <img
-                          src="@/assets/home-img/no-data.png"
-                          class="w-40 h-full"
-                        />
-                      </div>
-                    </template>
-                  </DataTable>
-                </div>
-                <div v-else class="flex-1 flex items-center justify-center">
-                  <img
-                    src="@/assets/home-img/no-data.png"
-                    class="w-40 h-auto"
-                  />
-                  <div class="flex justify-center items-center">
-                    <span class="text-xs text-gray-400">
-                      暂无策略配置数据
-                    </span>
-                  </div>
-                </div>
+                <StrategyConfigInfo :item="item" />
               </div>
             </div>
           </Panel>
@@ -875,101 +703,11 @@
       </template>
     </template>
   </div>
-  <Dialog
-    v-model:visible="viewFactorDialogVisible"
-    :closable="false"
-    modal
-    class="w-[90vw] sm:w-[600px] max-w-full"
-  >
-    <div class="flex flex-col gap-4">
-      <SelectButton
-        v-model="viewFactorSelect"
-        :options="viewFactorOptions"
-        size="small"
-        @value-change="viewFactorSelectChange"
-      />
-      <DataTable :value="viewFactorList" paginator :rows="5" class="text-sm">
-        <Column
-          :header="
-            viewFactorSelect === '因子'
-              ? '因子'
-              : viewFactorSelect === '过滤因子'
-                ? '过滤因子'
-                : '后置因子'
-          "
-          :style="{ width: '100px' }"
-        >
-          <template #body="{ data }">
-            <Tag class="font-medium text-xs">{{ data[0] }}</Tag>
-          </template>
-        </Column>
-        <Column
-          :header="viewFactorSelect === '因子' ? '排序方式' : '因子参数'"
-          :style="{ width: '100px' }"
-        >
-          <template #body="{ data }">
-            <div class="font-medium text-xs" v-if="viewFactorSelect === '因子'">
-              <div v-if="data[1]" class="space-x-2">
-                <span>升序</span><i class="pi pi-arrow-up text-xs"></i>
-              </div>
-              <div v-else class="space-x-2">
-                <span>降序</span><i class="pi pi-arrow-down text-xs"></i>
-              </div>
-            </div>
-            <div v-else class="font-medium text-xs">
-              {{ data[1] }}
-            </div>
-          </template>
-        </Column>
-        <Column
-          :header="viewFactorSelect === '因子' ? '因子参数' : '因子使用条件'"
-          :style="{ width: '140px' }"
-        >
-          <template #body="{ data }">
-            <div class="font-medium text-xs">{{ data[2] }}</div>
-          </template></Column
-        >
-        <Column
-          :header="viewFactorSelect === '因子' ? '因子权重' : '排序方式'"
-          :style="{ width: '100px' }"
-        >
-          <template #body="{ data }">
-            <div v-if="viewFactorSelect === '因子'">
-              <div class="font-medium text-xs">{{ data[3] }}</div>
-            </div>
-            <div v-else class="font-medium text-xs">
-              <div v-if="data.length === 4">
-                <div v-if="data[1]" class="space-x-2">
-                  <span>升序</span><i class="pi pi-arrow-up text-xs"></i>
-                </div>
-                <div v-else class="space-x-2">
-                  <span>降序</span><i class="pi pi-arrow-down text-xs"></i>
-                </div>
-              </div>
-              <div v-else class="font-medium text-xss">
-                <div class="space-x-2">
-                  <span>升序</span><i class="pi pi-arrow-up text-xs"></i>
-                </div>
-              </div>
-            </div> </template
-        ></Column>
-        <template #empty>
-          <div class="flex items-center justify-center h-full">
-            <img src="@/assets/home-img/no-data.png" class="w-40 h-auto" />
-          </div>
-        </template>
-      </DataTable>
-    </div>
-    <template #footer>
-      <Button
-        label="关闭"
-        size="small"
-        severity="secondary"
-        variant="outlined"
-        @click="viewFactorDialogVisible = false"
-      />
-    </template>
-  </Dialog>
+  <SharePosterDialog
+    v-model="sharePosterVisible"
+    :frameworkId="sharePosterAccount?.framework_id || ''"
+    :accountName="sharePosterAccount?.account_name || ''"
+  />
 </template>
 
 <script setup lang="ts">
@@ -979,28 +717,15 @@ const router = useRouter();
 import { FilterMatchMode } from "@primevue/core/api";
 import StrategicNetValueChart from "@/home-module/components/strategicNetValueChart.template.vue";
 import LongChart from "@/home-module/components/longChart.template.vue";
+import SharePosterDialog from "@/home-module/components/sharePosterDialog.template.vue";
+import StrategyConfigInfo from "@/home-module/components/strategyConfigInfo.template.vue";
 import { getHomeAccountInfo } from "@/common-module/services/service.provider";
-const marketOptionMap = {
-  spot_spot: "纯现货",
-  swap_swap: "纯合约",
-  mix_spot: "现货与合约-现货优先",
-  mix_swap: "现货与合约-合约优先",
-  spot_swap: "现货选币合约优先",
-};
-const marketOptionMapDesc = {
-  spot_spot: "纯现货(spot_spot)",
-  swap_swap: "纯合约(swap_swap)",
-  mix_spot: "现货与合约-现货优先(mix_spot)",
-  mix_swap: "现货与合约-合约优先(mix_swap)",
-  spot_swap: "现货选币合约优先(spot_swap)",
-};
 
 const viewfullscreenId = ref<number | null>(null);
 const viewIsLoading = ref<boolean>(false);
 const viewData = ref<tDbHomeAccountInfoRes[]>([]);
 
 const viewPostSelectOptions = ref<string[]>(["持仓合约", "持仓现货"]);
-const viewFactorDialogVisible = ref(false);
 
 // 定义方向筛选器
 const sideFilterOptions = ref([
@@ -1009,18 +734,6 @@ const sideFilterOptions = ref([
 ]);
 const tableFilters = ref({
   side: { value: null, matchMode: FilterMatchMode.EQUALS },
-});
-const viewFactorSelect = ref<string>("因子");
-const viewFactorOptions = ref<string[]>(["因子", "过滤因子", "后置因子"]);
-const viewFactorList = ref<string[]>([]);
-const viewCurrentFactorList = ref<{
-  factorList: string[];
-  filterList: string[];
-  filterListPost: string[];
-}>({
-  factorList: [],
-  filterList: [],
-  filterListPost: [],
 });
 
 const pnlSelectedTimeRange = ref<string>("1h");
@@ -1046,6 +759,8 @@ const colorList = ref<string[]>([
 ]);
 
 const viewAccountValueHiddenIdList = ref<number[]>([]);
+const sharePosterVisible = ref(false);
+const sharePosterAccount = ref<any>(null);
 
 onMounted(() => {
   loadData();
@@ -1080,7 +795,7 @@ const formatStrategyPool = () => {
   });
 };
 
-const getPnlHistory = (item: any) => {
+const getTop5Coins = (item: any) => {
   if (
     item?.pnl_history &&
     pnlSelectedTimeRange.value &&
@@ -1126,29 +841,9 @@ const goToFrameWorkPage = (id: number = 0) => {
   });
 };
 
-const showFactorDialog = (
-  factorList: string[],
-  filterList: string[],
-  filterListPost: string[]
-) => {
-  viewFactorDialogVisible.value = true;
-  viewCurrentFactorList.value = {
-    factorList: factorList || [],
-    filterList: filterList || [],
-    filterListPost: filterListPost || [],
-  };
-  viewFactorSelect.value = "因子";
-  viewFactorList.value = [...viewCurrentFactorList.value.factorList];
-};
-
-const viewFactorSelectChange = () => {
-  if (viewFactorSelect.value === "因子") {
-    viewFactorList.value = [...viewCurrentFactorList.value.factorList];
-  } else if (viewFactorSelect.value === "过滤因子") {
-    viewFactorList.value = [...viewCurrentFactorList.value.filterList];
-  } else if (viewFactorSelect.value === "后置因子") {
-    viewFactorList.value = [...viewCurrentFactorList.value.filterListPost];
-  }
+const openSharePoster = (item: any) => {
+  sharePosterAccount.value = item;
+  sharePosterVisible.value = true;
 };
 
 const showOrHiddenAction = (itemId: number) => {

@@ -10,12 +10,6 @@ const { themeMode } = useStorageValueOrFn();
 const app = createApp(App);
 app.use(AppRouter);
 
-import vue3LazyLoad from "vue3-lazy";
-app.use(vue3LazyLoad, {
-  loading: new URL("@/assets/images/v-lazy/loading.png", import.meta.url).href,
-  error: new URL("@/assets/images/v-lazy/err.png", import.meta.url).href,
-});
-
 import PrimeVue from "primevue/config";
 import { usePreset } from "@primeuix/themes";
 import { definePreset } from "@primeuix/themes";

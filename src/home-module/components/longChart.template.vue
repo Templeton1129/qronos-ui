@@ -4,12 +4,12 @@
       class="w-full flex-1 flex flex-col"
       :class="[
         isFullscreen === true
-          ? 'w-screen h-screen fixed inset-0 z-[9999] bg-white dark:bg-neutral-900 p-4'
+          ? 'w-screen h-screen fixed inset-0 z-[9999] bg-white dark:bg-neutral-900 px-1 py-4 sm:px-4'
           : 'relative',
       ]"
     >
       <!-- 放大按钮 -->
-      <div class="absolute top-1 right-2 z-10">
+      <div class="absolute top-1 right-2 z-10" v-if="isShowFullscreen">
         <Button
           v-if="isFullscreen === false"
           icon="pi pi-window-maximize"
@@ -41,6 +41,24 @@
         autoresize
       />
       <v-chart
+        v-if="props.exposure_long.length && props.exposure_short.length"
+        ref="refPositionExposureChart"
+        :key="`positionExposure-${chartKey}`"
+        :option="positionExposureOption"
+        :theme="themeMode === `dark` ? `dark` : `light`"
+        class="w-full flex-1"
+        autoresize
+      />
+      <div
+        v-else
+        class="w-full flex-1 flex flex-col gap-2 items-center justify-center"
+      >
+        <img src="@/assets/home-img/no-data.png" class="w-28 h-auto" />
+        <div class="flex justify-center items-center">
+          <span class="text-xs text-gray-400"> 暂无仓位敞口数据 </span>
+        </div>
+      </div>
+      <v-chart
         ref="refChart2"
         :key="`coinNum-${chartKey}`"
         :option="coinNumOption"
@@ -56,6 +74,7 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useStorageValueOrFn } from "@/common-module/hooks/getOrSetStorage";
 const { themeMode } = useStorageValueOrFn();
+import dayjs from "dayjs";
 
 const props = defineProps<{
   dateTime: string[];
@@ -64,10 +83,14 @@ const props = defineProps<{
   empty: number[]; //空仓比例
   long_coin_num: number[]; // 多头选币
   short_coin_num: number[]; // 空头选币
+  exposure_long: number[]; // 多头敞口
+  exposure_short: number[]; // 空头敞口
+  isShowFullscreen: boolean;
 }>();
 
-const refChart1 = ref(null);
-const refChart2 = ref(null);
+const refChart1 = ref<any>(null);
+const refChart2 = ref<any>(null);
+const refPositionExposureChart = ref<any>(null);
 
 // 全屏状态
 const isFullscreen = ref<boolean>(false);
@@ -113,6 +136,7 @@ const longRatioOption = computed(() => {
     tooltip: {
       trigger: "axis",
       z: 1000,
+      appendToBody: true,
       textStyle: {
         fontSize: 10,
       },
@@ -136,6 +160,9 @@ const longRatioOption = computed(() => {
       axisLabel: {
         rotate: 0,
         fontSize: 8,
+        formatter: (value: number | string) => {
+          return dayjs(value).format("YYYY-MM-DD HH:mm");
+        },
       },
     },
     yAxis: {
@@ -218,6 +245,7 @@ const coinNumOption = computed(() => ({
   tooltip: {
     trigger: "axis",
     z: 1000,
+    appendToBody: true,
     textStyle: {
       fontSize: 10,
     },
@@ -241,6 +269,9 @@ const coinNumOption = computed(() => ({
     axisLabel: {
       rotate: 0,
       fontSize: 8,
+      formatter: (value: number | string) => {
+        return dayjs(value).format("YYYY-MM-DD HH:mm");
+      },
     },
   },
   yAxis: {
@@ -276,11 +307,127 @@ const coinNumOption = computed(() => ({
   ],
 }));
 
+const positionExposureOption = computed(() => ({
+  backgroundColor: themeMode.value === "dark" ? "#171717" : "",
+  color: ["#22c55e", "#ef4444"],
+  title: {
+    text: "仓位敞口统计",
+    textStyle: {
+      fontSize: 14,
+      fontWeight: "normal",
+    },
+    left: "center",
+    top: 8,
+  },
+  legend: {
+    data: ["多头敞口", "空头敞口"],
+    top: 32,
+    textStyle: {
+      fontSize: 10,
+    },
+  },
+  grid: {
+    top: 54,
+    left: 40,
+    right: 5,
+    bottom: 20,
+  },
+  tooltip: {
+    trigger: "axis",
+    z: 1000,
+    appendToBody: true,
+    textStyle: {
+      fontSize: 10,
+    },
+    formatter: (params: any[]) => {
+      let res = params[0].axisValue + "<br/>";
+      params.forEach((item) => {
+        res += `${item.marker}${item.seriesName}: ${item.value}%<br/>`;
+      });
+      return res;
+    },
+  },
+  dataZoom: [
+    {
+      type: "inside",
+      xAxisIndex: 0,
+      start: 0,
+      end: 100,
+    },
+  ],
+  xAxis: {
+    type: "category",
+    data: props.dateTime,
+    axisLabel: {
+      rotate: 0,
+      fontSize: 8,
+      formatter: (value: number | string) => {
+        return dayjs(value).format("YYYY-MM-DD HH:mm");
+      },
+    },
+  },
+  yAxis: {
+    type: "value",
+    name: "Exposure(%)",
+    splitNumber: 3,
+    axisLabel: {
+      formatter: "{value}%",
+    },
+    position: "left",
+    nameTextStyle: {
+      fontSize: 10,
+    },
+  },
+  series: [
+    {
+      name: "多头敞口",
+      type: "line",
+      stack: "ratio",
+      data: props.exposure_long,
+      smooth: true,
+      showSymbol: false,
+      areaStyle: {
+        color: "#22c55e",
+      },
+      lineStyle: {
+        color: "#22c55e",
+        width: 0.1,
+      },
+      markLine: {
+        symbol: "none",
+        silent: true,
+        lineStyle: { color: "#22c55e", width: 1 },
+        data: [{ yAxis: 0 }],
+      },
+    },
+    {
+      name: "空头敞口",
+      type: "line",
+      data: props.exposure_short,
+      smooth: true,
+      showSymbol: false,
+      areaStyle: {
+        color: "#ef4444",
+      },
+      lineStyle: {
+        color: "#ef4444",
+        width: 0.1,
+      },
+    },
+  ],
+}));
+
 let isUnmounted = false;
 // 监听窗口大小变化
 let lastHeight = window.innerHeight;
 const handleResize = () => {
-  if (isUnmounted || !refChart1.value || !refChart2) return;
+  if (
+    isUnmounted ||
+    !refChart1.value ||
+    !refChart2.value ||
+    !refPositionExposureChart.value
+  )
+    return;
   const currentHeight = window.innerHeight;
   // 只监听高度变化，且变化超过10px才触发重新渲染
   if (Math.abs(currentHeight - lastHeight) > 10) {
@@ -299,7 +446,27 @@ onUnmounted(() => {
   window.removeEventListener("resize", handleResize);
 });
 
+const getChartImage1 = () => {
+  if (!refChart1.value) return "";
+  return refChart1.value?.getDataURL({
+    type: "png",
+    pixelRatio: 3,
+    backgroundColor: "transparent",
+  });
+};
+
+const getChartImage2 = () => {
+  if (!refChart2.value) return "";
+  return refChart2.value?.getDataURL({
+    type: "png",
+    pixelRatio: 3,
+    backgroundColor: "transparent",
+  });
+};
+
 defineExpose({
   handleResize,
+  getChartImage1,
+  getChartImage2,
 });
 </script>

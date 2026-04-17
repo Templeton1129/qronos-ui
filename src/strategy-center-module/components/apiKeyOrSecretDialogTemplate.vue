@@ -4,6 +4,7 @@
     :modal="true"
     class="max-w-[90vw] min-w-[50vw]"
     :closable="false"
+    :draggable="false"
   >
     <template #header>
       <div class="text-center text-lg font-bold">{{ inputType }}配置</div>

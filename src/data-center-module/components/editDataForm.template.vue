@@ -4,6 +4,7 @@
     header="数据配置"
     :closable="!isForceEdit"
     modal
+    :draggable="false"
     class="w-[90vw] sm:w-[600px] max-w-full"
   >
     <Form v-slot="$form" :resolver @submit="formSubmitAction">
@@ -24,10 +25,10 @@
             :min="1"
             class="w-full"
           >
-            <template #incrementbuttonicon>
+            <template #incrementicon>
               <span class="pi pi-plus" />
             </template>
-            <template #decrementbuttonicon>
+            <template #decrementicon>
               <span class="pi pi-minus" />
             </template>
           </InputNumber>
@@ -120,21 +121,27 @@
           title="使用API来更新K线"
           description="启用后使用彩虹额外提供的数据API，下载行情数据；"
           :mobIsHidden="false"
-          @update:modelValue="(value:boolean) => (initialValues.use_api.kline = value)"
+          @update:modelValue="
+            (value: boolean) => (initialValues.use_api.kline = value)
+          "
         />
         <CustomCheckboxTemplate
           :modelValue="initialValues.use_api.coin_cap"
           title="使用API来更新市值数据"
           description="启用后使用彩虹额外提供的数据API，下载市值全量数据，更新增量数据；需要使用市值数据的策略必须启用勾选；"
           :mobIsHidden="false"
-          @update:modelValue="(value:boolean) => (initialValues.use_api.coin_cap = value)"
+          @update:modelValue="
+            (value: boolean) => (initialValues.use_api.coin_cap = value)
+          "
         />
         <CustomCheckboxTemplate
           :modelValue="initialValues.funding_rate"
           title="是否需要使用资金费数据"
           description="启用后会使用资金费数据"
           :mobIsHidden="false"
-          @update:modelValue="(value:boolean) => (initialValues.funding_rate = value)"
+          @update:modelValue="
+            (value: boolean) => (initialValues.funding_rate = value)
+          "
         />
 
         <!-- 其他配置 -->

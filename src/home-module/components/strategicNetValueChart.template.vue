@@ -4,12 +4,12 @@
       class="w-full flex-1"
       :class="[
         isFullscreen === true
-          ? 'w-screen h-screen fixed inset-0 z-[9999] bg-white dark:bg-neutral-900 p-4'
+          ? 'w-screen h-screen fixed inset-0 z-[9999] bg-white dark:bg-neutral-900 px-0 py-4 sm:px-4'
           : 'relative flex',
       ]"
     >
       <!-- 放大按钮 -->
-      <div class="absolute top-1 right-2 z-10">
+      <div class="absolute top-1 right-2 z-10" v-if="isShowFullscreen">
         <Button
           v-if="isFullscreen === false"
           icon="pi pi-window-maximize"
@@ -47,6 +47,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { useStorageValueOrFn } from "@/common-module/hooks/getOrSetStorage";
+import dayjs from "dayjs";
 const { themeMode } = useStorageValueOrFn();
 
 const props = defineProps<{
@@ -56,6 +57,7 @@ const props = defineProps<{
   sub_stg_eqs: {
     [key: string]: { candle_begin_time: string[]; net: number[] };
   };
+  isShowFullscreen: boolean;
 }>();
 
 // 全屏状态
@@ -64,10 +66,10 @@ const isFullscreen = ref<boolean>(false);
 const chartKey = ref<number>(0);
 const subStgDataTime = ref<string[]>([]);
 
-const refChart = ref(null);
+const refChart = ref<any>(null);
 
 watch(
-  props.sub_stg_eqs,
+  () => props.sub_stg_eqs,
   (newVal) => {
     if (Object.keys(newVal).length > 0) {
       subStgDataTime.value =
@@ -113,7 +115,6 @@ const getSubStgOption = () => {
 const option = computed(() => {
   return {
     backgroundColor: themeMode.value === "dark" ? "#171717" : "",
-    color: ["#f5a623", "#bbbbbb"],
     title: {
       text: "策略净值曲线图",
       textStyle: {
@@ -125,6 +126,7 @@ const option = computed(() => {
     },
     tooltip: {
       trigger: "axis",
+      appendToBody: true,
       z: 1000,
       textStyle: {
         fontSize: 10,
@@ -136,6 +138,7 @@ const option = computed(() => {
         fontSize: 10,
       },
       top: 38,
+      type: "scroll",
       show: isFullscreen.value,
     },
     grid: {
@@ -144,10 +147,10 @@ const option = computed(() => {
         Math.max(...props.equity) < 1000
           ? 45
           : Math.max(...props.equity) < 10000
-          ? 58
-          : 70,
+            ? 58
+            : 70,
       right: 45,
-      bottom: 20,
+      bottom: 65,
     },
     xAxis: [
       {
@@ -160,25 +163,10 @@ const option = computed(() => {
           showMaxLabel: true,
           margin: 12,
           formatter: (value: number | string) => {
-            const d = new Date(value);
-            const y = d.getFullYear();
-            const m = (d.getMonth() + 1).toString().padStart(2, "0");
-            const day = d.getDate().toString().padStart(2, "0");
-            const hh = d.getHours().toString().padStart(2, "0");
-            const mm = d.getMinutes().toString().padStart(2, "0");
-            return `${y}-${m}-${day} ${hh}:${mm}`;
+            return dayjs(value).format("YYYY-MM-DD HH:mm");
           },
         },
       },
-      // {
-      //   type: "category",
-      //   data: subStgDataTime.value,
-      //   axisLabel: {
-      //     rotate: 0,
-      //     fontSize: 8,
-      //   },
-      //   show: false,
-      // },
     ],
     yAxis: [
       {
@@ -187,6 +175,9 @@ const option = computed(() => {
         position: "left",
         axisLabel: {
           formatter: "{value}%",
+        },
+        lineStyle: {
+          color: "#f5a623",
         },
       },
       {
@@ -197,6 +188,9 @@ const option = computed(() => {
           formatter: "{value}%",
         },
         show: true,
+        lineStyle: {
+          color: "#bbbbbb",
+        },
       },
     ],
     dataZoom: [
@@ -206,12 +200,14 @@ const option = computed(() => {
         start: 0,
         end: 100,
       },
-      // {
-      //   type: "inside",
-      //   xAxisIndex: 1,
-      //   start: 0,
-      //   end: 100,
-      // },
+      {
+        type: "slider",
+        xAxisIndex: 0,
+        start: 0,
+        end: 100,
+        height: 24,
+        bottom: 15,
+      },
     ],
     series: [
       {
@@ -259,7 +255,7 @@ const option = computed(() => {
         },
         yAxisIndex: 1,
         showSymbol: false,
-        lineStyle: { color: "#bbbbbb", width: 2, opacity: 0.3 },
+        lineStyle: { color: "#bbbbbb", width: 1, opacity: 0.3 },
         opacity: 0.5,
         markPoint: {},
       },
@@ -298,7 +294,17 @@ onUnmounted(() => {
   window.removeEventListener("resize", handleResize);
 });
 
+const getChartImage = () => {
+  if (!refChart.value) return "";
+  return refChart.value?.getDataURL({
+    type: "png",
+    pixelRatio: 3,
+    backgroundColor: "transparent",
+  });
+};
+
 defineExpose({
   handleResize,
+  getChartImage,
 });
 </script>

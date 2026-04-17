@@ -28,16 +28,21 @@
               {{ viewFrameWorkName }}
             </div>
           </div>
-          <div class="space-x-2">
-            <Button
-              class="hidden sm:inline-flex"
-              icon="pi pi-upload"
-              label="升级"
-              severity="primary"
-              @click="checkForUpdates"
-              :loading="viewCheckingForUpdates"
-              :disabled="viewStatusIsProcessing"
-            />
+          <div class="flex gap-2 items-center">
+            <component
+              :is="viewHasNewVersion ? OverlayBadge : 'div'"
+              v-bind="viewHasNewVersion ? { severity: 'danger' } : {}"
+            >
+              <Button
+                class="hidden sm:inline-flex"
+                icon="pi pi-arrow-up"
+                label="升级"
+                severity="primary"
+                @click="checkForUpdates()"
+                :loading="viewCheckingForUpdates"
+                :disabled="viewStatusIsProcessing"
+              />
+            </component>
             <Button
               class="hidden sm:inline-flex"
               icon="pi pi-cog"
@@ -259,12 +264,13 @@
                       >
                         <span>设置的分钟偏移有</span>
                         <Message
+                          class="min-w-0"
                           severity="success"
                           variant="simple"
                           size="small"
                           :pt="{
                             text: {
-                              class: `max-w-[60%] truncate`,
+                              class: `truncate`,
                             },
                           }"
                           v-tooltip.top="{
@@ -445,6 +451,7 @@
 </template>
 
 <script setup lang="ts">
+import OverlayBadge from "primevue/overlaybadge";
 import { ref, onMounted, onUnmounted } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
 import { useToast } from "primevue/usetoast";
@@ -460,7 +467,10 @@ import {
   getframWorkVersionList,
   updateDataCenter,
 } from "@/common-module/services/service.provider";
-import { hourOffsetList } from "@/common-module/defaultValues";
+import {
+  hourOffsetList,
+  logRefreshTimeList,
+} from "@/common-module/defaultValues";
 import EditDataFormTemplate from "@/data-center-module/components/editDataForm.template.vue";
 import DataTimeLineTemplate from "@/data-center-module/components/dataTimeLine.template.vue";
 const refDataTimeLineTemplate = ref<InstanceType<
@@ -490,21 +500,6 @@ const initialValues = ref<tDataCenterConfigParams>({
   is_first: false,
 });
 const viewIsForceEdit = ref<boolean>(false);
-
-const logRefreshTimeList = [
-  {
-    name: "不自动更新日志",
-    code: "0",
-  },
-  {
-    name: "5s自动更新日志",
-    code: "5",
-  },
-  {
-    name: "10s自动更新日志",
-    code: "10",
-  },
-];
 const viewIsOpenLogDialog = ref<boolean>(false);
 const viewDataLog = ref<string>(`<h1>暂无日志</h1>`);
 const logRefreshTimer = ref<ReturnType<typeof setInterval> | null>(null);
@@ -521,12 +516,14 @@ const frameWorkStatusTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 
 // 更新相关
 const viewCheckingForUpdates = ref<boolean>(false);
+const viewHasNewVersion = ref<boolean>(false);
 const viewIsShowUpdateDialog = ref<boolean>(false);
 const viewNewVesion = ref<vFrameWorkVersionItem>();
 const viewUpdateIsLoading = ref<boolean>(false);
 
 onMounted(async () => {
   startDownloadFrameWorkStatusTimer();
+  checkForUpdates(true);
 });
 
 const startDownloadFrameWorkStatusTimer = () => {
@@ -756,11 +753,16 @@ const openEditDataFormDialog = () => {
 };
 
 // 检查更新
-const checkForUpdates = async () => {
+const checkForUpdates = async (silent = false) => {
   // [mk] 1.检测当前数据中心是否是最新版本
-  viewCheckingForUpdates.value = true;
+  if (silent === false) {
+    viewCheckingForUpdates.value = true;
+  }
   const res1 = await getframWorkVersionList(true);
-  viewCheckingForUpdates.value = false;
+  if (silent === false) {
+    viewCheckingForUpdates.value = false;
+  }
+
   let dataCenterVesionList: vFrameWorkVersionItem[] = [];
   if (res1.result === true) {
     dataCenterVesionList = res1.data;
@@ -771,27 +773,37 @@ const checkForUpdates = async () => {
   if (
     dataCenterVesionList &&
     dataCenterVesionList.length > 0 &&
+    viewFrameWorkName.value &&
     dataCenterVesionList[0].name !== viewFrameWorkName.value
   ) {
     // [mk] 2.可升级
+    viewHasNewVersion.value = true;
     viewNewVesion.value = dataCenterVesionList[0];
-    viewIsShowUpdateDialog.value = true;
+    if (!silent) {
+      viewIsShowUpdateDialog.value = true;
+    }
   } else if (
     dataCenterVesionList &&
     dataCenterVesionList.length > 0 &&
     dataCenterVesionList[0].name === viewFrameWorkName.value
   ) {
-    toast.add({
-      severity: "info",
-      summary: "当前已是最新版本",
-      life: 3000,
-    });
+    viewHasNewVersion.value = false;
+    if (!silent) {
+      toast.add({
+        severity: "info",
+        summary: "当前已是最新版本",
+        life: 3000,
+      });
+    }
   } else {
-    toast.add({
-      severity: "warn",
-      summary: "无版本信息",
-      life: 3000,
-    });
+    viewHasNewVersion.value = false;
+    if (!silent) {
+      toast.add({
+        severity: "warn",
+        summary: "无版本信息",
+        life: 3000,
+      });
+    }
   }
 };
 
@@ -808,6 +820,7 @@ const confirmUpdate = async () => {
         detail: "数据中心已升级到最新版本",
         life: 3000,
       });
+      viewHasNewVersion.value = false;
       // 重新加载数据
       startDownloadFrameWorkStatusTimer();
     }
