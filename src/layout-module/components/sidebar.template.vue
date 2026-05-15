@@ -110,8 +110,7 @@ import { useStorageValueOrFn } from "@/common-module/hooks/getOrSetStorage";
 const { userInfo, sessionGAtoken, getIsLoggedInWX } = useStorageValueOrFn();
 import { logout } from "@/common-module/services/service.provider";
 import PrimaryConfiguratorTemplate from "@/layout-module/components/primaryConfigurator.template.vue";
-const defaultAvatar =
-  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
+import { defaultAvatar } from "@/common-module/defaultValues";
 
 const viewMenu = ref([
   { label: "首页", icon: "pi pi-home", route: "/home" },

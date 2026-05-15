@@ -73,7 +73,7 @@ axios.interceptors.request.use(
     if (req.url?.includes("/user/info")) {
       const wxToken = localStorageWxtoken.value;
       if (wxToken) {
-        req.headers[`xbx-Authorization`] = wxToken; // [mk] miss will cause invaild token issue
+        req.headers[`xbx-Authorization`] = wxToken;
       }
     } else if (req.url?.includes("/user/authorized")) {
       return req;

@@ -25,7 +25,7 @@
               ><span class="text-red-500 mr-1">*</span>账户名称</label
             >
             <InputText
-              :size="formItemSize || 'normal'"
+              size="small"
               v-model.trim="initialValues.account_name"
               name="account_name"
               placeholder="请输入账户名称"
@@ -47,7 +47,7 @@
               ><span class="text-red-500 mr-1">*</span>账户类型</label
             >
             <Select
-              :size="formItemSize || 'normal'"
+              size="small"
               v-model="initialValues.account_config.account_type"
               :options="accountTypeList"
               placeholder="请选择账户类型"
@@ -95,7 +95,7 @@
           <div v-if="type === `修改`" class="hidden sm:block">
             <label for="apiKey" class="text-sm font-medium">API KEY</label>
             <InputText
-              :size="formItemSize || 'normal'"
+              size="small"
               :value="maskString(initialValues.account_config.apiKey)"
               name="apiKey"
               placeholder="请输入API KEY"
@@ -154,7 +154,7 @@
           <div v-if="type === `修改`" class="hidden sm:block">
             <label for="secret" class="text-sm font-medium">密钥</label>
             <InputText
-              :size="formItemSize || 'normal'"
+              size="small"
               :value="maskString(initialValues.account_config.secret)"
               name="secret"
               placeholder="请输入密钥"
@@ -213,12 +213,12 @@
           <!-- 分钟偏移 -->
           <div class="hidden sm:block">
             <label
-              for="enabled_hour_offsets"
+              for="hour_offset"
               class="hidden sm:block text-sm font-medium mb-1"
               ><span class="text-red-500 mr-1">*</span>分钟偏移</label
             >
             <Select
-              :size="formItemSize || 'normal'"
+              size="small"
               v-model="initialValues.account_config.hour_offset"
               name="hour_offset"
               :options="hourOffsetList"
@@ -275,7 +275,7 @@
             >
             <InputNumber
               name="get_kline_num"
-              :size="formItemSize || 'normal'"
+              size="small"
               v-model.trim="initialValues.get_kline_num"
               mode="decimal"
               showButtons
@@ -324,7 +324,7 @@
               >黑名单</label
             >
             <AutoComplete
-              :size="formItemSize || 'normal'"
+              size="small"
               v-model="initialValues.black_list"
               :suggestions="suggestions"
               multiple
@@ -456,7 +456,7 @@
                   >企业微信机器人url</label
                 >
                 <InputText
-                  :size="formItemSize || 'normal'"
+                  size="small"
                   v-model.trim="initialValues.account_config.wechat_webhook_url"
                   name="wechat_webhook_url"
                   type="text"
@@ -474,7 +474,9 @@
               </div>
 
               <div>
-                <label class="hidden sm:block text-sm font-medium mb-1"
+                <label
+                  for="min_kline_num"
+                  class="hidden sm:block text-sm font-medium mb-1"
                   >最小k线数量</label
                 >
                 <InputNumber
@@ -545,7 +547,7 @@
                 >
                 <InputNumber
                   name="buy_bnb_value"
-                  :size="formItemSize || 'normal'"
+                  size="small"
                   v-model.trim="initialValues.account_config.buy_bnb_value"
                   mode="decimal"
                   showButtons
@@ -595,7 +597,7 @@
                   >白名单</label
                 >
                 <AutoComplete
-                  :size="formItemSize || 'normal'"
+                  size="small"
                   v-model="initialValues.white_list"
                   :suggestions="suggestions1"
                   multiple
@@ -642,7 +644,7 @@
                   >套利底仓</label
                 >
                 <AutoComplete
-                  :size="formItemSize || 'normal'"
+                  size="small"
                   v-model="initialValues.account_config.seed_coins"
                   :suggestions="seedCoinSuggestions"
                   multiple
@@ -696,7 +698,7 @@
                   class="w-full flex items-center gap-2 mb-1"
                 >
                   <AutoComplete
-                    :size="formItemSize || 'normal'"
+                    size="small"
                     v-model="coinMarginEditKeys[idx]"
                     :suggestions="coinMarginSuggestions"
                     forceSelection
@@ -709,7 +711,7 @@
                     emptySearchMessage="重复的输入"
                   />
                   <InputNumber
-                    :size="formItemSize || 'normal'"
+                    size="small"
                     v-model="coinMarginEditValues[idx]"
                     placeholder="保证金金额"
                     class="flex-1"
@@ -941,7 +943,7 @@
                 <label class="text-sm font-medium">rebalance模式</label>
                 <div class="flex gap-2 mt-1">
                   <Select
-                    :size="formItemSize || 'normal'"
+                    size="small"
                     v-model="initialValues.rebalance_mode.mode"
                     :options="rebalanceModeOptions"
                     placeholder="请选择rebalance模式"
@@ -968,7 +970,7 @@
                   >
                     <InputNumber
                       name="reblanceModeParams"
-                      :size="formItemSize || 'normal'"
+                      size="small"
                       v-model="
                         initialValues.rebalance_mode.params.min_order_usdt_ratio
                       "
@@ -1032,13 +1034,13 @@
                   class="w-full flex items-center gap-2 mb-1"
                 >
                   <InputText
-                    :size="formItemSize || 'normal'"
+                    size="small"
                     :model-value="(item as any).coin"
                     @blur="(e: Event) => formatCoinInput(e, index as number)"
                     placeholder="输入币种"
                   />
                   <InputNumber
-                    :size="formItemSize || 'normal'"
+                    size="small"
                     v-model="(item as any).value"
                     placeholder="输入资产比例"
                     class="flex-1"
@@ -1162,7 +1164,6 @@ const props = defineProps<{
   frameWorkId?: string;
   frameWorkType: string;
   type: "新增" | "修改";
-  formItemSize?: "small" | "normal" | "large";
 }>();
 
 const initialValues = ref<tDbAccountInfoRes>(
@@ -1264,15 +1265,14 @@ const resolver = ({ values }: any) => {
 
   // 框架版本 必填
   if (props.type === `新增`) {
-    if (!initialValues.value.account_name) {
+    const name = initialValues.value.account_name;
+    const invalidChars = /[<>:"/\\|?*+\s_（）]/;
+
+    if (!name) {
       errors.account_name = [{ message: "请填写账户名" }];
-    } else if (/\s/.test(initialValues.value.account_name)) {
-      errors.account_name = [{ message: "账户名不能包含空格" }];
-    } else if (/_/.test(initialValues.value.account_name)) {
-      errors.account_name = [{ message: "账户名不能包含下划线" }];
-    } else if (
-      viewAccountNameList.value.includes(initialValues.value.account_name)
-    ) {
+    } else if (invalidChars.test(name)) {
+      errors.account_name = [{ message: "账户名不能包含空格或特殊字符" }];
+    } else if (viewAccountNameList.value.includes(name)) {
       errors.account_name = [{ message: "账户名已存在，请更换" }];
     }
   }

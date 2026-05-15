@@ -210,13 +210,7 @@
               </div>
               <div class="flex flex-col items-center gap-y-1 -mt-2">
                 <div
-                  v-if="
-                    slotProps.data?.equity &&
-                    slotProps.data?.equity?.time &&
-                    slotProps.data?.equity?.net &&
-                    slotProps.data?.equity?.dd2here &&
-                    slotProps.data?.sub_stg_eqs
-                  "
+                  v-if="hasNetChartData(slotProps.data)"
                   class="h-100 w-full flex"
                   :key="slotProps.data.account_name"
                 >
@@ -415,7 +409,6 @@
     :frameWorkType="frameWorkType"
     :frameWorkId="frameWorkId"
     type="修改"
-    formItemSize="small"
     @refreshAccountInfoList="getAccountInfoListFn"
   />
 
@@ -497,7 +490,6 @@
       :frameWorkId="frameWorkId"
       :frameWorkType="frameWorkType"
       type="新增"
-      formItemSize="small"
       @refreshForceStatus="changeForceAccountStatus"
       @refreshAccountInfoList="getAccountInfoListFn"
     />
@@ -914,6 +906,11 @@ const lockAccountFn = async (accountData: tDbAccountInfoRes) => {
     toast.add({ severity: "success", summary: "操作成功", life: 2000 });
     getAccountInfoListFn();
   }
+};
+
+const hasNetChartData = (item: tDbHomeAccountInfoRes) => {
+  const eq = item?.equity;
+  return eq?.time && eq?.net && eq?.dd2here && item?.sub_stg_eqs;
 };
 
 defineExpose({

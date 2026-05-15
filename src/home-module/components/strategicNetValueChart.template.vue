@@ -112,6 +112,7 @@ const getSubStgOption = () => {
   }
   return output;
 };
+
 const option = computed(() => {
   return {
     backgroundColor: themeMode.value === "dark" ? "#171717" : "",

@@ -61,7 +61,7 @@
       </template>
       <template v-else>
         <div
-          v-if="viewFrameWorkInfoList && viewFrameWorkInfoList.length > 0"
+          v-if="viewFrameWorkInfoList?.length > 0"
           class="flex flex-col gap-2 pr-4"
           :class="[
             viewIsFullscreen === false ? 'max-h-[108px] overflow-y-auto' : '',
@@ -215,7 +215,7 @@
       </template>
       <template v-else>
         <div
-          v-if="viewFrameWorkInfoList && viewFrameWorkInfoList.length > 0"
+          v-if="viewFrameWorkInfoList?.length > 0"
           class="flex flex-col gap-2 pr-4"
         >
           <div
@@ -348,6 +348,7 @@ import {
   getAccountInfo,
   startOrStopFrameWork,
   getDataCenterConfig,
+  initGlobalConfigData,
 } from "@/common-module/services/service.provider";
 import InputEncryptedPwdDialogTmpl from "@/common-module/components/inputEncryptedPwdDialog.template.vue";
 const refInputEncryptedPwdDialogTmpl = ref<InstanceType<
@@ -378,14 +379,7 @@ const viewFrameWorkInfoList = ref<
   })[]
 >([]);
 
-const viewGlobalConfigData = ref<iConfigData>({
-  is_simulate: "debug",
-  error_webhook_url: "",
-  factor_col_limit: 64,
-  is_encrypt: false,
-  lookback_days: 0,
-  incremental_lookback_hours: 0,
-});
+const viewGlobalConfigData = ref<iConfigData>(initGlobalConfigData());
 // 存储当前待执行的操作
 const viewPendingOperation = ref<{
   status: dataCenterStatusEnum;
@@ -490,15 +484,10 @@ const clearFrameWorkRunStatusTimer = () => {
 const getGlobalConfigDataFn = async (framework_id: string) => {
   const res = await getDataCenterConfig(framework_id);
   if (res.result === true) {
-    viewGlobalConfigData.value.is_simulate = res.data?.is_simulate || "debug";
-    viewGlobalConfigData.value.error_webhook_url =
-      res.data?.error_webhook_url || "";
-    viewGlobalConfigData.value.factor_col_limit =
-      res.data?.factor_col_limit || 64;
-    viewGlobalConfigData.value.is_encrypt = res.data?.is_encrypt || false;
-    viewGlobalConfigData.value.lookback_days = res.data?.lookback_days ?? 0;
-    viewGlobalConfigData.value.incremental_lookback_hours =
-      res.data?.incremental_lookback_hours ?? 0;
+    viewGlobalConfigData.value = {
+      ...initGlobalConfigData(),
+      ...res.data,
+    } as iConfigData;
   }
 };
 

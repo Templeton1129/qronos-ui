@@ -96,6 +96,7 @@ import {
   getDataCenterConfig,
   uploadFolderEnum,
   frameWorkTypeEnum,
+  initGlobalConfigData,
 } from "@/common-module/services/service.provider";
 import { useStrategyStore } from "@/store/strategy";
 const strategyStore = useStrategyStore();
@@ -107,14 +108,7 @@ const props = defineProps<{
 const viewIsLoading = ref(true); // 新增加载状态
 const runStatuslList = ref<tDbFrameWorkRunStatusRes[]>([]);
 const frameWorkStatusTimer = ref<ReturnType<typeof setTimeout> | null>(null);
-const viewGlobalConfigData = ref<iConfigData>({
-  is_simulate: "debug",
-  error_webhook_url: "",
-  factor_col_limit: 64,
-  is_encrypt: false,
-  lookback_days: 0,
-  incremental_lookback_hours: 0,
-});
+const viewGlobalConfigData = ref<iConfigData>(initGlobalConfigData());
 
 onMounted(async () => {
   runStatuslList.value = [];
@@ -219,16 +213,10 @@ const getLogTypeList = (framework_id: string) => {
 const getGlobalConfigDataFn = async (framework_id: string) => {
   const res = await getDataCenterConfig(framework_id);
   if (res.result === true) {
-    viewGlobalConfigData.value.is_simulate = res.data?.is_simulate || "debug";
-    viewGlobalConfigData.value.error_webhook_url =
-      res.data?.error_webhook_url || "";
-    viewGlobalConfigData.value.factor_col_limit =
-      res.data?.factor_col_limit || 64;
-    viewGlobalConfigData.value.is_encrypt = res.data?.is_encrypt || false;
-    strategyStore.setIsEncryption(res.data?.is_encrypt || false);
-    viewGlobalConfigData.value.lookback_days = res.data?.lookback_days ?? 0;
-    viewGlobalConfigData.value.incremental_lookback_hours =
-      res.data?.incremental_lookback_hours ?? 0;
+    viewGlobalConfigData.value = {
+      ...initGlobalConfigData(),
+      ...res.data,
+    } as iConfigData;
   }
 };
 

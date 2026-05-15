@@ -111,13 +111,12 @@ appRouter.beforeEach(async (to, from, next) => {
 
   // 已登录过微信
   if (to.path === "/bindWx" && userInfo.value !== null) {
-    next("/dataCenter"); // 跳转到数据中心
+    next("/home");
     return;
   }
 
-  // 当输入不存在的页面跳回/dataCenter
+  // 当输入不存在的页面跳回
   if (to.matched.length === 0) {
-    // next("/dataCenter");
     next("/home");
     return;
   }

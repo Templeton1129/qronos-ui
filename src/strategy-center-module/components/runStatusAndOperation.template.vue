@@ -447,7 +447,6 @@
         class="flex justify-between items-center flex-wrap sm:flex-nowrap gap-2"
       >
         <div class="font-semibold flex items-center gap-2">
-          {{ frameWorkName }}
           <Tag
             :value="
               frameWorkSourceLabelMap[
@@ -461,6 +460,7 @@
             "
             class="text-xs shrink-0"
           />
+          {{ frameWorkName }}
         </div>
 
         <div class="flex justify-center items-center space-x-2 sm:space-x-4">
@@ -607,7 +607,8 @@
           <i
             class="pi pi-question-circle cursor-pointer"
             v-tooltip="{
-              value: `用来裁切保留选币&因子值，方便实盘与回测对比，实盘使用该配置会影响部分速度<br/>配置 0: 不生效<br/>配置 7: 保留最近 7 天的选币&因子值数据`,
+              value: `用来裁切保留选币&因子值，方便实盘与回测对比，实盘使用该配置会影响部分速度<br/>
+              <strong>配置 0：</strong>不生效<br/><strong>配置 7：</strong>保留最近 7 天的选币&因子值数据`,
               escape: false,
               class: 'min-w-80',
               autoHide: false,
@@ -637,6 +638,48 @@
       </div>
       <div class="space-y-2">
         <label
+          for="lookback_save_interval_hours"
+          class="text-sm font-medium flex flex-wrap items-center gap-1"
+          >归档保存频率
+          <i
+            class="pi pi-question-circle cursor-pointer"
+            v-tooltip="{
+              value: `<strong>配置 0：</strong>关闭保存 runtime_data 数据<br/>
+              <strong>配置 1：</strong>每小时都归档实盘数据（默认，等价原行为），且始终使用 lookback_days<br/>
+              <strong>配置 N>1：</strong>每 N 小时归档一次（基于 run_time.hour % N == 0），其他小时 回看多久的数据(lookback_days) 会被强制置 0 以降低实盘运算开销<br/>
+              <strong>建议：</strong>回看多久的数据(lookback_days) 较大时（例如 7 天），可将此值设为 6 或 12，以减轻每小时跑增量时的数据规模和磁盘存储`,
+              escape: false,
+              class: 'min-w-90',
+              autoHide: false,
+            }"
+          ></i>
+          <span class="text-xs text-gray-500"
+            >( 配置 0: 关闭保存 runtime_data 数据 )</span
+          >
+        </label>
+        <InputGroup>
+          <InputNumber
+            v-model="viewConfigData.lookback_save_interval_hours"
+            :min="0"
+            mode="decimal"
+            showButtons
+            name="lookback_save_interval_hours"
+            placeholder="请填写归档保存频率"
+            size="small"
+          />
+          <InputGroupAddon size="small">小时</InputGroupAddon>
+        </InputGroup>
+        <Message
+          v-if="$form.lookback_save_interval_hours?.invalid"
+          severity="error"
+          size="small"
+          variant="simple"
+          class="mt-1"
+          >{{ $form.lookback_save_interval_hours.error?.message }}</Message
+        >
+      </div>
+      <div class="space-y-2">
+        <label
           for="incremental_lookback_hours"
           class="text-sm font-medium flex items-center gap-1"
           >增量计算资金曲线时长
@@ -644,7 +687,8 @@
             class="pi pi-question-circle cursor-pointer"
             v-tooltip="{
               value: `增量计算时回退N小时重新模拟，0表示不回退<br/>
-              配置 0: 不生效<br/>配置 7: 从最近 7 小时前开始模拟回测，同时增量更新最近 7 小时资金曲线数据incremental_lookback_hours = 0  # 增量计算时最大支持更新最近多少小时资金曲线(建议最大不超过 24)`,
+              <strong>配置 0：</strong>不生效<br/><strong>配置 7：</strong>从最近 7 小时前开始模拟回测，同时增量更新最近 7 小时资金曲线数据
+              <strong>建议：</strong>最大不超过 24`,
               escape: false,
               class: 'min-w-90',
               autoHide: false,
@@ -845,6 +889,7 @@ import {
   editGlobalConfig,
   importFrameWorkZip,
   frameWorkSourceEnum,
+  initGlobalConfigData,
 } from "@/common-module/services/service.provider";
 import { logRefreshTimeList } from "@/common-module/defaultValues";
 
@@ -858,14 +903,7 @@ const props = defineProps<{
   frameWorkType: string;
   runStatus: { startup: string; delist: string; monitor: string };
   allPmIdTypeList: tDbFrameWorkRunStatusRes[];
-  globalConfigData: {
-    is_simulate: string | null;
-    error_webhook_url: string;
-    factor_col_limit: number;
-    is_encrypt: boolean;
-    lookback_days: number;
-    incremental_lookback_hours: number;
-  };
+  globalConfigData: iConfigData;
 }>();
 const frameWorkSourceLabelMap = {
   [frameWorkSourceEnum.official]: "官方",
@@ -899,14 +937,7 @@ const modeOpetions = [
 
 const viewCurrentPm_id = ref<null | number | string>(null);
 
-const viewConfigData = ref<iConfigData>({
-  is_simulate: "debug",
-  error_webhook_url: "",
-  factor_col_limit: 64,
-  is_encrypt: false,
-  lookback_days: 0,
-  incremental_lookback_hours: 0,
-});
+const viewConfigData = ref<iConfigData>(initGlobalConfigData());
 const selectValue = ref<string>("debug");
 const viewOldConfigData = ref<iConfigData>();
 const viewIsOpenConfigDataDialog = ref<boolean>(false);
@@ -948,7 +979,7 @@ watch(
     if (val) {
       const clonedVal = JSON.parse(JSON.stringify(val));
       viewConfigData.value = {
-        ...JSON.parse(JSON.stringify(viewConfigData.value)),
+        ...initGlobalConfigData(),
         ...clonedVal,
       };
 
@@ -1160,6 +1191,14 @@ const resolver = ({ values }: any) => {
     errors.incremental_lookback_hours = [
       {
         message: "增量计算资金曲线时长不能为空,若不想启用配置可填写0代表不生效",
+      },
+    ];
+  }
+
+  if (viewConfigData.value.lookback_save_interval_hours == null) {
+    errors.lookback_save_interval_hours = [
+      {
+        message: "归档保存频率不能为空",
       },
     ];
   }

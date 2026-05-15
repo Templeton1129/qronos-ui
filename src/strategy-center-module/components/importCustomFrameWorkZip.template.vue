@@ -362,7 +362,7 @@ const uploadAction = async () => {
     return;
   }
 
-  // 3️ 禁止特殊字符
+  // 禁止特殊字符
   const invalidChars = /[\/\\?%*:|"<>]/;
   if (invalidChars.test(fullFrameworkName.value)) {
     viewFrameworkNameError.value =

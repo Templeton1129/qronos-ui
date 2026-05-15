@@ -65,6 +65,7 @@ export const maskString = (str: string) => {
   return `${firstTwo}${middle}${lastTwo}`;
 };
 
+// 下载加密工具代码
 export const downloadEncryptor = () => {
   // 创建加密工具文件内容
   const encryptorContent = `"""
@@ -178,4 +179,14 @@ if __name__ == "__main__":
 
   // 清理URL对象
   URL.revokeObjectURL(url);
+};
+
+// 数字变千分位格式
+export const formatPnL = (val?: number | string) => {
+  if (val === null || val === undefined) return "--";
+
+  const n = Number(val);
+  if (isNaN(n)) return "--";
+
+  return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };

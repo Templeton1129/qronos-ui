@@ -145,6 +145,18 @@ export const initAccountInfo: tDbAccountInfoRes = {
   },
 };
 
+export const initGlobalConfigData = (): iConfigData => {
+  return {
+    is_simulate: "debug",
+    error_webhook_url: "",
+    factor_col_limit: 64,
+    is_encrypt: false,
+    lookback_days: 0,
+    incremental_lookback_hours: 0,
+    lookback_save_interval_hours: 0,
+  };
+};
+
 // ---------------登录鉴权相关接口-------------
 /**
  * 绑定谷歌验证码

@@ -55,7 +55,7 @@
           <img
             v-else
             class="size-8 rounded-full"
-            src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+            :src="defaultAvatar"
             loading="lazy"
             alt=""
             @click="gotoProfileAction"
@@ -106,9 +106,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 const route = useRoute();
-import { useRouter } from "vue-router";
 const router = useRouter();
 import { useUserStore } from "@/store/user";
 const store = useUserStore();
@@ -119,13 +118,12 @@ import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/vue";
 import { Bars3Icon, XMarkIcon } from "@heroicons/vue/24/outline";
 import PrimaryConfiguratorTemplate from "@/layout-module/components/primaryConfigurator.template.vue";
 
-const ViewCurrentUserNavigationId = ref<number>(0);
-
 import { useStorageValueOrFn } from "@/common-module/hooks/getOrSetStorage";
-
 const { getIsLoggedInWX, userInfo, sessionGAtoken } = useStorageValueOrFn();
 import { logout } from "@/common-module/services/service.provider";
+import { defaultAvatar } from "@/common-module/defaultValues";
 
+const ViewCurrentUserNavigationId = ref<number>(0);
 const userInfoObj = computed(() => {
   if (userInfo.value !== null) {
     return JSON.parse(userInfo.value);

@@ -303,6 +303,7 @@ type tDataCenterConfigParams = typeof dataCenterConfigParams & {
   is_encrypt?: boolean; //策略页面
   lookback_days?: number; //策略页面
   incremental_lookback_hours?: number; //策略页面
+  lookback_save_interval_hours?: number; //策略页面
 };
 type tDbDataCenterConfigRes = tDataCenterConfigParams & { is_first: boolean };
 
@@ -313,6 +314,7 @@ interface iConfigData {
   is_encrypt: boolean;
   lookback_days: number;
   incremental_lookback_hours: number;
+  lookback_save_interval_hours: number;
 }
 
 const tFrameWorkStatusRes = {
@@ -491,6 +493,7 @@ const tHomeAccountInfoRes = {
   edit_id: 1,
   framework_id: "",
   framework_name: "仓位管理实盘框架v1.3.3",
+  is_simulate: "debug", //"debug" 调试模式 "simulate" 模拟实盘 "none"真实实盘
   account_name: "账户2",
   hour_offset: "5m",
   strategy_name: null,

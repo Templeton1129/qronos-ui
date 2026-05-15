@@ -76,6 +76,7 @@
               content: {
                 class: 'p-0 flex-1',
               },
+              header: 'pb-0 sm:pb-[6px]',
             }"
             :collapsed="!expandedPanels.includes(item.id)"
             @update:collapsed="() => togglePanel(item.id)"
@@ -84,9 +85,17 @@
             <template #header>
               <div class="flex items-center gap-1 sm:gap-2">
                 <span class="text-lg font-bold">{{ item.account_name }}</span>
-                <span class="text-xs text-gray-500 dark:text-gray-200">{{
-                  item.framework_name
-                }}</span>
+                <span
+                  class="text-xs text-gray-500 dark:text-gray-200 hidden sm:inline-block"
+                  >{{ item.framework_name }}</span
+                >
+                <Tag
+                  v-if="item.is_simulate"
+                  class="text-xs font-medium tracking-wider"
+                  :severity="item.is_simulate === 'none' ? '' : 'warn'"
+                >
+                  {{ modeMap[item.is_simulate] }}
+                </Tag>
                 <Tag v-tooltip="'分钟偏移'" class="text-xs font-medium">{{
                   item.hour_offset
                 }}</Tag>
@@ -108,21 +117,23 @@
               </div>
             </template>
             <template #icons>
-              <Button
-                icon="pi pi-share-alt"
-                label="分享海报"
-                outlined
-                size="small"
-                @click="openSharePoster(item)"
-                class="hidden sm:inline-flex text-xs mr-2 py-1"
-              />
-              <Button
-                icon="pi pi-share-alt"
-                text
-                size="small"
-                @click="openSharePoster(item)"
-                class="inline-flex sm:hidden text-xs"
-              />
+              <template v-if="item.is_simulate !== 'debug'">
+                <Button
+                  icon="pi pi-share-alt"
+                  label="分享海报"
+                  outlined
+                  size="small"
+                  @click="openSharePoster(item)"
+                  class="hidden sm:inline-flex text-xs mr-2 py-1"
+                />
+                <Button
+                  icon="pi pi-share-alt"
+                  text
+                  size="small"
+                  @click="openSharePoster(item)"
+                  class="inline-flex sm:hidden text-xs"
+                />
+              </template>
               <template v-if="expandedPanels.includes(item.id)">
                 <Button
                   v-if="viewfullscreenId !== item.id"
@@ -148,6 +159,11 @@
                 />
               </template>
             </template>
+            <div
+              class="text-sm text-gray-500 dark:text-gray-200 flex sm:hidden pl-4.5 mb-2"
+            >
+              {{ item.framework_name }}
+            </div>
             <div
               class="flex gap-2 sm:gap-3 px-2 sm:px-4 pb-1"
               :class="[
@@ -189,35 +205,18 @@
                   >
                     <div
                       class="font-bold text-primary-500 font-mono"
-                      :class="[
-                        item?.equity?.equity_amount &&
-                        item?.equity?.equity_amount?.length > 0 &&
-                        item?.equity?.equity_amount[
-                          item?.equity?.equity_amount?.length - 1
-                        ] < 1000
-                          ? 'text-6xl sm:text-7xl'
-                          : item?.equity?.equity_amount &&
-                              item?.equity?.equity_amount?.length > 0 &&
-                              item?.equity?.equity_amount[
-                                item?.equity?.equity_amount?.length - 1
-                              ] < 100000
-                            ? 'text-5xl sm:text-6xl'
-                            : 'text-4xl sm:text-5xl',
-                      ]"
+                      :class="getFontClass(item)"
                       v-if="
                         !viewAccountValueHiddenIdList.includes(item.id) &&
-                        item?.equity?.equity_amount &&
                         item?.equity?.equity_amount?.length > 0
                       "
                     >
                       {{
-                        Number(
+                        formatPnL(
                           item?.equity?.equity_amount[
                             item?.equity?.equity_amount?.length - 1
                           ]
                         )
-                          .toFixed(2)
-                          .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }}
                     </div>
                     <div
@@ -263,11 +262,13 @@
                   >
                     <div class="flex flex-1 flex-col items-center gap-2">
                       <span>24H盈亏</span>
-                      <Tag class="font-medium w-30 font-mono rounded-sm">{{
-                        viewAccountValueHiddenIdList.includes(item.id)
-                          ? "****"
-                          : item?.eq_pnl_24h || "--"
-                      }}</Tag>
+                      <Tag class="font-medium w-30 font-mono rounded-sm">
+                        {{
+                          viewAccountValueHiddenIdList.includes(item.id)
+                            ? "****"
+                            : formatPnL(item?.eq_pnl_24h)
+                        }}
+                      </Tag>
                     </div>
                     <Divider layout="vertical" />
                     <div class="flex flex-1 flex-col items-center gap-2">
@@ -289,7 +290,7 @@
                       <Tag class="font-medium w-30 font-mono rounded-sm">{{
                         viewAccountValueHiddenIdList.includes(item.id)
                           ? "****"
-                          : item?.eq_max_24h || "--"
+                          : formatPnL(item?.eq_max_24h)
                       }}</Tag>
                     </div>
                     <Divider layout="vertical" />
@@ -298,7 +299,7 @@
                       <Tag class="font-medium w-30 font-mono rounded-sm">{{
                         viewAccountValueHiddenIdList.includes(item.id)
                           ? "****"
-                          : item?.eq_min_24h || "--"
+                          : formatPnL(item?.eq_min_24h)
                       }}</Tag>
                     </div>
                   </div>
@@ -313,44 +314,33 @@
                     : 'min-w-full sm:min-w-110',
                 ]"
               >
-                <template
-                  v-if="
-                    item?.equity &&
-                    item?.equity?.time &&
-                    item?.equity?.net &&
-                    item?.equity?.dd2here &&
-                    item?.sub_stg_eqs
-                  "
-                >
-                  <StrategicNetValueChart
-                    :dateTime="item.equity.time"
-                    :equity="item.equity.net"
-                    :dd2here="item.equity.dd2here"
-                    :sub_stg_eqs="item.sub_stg_eqs"
-                    :isShowFullscreen="true"
-                  />
-                </template>
-                <template v-else>
-                  <div class="flex-1 flex flex-col items-center px-4 py-3">
-                    <div class="text-md text-center">策略净值曲线图</div>
+                <StrategicNetValueChart
+                  v-if="hasNetChartData(item)"
+                  :dateTime="item.equity.time"
+                  :equity="item.equity.net"
+                  :dd2here="item.equity.dd2here"
+                  :sub_stg_eqs="item.sub_stg_eqs"
+                  :isShowFullscreen="true"
+                />
+                <div v-else class="flex-1 flex flex-col items-center px-4 py-3">
+                  <div class="text-md text-center">策略净值曲线图</div>
+                  <div
+                    class="flex-1 flex flex-col gap-2 items-center justify-center"
+                  >
+                    <img
+                      src="@/assets/home-img/no-data.png"
+                      class="w-40 h-auto"
+                    />
                     <div
-                      class="flex-1 flex flex-col gap-2 items-center justify-center"
+                      v-if="viewSelectedTimeRange !== 0"
+                      class="flex justify-center items-center"
                     >
-                      <img
-                        src="@/assets/home-img/no-data.png"
-                        class="w-40 h-auto"
-                      />
-                      <div
-                        v-if="viewSelectedTimeRange !== 0"
-                        class="flex justify-center items-center"
-                      >
-                        <span class="text-xs text-gray-400">
-                          最近 {{ viewSelectedTimeRange }} 天暂无策略净值数据
-                        </span>
-                      </div>
+                      <span class="text-xs text-gray-400">
+                        最近 {{ viewSelectedTimeRange }} 天暂无策略净值数据
+                      </span>
                     </div>
                   </div>
-                </template>
+                </div>
               </div>
               <!-- 3.多空统计(多空比例，仓位敞口，多空数量) -->
               <div
@@ -361,50 +351,37 @@
                     : 'min-w-full sm:min-w-110',
                 ]"
               >
-                <template
-                  v-if="
-                    item?.equity &&
-                    item?.equity?.time &&
-                    item?.equity?.long_ratio &&
-                    item?.equity?.short_ratio &&
-                    item?.equity?.empty_ratio &&
-                    item?.equity?.long_coin_num &&
-                    item?.equity?.short_coin_num
-                  "
-                >
-                  <LongChart
-                    :dateTime="item.equity.time"
-                    :long="item.equity.long_ratio"
-                    :short="item.equity.short_ratio"
-                    :empty="item.equity.empty_ratio"
-                    :long_coin_num="item.equity.long_coin_num"
-                    :short_coin_num="item.equity.short_coin_num"
-                    :exposure_short="item.equity.exposure_short || []"
-                    :exposure_long="item.equity.exposure_long || []"
-                    :isShowFullscreen="true"
-                  />
-                </template>
-                <template v-else>
-                  <div class="flex-1 flex flex-col items-center px-4 py-3">
-                    <div class="text-md text-center">多空统计</div>
+                <LongChart
+                  v-if="hasLongChartData(item)"
+                  :dateTime="item.equity.time"
+                  :long="item.equity.long_ratio"
+                  :short="item.equity.short_ratio"
+                  :empty="item.equity.empty_ratio"
+                  :long_coin_num="item.equity.long_coin_num"
+                  :short_coin_num="item.equity.short_coin_num"
+                  :exposure_short="item.equity.exposure_short || []"
+                  :exposure_long="item.equity.exposure_long || []"
+                  :isShowFullscreen="true"
+                />
+                <div v-else class="flex-1 flex flex-col items-center px-4 py-3">
+                  <div class="text-md text-center">多空统计</div>
+                  <div
+                    class="flex-1 flex flex-col gap-2 items-center justify-center"
+                  >
+                    <img
+                      src="@/assets/home-img/no-data.png"
+                      class="w-40 h-auto"
+                    />
                     <div
-                      class="flex-1 flex flex-col gap-2 items-center justify-center"
+                      v-if="viewSelectedTimeRange !== 0"
+                      class="flex justify-center items-center"
                     >
-                      <img
-                        src="@/assets/home-img/no-data.png"
-                        class="w-40 h-auto"
-                      />
-                      <div
-                        v-if="viewSelectedTimeRange !== 0"
-                        class="flex justify-center items-center"
-                      >
-                        <span class="text-xs text-gray-400">
-                          最近 {{ viewSelectedTimeRange }} 天暂无多空统计数据
-                        </span>
-                      </div>
+                      <span class="text-xs text-gray-400">
+                        最近 {{ viewSelectedTimeRange }} 天暂无多空统计数据
+                      </span>
                     </div>
                   </div>
-                </template>
+                </div>
               </div>
               <!-- 4.持仓模块表格 -->
               <div
@@ -670,7 +647,7 @@
                 <div
                   class="text-xs text-gray-500 dark:text-gray-300 text-center"
                 >
-                  开平仓币种数据可能还不准确，后续会优化
+                  统计期间中途价格波动，与账户净值差额存有偏差
                 </div>
               </div>
               <!-- 6.策略配置信息表格-->
@@ -690,7 +667,7 @@
           class="h-full flex-1 flex flex-col items-center justify-center gap-4"
         >
           <div class="text-center text-sm">
-            实盘交易暂时未启动，请去
+            实盘交易暂时未启动，请前往
             <Button
               label="策略中心"
               variant="text"
@@ -707,6 +684,7 @@
     v-model="sharePosterVisible"
     :frameworkId="sharePosterAccount?.framework_id || ''"
     :accountName="sharePosterAccount?.account_name || ''"
+    :mode="sharePosterAccount?.is_simulate || ''"
   />
 </template>
 
@@ -720,12 +698,19 @@ import LongChart from "@/home-module/components/longChart.template.vue";
 import SharePosterDialog from "@/home-module/components/sharePosterDialog.template.vue";
 import StrategyConfigInfo from "@/home-module/components/strategyConfigInfo.template.vue";
 import { getHomeAccountInfo } from "@/common-module/services/service.provider";
+import { formatPnL } from "@/common-module/utils";
 
 const viewfullscreenId = ref<number | null>(null);
 const viewIsLoading = ref<boolean>(false);
 const viewData = ref<tDbHomeAccountInfoRes[]>([]);
 
 const viewPostSelectOptions = ref<string[]>(["持仓合约", "持仓现货"]);
+
+const modeMap: Record<string, string> = {
+  none: "实盘交易",
+  simulate: "模拟实盘",
+  debug: "调试模式",
+};
 
 // 定义方向筛选器
 const sideFilterOptions = ref([
@@ -796,26 +781,22 @@ const formatStrategyPool = () => {
 };
 
 const getTop5Coins = (item: any) => {
-  if (
-    item?.pnl_history &&
-    pnlSelectedTimeRange.value &&
-    item.pnl_history[pnlSelectedTimeRange.value] &&
-    item.pnl_history[pnlSelectedTimeRange.value].length > 0
-  ) {
-    // 根据coinSortType取total_pnl>0/<0的币排序,截取前五名展示
-    if (item.coinSortType === "盈利") {
-      return item.pnl_history[pnlSelectedTimeRange.value]
-        .filter((coin: any) => coin.total_pnl > 0)
-        .sort((a: any, b: any) => b.total_pnl - a.total_pnl)
-        .slice(0, 5);
-    } else {
-      return item.pnl_history[pnlSelectedTimeRange.value]
-        .filter((coin: any) => coin.total_pnl < 0)
-        .sort((a: any, b: any) => a.total_pnl - b.total_pnl)
-        .slice(0, 5);
-    }
-  }
-  return [];
+  const range = pnlSelectedTimeRange.value;
+  const list = item?.pnl_history?.[range];
+
+  if (!list?.length) return [];
+
+  const isProfit = item.coinSortType === "盈利";
+
+  return list
+    .filter((coin: any) => (isProfit ? coin.total_pnl > 0 : coin.total_pnl < 0))
+    .sort(
+      (a: any, b: any) =>
+        isProfit
+          ? b.total_pnl - a.total_pnl // 盈利：大到小
+          : a.total_pnl - b.total_pnl // 亏损：小到大
+    )
+    .slice(0, 5);
 };
 
 const expandAll = () => {
@@ -853,6 +834,33 @@ const showOrHiddenAction = (itemId: number) => {
   } else {
     viewAccountValueHiddenIdList.value.push(itemId);
   }
+};
+
+const getFontClass = (item: tDbHomeAccountInfoRes) => {
+  const arr = item?.equity?.equity_amount;
+  const v = arr?.length ? arr[arr.length - 1] : 0;
+
+  if (v < 1000) return "text-6xl sm:text-7xl";
+  if (v < 100000) return "text-5xl sm:text-6xl";
+  return "text-4xl sm:text-5xl";
+};
+
+const hasNetChartData = (item: tDbHomeAccountInfoRes) => {
+  const eq = item?.equity;
+  return eq?.time && eq?.net && eq?.dd2here && item?.sub_stg_eqs;
+};
+
+const hasLongChartData = (item: tDbHomeAccountInfoRes) => {
+  const eq = item?.equity;
+
+  return (
+    eq?.time &&
+    eq?.long_ratio &&
+    eq?.short_ratio &&
+    eq?.empty_ratio &&
+    eq?.long_coin_num &&
+    eq?.short_coin_num
+  );
 };
 </script>
 

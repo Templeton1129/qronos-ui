@@ -44,6 +44,26 @@
           class="flex-1 max-w-full sm:max-w-[480px] overflow-y-auto relative bg-slate-950 p-4 space-y-3"
         >
           <div
+            v-if="mode === 'simulate'"
+            class="absolute inset-0 pointer-events-none z-[8] overflow-hidden"
+          >
+            <div
+              class="absolute inset-0 flex flex-wrap justify-center content-center gap-[60px] sm:gap-[120px] px-10 text-sm sm:text-base"
+            >
+              <span
+                v-for="i in 30"
+                :key="i"
+                :style="{
+                  transform: `rotate(-25deg) translateY(${(i % 6) * 4}px)`,
+                  opacity: 0.04 + (i % 6) * 0.012,
+                }"
+              >
+                XBX SIMULATION
+              </span>
+            </div>
+          </div>
+
+          <div
             class="absolute inset-0 opacity-30"
             style="
               background-image:
@@ -59,7 +79,8 @@
                 ),
                 linear-gradient(
                   to bottom,
-                  rgba(255, 255, 255, 0.03),
+                  rgba(255, 255, 255, 0.06),
+                  rgba(255, 255, 255, 0.01),
                   rgba(255, 255, 255, 0)
                 );
             "
@@ -131,40 +152,51 @@
                   src="@/assets/header-img/xbx-logo.png"
                 />
                 <div class="flex-1 min-w-0 space-y-0.5">
-                  <div class="flex items-center gap-2 min-w-0">
+                  <div class="flex items-center justify-between gap-2 min-w-0">
                     <!-- 编辑 -->
                     <template v-if="viewIsEditing">
-                      <div
-                        class="flex-1 min-w-0 border border-gray-400/60 rounded-lg border-dashed px-2 focus-within:border-gray-300 transition"
-                      >
-                        <input
-                          v-model.trim="viewCustomTitle"
-                          class="w-full text-[15px] font-semibold tracking-wide bg-transparent text-gray-100 border-0 outline-none placeholder:text-gray-500"
-                          placeholder="名称"
-                          @keyup.enter="saveNameAction"
-                        />
-                      </div>
+                      <div class="flex-1 flex items-center gap-2 min-w-0">
+                        <div
+                          class="flex-1 min-w-0 border border-gray-400/60 rounded-lg border-dashed px-2 focus-within:border-gray-300 transition"
+                        >
+                          <input
+                            v-model.trim="viewCustomTitle"
+                            class="w-full text-[15px] font-semibold tracking-wide bg-transparent text-gray-100 border-0 outline-none placeholder:text-gray-500"
+                            placeholder="名称"
+                            @keyup.enter="saveNameAction"
+                          />
+                        </div>
 
-                      <i
-                        class="pi pi-check cursor-pointer px-1 hover:text-green-400 transition shrink-0"
-                        @click="saveNameAction"
-                      ></i>
+                        <i
+                          class="pi pi-check cursor-pointer px-1 hover:text-green-400 transition shrink-0"
+                          @click="saveNameAction"
+                        ></i>
+                      </div>
                     </template>
 
                     <!-- 展示 -->
                     <template v-else>
-                      <span
-                        class="min-w-0 truncate text-[15px] font-semibold tracking-wide"
-                        :title="viewCustomTitle"
-                      >
-                        {{ viewCustomTitle }}
-                      </span>
+                      <div class="flex-1 flex items-center gap-2 min-w-0">
+                        <span
+                          class="min-w-0 truncate text-[15px] font-semibold tracking-wide"
+                          :title="viewCustomTitle"
+                        >
+                          {{ viewCustomTitle }}
+                        </span>
 
-                      <i
-                        class="pi pi-pencil text-sm cursor-pointer px-1 shrink-0 hover:text-gray-300 transition"
-                        @click="viewIsEditing = true"
-                      ></i>
+                        <i
+                          class="pi pi-pencil text-sm cursor-pointer px-1 shrink-0 hover:text-gray-300 transition"
+                          @click="viewIsEditing = true"
+                        ></i>
+                      </div>
                     </template>
+
+                    <span
+                      v-if="mode === 'simulate'"
+                      class="text-[11px] font-medium text-primary-300 px-3 py-1 rounded-full tracking-wider bg-primary-500/10 border border-primary-400/20 backdrop-blur-sm"
+                    >
+                      模拟盘
+                    </span>
                   </div>
 
                   <!-- 状态 -->
@@ -777,6 +809,7 @@ const props = defineProps<{
   modelValue: boolean;
   frameworkId: string;
   accountName: string;
+  mode: string;
 }>();
 
 const emit = defineEmits<{
@@ -800,8 +833,6 @@ const viewCopying = ref(false);
 const viewInitLoading = ref(false);
 const viewSectionLoading = ref(false);
 const viewHasLoaded = ref(false);
-
-// const shareTime = computed(() => dayjs().format("YYYY-MM-DD HH:mm:ss"));
 
 const viewCustomTitle = ref<string>(props.accountName || "");
 const viewIsEditing = ref<boolean>(false);

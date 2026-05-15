@@ -1,5 +1,3 @@
-import { computed } from "vue";
-
 export const useRatingFn = () => {
   // 最大回撤%（越小越好）
   const getDrawdownMeta = (val: number) => {
